@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/reneo-squire
+reneo-squire.so
+reneo-squire.dylib
+reneo-squire.dll
+reneo-squire.a
+reneo-squire.lib
+reneo-squire-test-*
+*.exe
+*.o
+*.obj
+*.lst
