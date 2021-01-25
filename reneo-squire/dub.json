@@ -5,5 +5,8 @@
 	"copyright": "Copyright © 2021, Robert Heedt",
 	"description": "Supplementary application for ReNEO keyboard driver, implementing layer 3 and upwards.",
 	"license": "proprietary",
-	"name": "reneo-squire"
+    "name": "reneo-squire",
+    "libs": [
+        "user32"
+    ]
 }
