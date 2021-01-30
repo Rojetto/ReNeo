@@ -110,13 +110,31 @@ void initMapping() {
                     NeoKey("Greek_sigma", 'σ'), NeoKey("Greek_SIGMA", 'Σ')];
     mapping['E'] = [NeoKey("e", to!VK('E')), NeoKey("E", to!VK('E')),
                     NeoKey("braceright", '}'), NeoKey("Right", VK_RIGHT),
-                    NeoKey("Greek_epsilon", 'ε'), NeoKey("U220323", '∃')];
+                    NeoKey("Greek_epsilon", 'ε'), NeoKey("U2203", '∃')];
     mapping[VK_OEM_1] = [NeoKey("dead_circumflex", '^'), NeoKey("dead_caron", 'ˇ'),
                          NeoKey("U21BB", '↻'), NeoKey("dead_abovedot", '˙'),
                          NeoKey("dead_hook", '˞'), NeoKey("dead_belowdot", '.')];
-    mapping[VK_TAB] = [NeoKey("tab", VK_TAB), NeoKey("tab", VK_TAB),
-                       NeoKey("Multi_key", '♫'), NeoKey("tab", VK_TAB),
+    mapping[VK_TAB] = [NeoKey("Tab", VK_TAB), NeoKey("Tab", VK_TAB),
+                       NeoKey("Multi_key", '♫'), NeoKey("Tab", VK_TAB),
                        NeoKey("VoidSymbol", 0xFF), NeoKey("VoidSymbol", 0xFF)];   
+}
+
+bool isKeyDown(int vk) nothrow {
+    return cast(bool)((GetAsyncKeyState(vk) & 0b1000_0000_0000_0000) >> 15);
+}
+
+void sendVK(int vk, bool down) nothrow {
+    INPUT input_struct;
+    input_struct.type = INPUT_KEYBOARD;
+    input_struct.ki.wVk = cast(ushort)vk;
+    input_struct.ki.wScan = 0;
+    if (down) {
+        input_struct.ki.dwFlags = 0x0000;
+    } else {
+        input_struct.ki.dwFlags = 0x0002;
+    }
+
+    SendInput(1, &input_struct, INPUT.sizeof);
 }
 
 HHOOK hHook;
@@ -125,9 +143,37 @@ extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
     auto vk = msg_ptr.vkCode;
+
+    //printf("KeyState Mod3 %x\n", GetAsyncKeyState(VK_LSHIFT));
+
+    bool leftShiftDown = isKeyDown(VK_LSHIFT);
+    bool rightShiftDown = isKeyDown(VK_RSHIFT);
+    bool leftMod3Down = isKeyDown(0x8A);
+    bool rightMod3Down = isKeyDown(0x8B);
+    bool leftMod4Down = isKeyDown(0x8C);
+    bool rightMod4Down = isKeyDown(0x8D);
+
+    bool shiftDown = leftShiftDown || rightShiftDown;
+    bool mod3Down = leftMod3Down || rightMod3Down;
+    bool mod4Down = leftMod4Down || rightMod4Down;
+
+    uint layer = 1;
+
+    if (mod3Down && mod4Down) {
+        layer = 6;
+    } else if (shiftDown && mod3Down) {
+        layer = 5;
+    }  else if (mod4Down) {
+        layer = 4;
+    }  else if (mod3Down) {
+        layer = 3;
+    }  else if (shiftDown) {
+        layer = 2;
+    } 
+
     switch(wParam) {
         case WM_KEYDOWN:
-        //printf("Key down %x\n", vk);
+        printf("Key down %x, layer %d\n", vk, layer);
         break;
         default:
         break;
