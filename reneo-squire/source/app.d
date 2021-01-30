@@ -170,11 +170,61 @@ bool rightMod3Down;
 bool leftMod4Down;
 bool rightMod4Down;
 
-uint getLayer() nothrow {
+extern (Windows)
+LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
+    auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
+    auto vk = msg_ptr.vkCode;
+    
+    auto scan = msg_ptr.scanCode;
+    bool down = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
+
+    // ignore all simulated keypresses
+    // TODO: use LLKHF_INJECTED
+    if (vk == VK_PACKET || scan == 0) {
+        return CallNextHookEx(hHook, nCode, wParam, lParam);
+    }
+
+    // setting eat = true stops the keypress from propagating further
+    bool eat = false;
+
+    // update stored modifier key states
+    // GetAsyncKeyState didn't seem to work for multiple simultaneous keys
+    if (vk == VK_LSHIFT) {
+        leftShiftDown = down;
+
+        // CAPSLOCK by pressing both Shift keys
+        // TODO: Handle repeat correctly
+        if (down && rightShiftDown) {
+            sendVK(VK_CAPITAL, true);
+            sendVK(VK_CAPITAL, false);
+        }
+    } else if (vk == VK_RSHIFT) {
+        rightShiftDown = down;
+
+        if (down && leftShiftDown) {
+            sendVK(VK_CAPITAL, true);
+            sendVK(VK_CAPITAL, false);
+        }
+    } else if (vk == 0x8A) {
+        leftMod3Down = down;
+        // eat all mod 3 and mod 4 keypresses
+        eat = true;
+    } else if (vk == 0x8B) {
+        rightMod3Down = down;
+        eat = true;
+    } else if (vk == 0x8C) {
+        leftMod4Down = down;
+        eat = true;
+    } else if (vk == 0x8D) {
+        rightMod4Down = down;
+        eat = true;
+    }
+
     bool shiftDown = leftShiftDown || rightShiftDown;
     bool mod3Down = leftMod3Down || rightMod3Down;
     bool mod4Down = leftMod4Down || rightMod4Down;
 
+    // determine the layer we are currently on
     uint layer = 1;
 
     if (mod3Down && mod4Down) {
@@ -189,63 +239,15 @@ uint getLayer() nothrow {
         layer = 2;
     }
 
-    return layer;
-}
+    // translate keypress to NEO layout factoring in the current layer
+    NeoKey nk = mapToNeo(vk, layer);
+    //printf("Key down %x, layer %d, mapped to keysym %x\n", vk, layer, nk.keysym);
 
-extern (Windows)
-LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
-    auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
-    auto vk = msg_ptr.vkCode;
-    auto scan = msg_ptr.scanCode;
-
-    bool eat = false;
-
-    switch(wParam) {
-        case WM_KEYDOWN:
-        if (vk == VK_LSHIFT) {
-            leftShiftDown = true;
-        } else if (vk == VK_RSHIFT) {
-            rightShiftDown = true;
-        } else if (vk == 0x8A) {
-            leftMod3Down = true;
-        } else if (vk == 0x8B) {
-            rightMod3Down = true;
-        } else if (vk == 0x8C) {
-            leftMod4Down = true;
-        } else if (vk == 0x8D) {
-            rightMod4Down = true;
+    if (wParam == WM_KEYDOWN) {
+        if (layer >= 3) {
+            eat = true;
+            sendNeoKey(nk, true);
         }
-
-        uint layer = getLayer();
-
-        if (vk != VK_PACKET && scan != 0) {
-            NeoKey nk = mapToNeo(vk, layer);
-            //printf("Key down %x, layer %d, mapped to keysym %x\n", vk, layer, nk.keysym);
-
-            if (layer >= 3) {
-                eat = true;
-                sendNeoKey(nk, true);
-            }
-        }
-        break;
-
-        case WM_KEYUP:
-        if (vk == VK_LSHIFT) {
-            leftShiftDown = false;
-        } else if (vk == VK_RSHIFT) {
-            rightShiftDown = false;
-        } else if (vk == 0x8A) {
-            leftMod3Down = false;
-        } else if (vk == 0x8B) {
-            rightMod3Down = false;
-        } else if (vk == 0x8C) {
-            leftMod4Down = false;
-        } else if (vk == 0x8D) {
-            rightMod4Down = false;
-        }
-        break;
-        default:
-        break;
     }
 
     if (eat) {
