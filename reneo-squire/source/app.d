@@ -6,7 +6,7 @@ import std.conv;
 import core.runtime;
 import core.sys.windows.windows;
 
-alias VK = WPARAM;
+alias VK = DWORD;
 
 enum NeoKeyType {
     VKEY,
@@ -20,33 +20,21 @@ struct NeoKey {
         VK vk_code;
         wchar char_code;
     }
-
-    this(uint keysym, VK vk_code) {
-        this.keysym = keysym;
-        this.keytype = NeoKeyType.VKEY;
-        this.vk_code = vk_code;
-    }
-
-    this(uint keysym, wchar char_code) {
-        this.keysym = keysym;
-        this.keytype = NeoKeyType.CHAR;
-        this.char_code = char_code;
-    }
-    
-    this(string keysym_str, VK vk_code) {
-        this.keysym = parseKeysym(keysym_str);
-        this.keytype = NeoKeyType.VKEY;
-        this.vk_code = vk_code;
-    }
-
-    this(string keysym_str, wchar char_code) {
-        this.keysym = parseKeysym(keysym_str);
-        this.keytype = NeoKeyType.CHAR;
-        this.char_code = char_code;
-    }
 }
 
+NeoKey mapVK(string keysym_str, VK vk) {
+    NeoKey nk = { keysym: parseKeysym(keysym_str), keytype: NeoKeyType.VKEY, vk_code: vk };
+    return nk;
+}
+
+NeoKey mapChar(string keysym_str, wchar char_code) {
+    NeoKey nk = { keysym: parseKeysym(keysym_str), keytype: NeoKeyType.CHAR, char_code: char_code };
+    return nk;
+}
+
+
 NeoKey[6][VK] mapping;
+NeoKey VOID_KEY;
 
 struct KeySymEntry {
     uint key_code;
@@ -98,25 +86,27 @@ uint parseKeysym(string keysym) {
     }
 
     writeln("Keysym ", keysym, " not found.");
-    return 0xffffffff;
+    return 0xffffff;
 }
 
 void initMapping() {
-    mapping[VK_OEM_PERIOD] = [NeoKey("period", VK_OEM_PERIOD), NeoKey("enfilledcircbullet", '•'),
-                              NeoKey("apostrophe", '\''), NeoKey("KP_3", VK_NUMPAD3),
-                              NeoKey("U03D1", 'ϑ'), NeoKey("U21A6", '↦')];
-    mapping['S'] = [NeoKey("s", to!VK('S')), NeoKey("S", to!VK('S')),
-                    NeoKey("question", '?'), NeoKey("questiondown", '¿'),
-                    NeoKey("Greek_sigma", 'σ'), NeoKey("Greek_SIGMA", 'Σ')];
-    mapping['E'] = [NeoKey("e", to!VK('E')), NeoKey("E", to!VK('E')),
-                    NeoKey("braceright", '}'), NeoKey("Right", VK_RIGHT),
-                    NeoKey("Greek_epsilon", 'ε'), NeoKey("U2203", '∃')];
-    mapping[VK_OEM_1] = [NeoKey("dead_circumflex", '^'), NeoKey("dead_caron", 'ˇ'),
-                         NeoKey("U21BB", '↻'), NeoKey("dead_abovedot", '˙'),
-                         NeoKey("dead_hook", '˞'), NeoKey("dead_belowdot", '.')];
-    mapping[VK_TAB] = [NeoKey("Tab", VK_TAB), NeoKey("Tab", VK_TAB),
-                       NeoKey("Multi_key", '♫'), NeoKey("Tab", VK_TAB),
-                       NeoKey("VoidSymbol", 0xFF), NeoKey("VoidSymbol", 0xFF)];   
+    VOID_KEY = mapVK("VoidSymbol", 0xFF);
+
+    mapping[VK_OEM_PERIOD] = [mapVK("period", VK_OEM_PERIOD), mapChar("enfilledcircbullet", '•'),
+                              mapChar("apostrophe", '\''), mapVK("KP_3", VK_NUMPAD3),
+                              mapChar("U03D1", 'ϑ'), mapChar("U21A6", '↦')];
+    mapping['S'] = [mapVK("s", 'S'), mapVK("S", 'S'),
+                    mapChar("question", '?'), mapChar("questiondown", '¿'),
+                    mapChar("Greek_sigma", 'σ'), mapChar("Greek_SIGMA", 'Σ')];
+    mapping['E'] = [mapVK("e", 'E'), mapVK("E", 'E'),
+                    mapChar("braceright", '}'), mapVK("Right", VK_RIGHT),
+                    mapChar("Greek_epsilon", 'ε'), mapChar("U2203", '∃')];
+    mapping[VK_OEM_1] = [mapChar("dead_circumflex", '^'), mapChar("dead_caron", 'ˇ'),
+                         mapChar("U21BB", '↻'), mapChar("dead_abovedot", '˙'),
+                         mapChar("dead_hook", '˞'), mapChar("dead_belowdot", '.')];
+    mapping[VK_TAB] = [mapVK("Tab", VK_TAB), mapVK("Tab", VK_TAB),
+                       mapChar("Multi_key", '♫'), mapVK("Tab", VK_TAB),
+                       mapVK("VoidSymbol", 0xFF), mapVK("VoidSymbol", 0xFF)];   
 }
 
 bool isKeyDown(int vk) nothrow {
@@ -131,28 +121,56 @@ void sendVK(int vk, bool down) nothrow {
     if (down) {
         input_struct.ki.dwFlags = 0x0000;
     } else {
-        input_struct.ki.dwFlags = 0x0002;
+        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
     }
 
     SendInput(1, &input_struct, INPUT.sizeof);
 }
 
+void sendUTF16(wchar unicode_char, bool down) nothrow {
+    INPUT input_struct;
+    input_struct.type = INPUT_KEYBOARD;
+    input_struct.ki.wVk = 0;
+    input_struct.ki.wScan = unicode_char;
+    if (down) {
+        input_struct.ki.dwFlags = KEYEVENTF_UNICODE;
+    } else {
+        input_struct.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+    }
+
+    SendInput(1, &input_struct, INPUT.sizeof);
+}
+
+void sendNeoKey(NeoKey nk, bool down) nothrow {
+    if (nk.keysym == 0xffffff) {
+        return;
+    }
+
+    if (nk.keytype == NeoKeyType.VKEY) {
+        sendVK(nk.vk_code, down);
+    } else {
+        sendUTF16(nk.char_code, down);
+    }
+}
+
+NeoKey mapToNeo(VK vk, uint layer) nothrow {
+    if (vk in mapping) {
+        return mapping[vk][layer - 1];
+    }
+
+    return VOID_KEY;
+}
+
 HHOOK hHook;
 
-extern (Windows)
-LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
-    auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
-    auto vk = msg_ptr.vkCode;
+bool leftShiftDown;
+bool rightShiftDown;
+bool leftMod3Down;
+bool rightMod3Down;
+bool leftMod4Down;
+bool rightMod4Down;
 
-    //printf("KeyState Mod3 %x\n", GetAsyncKeyState(VK_LSHIFT));
-
-    bool leftShiftDown = isKeyDown(VK_LSHIFT);
-    bool rightShiftDown = isKeyDown(VK_RSHIFT);
-    bool leftMod3Down = isKeyDown(0x8A);
-    bool rightMod3Down = isKeyDown(0x8B);
-    bool leftMod4Down = isKeyDown(0x8C);
-    bool rightMod4Down = isKeyDown(0x8D);
-
+uint getLayer() nothrow {
     bool shiftDown = leftShiftDown || rightShiftDown;
     bool mod3Down = leftMod3Down || rightMod3Down;
     bool mod4Down = leftMod4Down || rightMod4Down;
@@ -169,15 +187,71 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
         layer = 3;
     }  else if (shiftDown) {
         layer = 2;
-    } 
+    }
+
+    return layer;
+}
+
+extern (Windows)
+LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
+    auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
+    auto vk = msg_ptr.vkCode;
+    auto scan = msg_ptr.scanCode;
+
+    bool eat = false;
 
     switch(wParam) {
         case WM_KEYDOWN:
-        printf("Key down %x, layer %d\n", vk, layer);
+        if (vk == VK_LSHIFT) {
+            leftShiftDown = true;
+        } else if (vk == VK_RSHIFT) {
+            rightShiftDown = true;
+        } else if (vk == 0x8A) {
+            leftMod3Down = true;
+        } else if (vk == 0x8B) {
+            rightMod3Down = true;
+        } else if (vk == 0x8C) {
+            leftMod4Down = true;
+        } else if (vk == 0x8D) {
+            rightMod4Down = true;
+        }
+
+        uint layer = getLayer();
+
+        if (vk != VK_PACKET && scan != 0) {
+            NeoKey nk = mapToNeo(vk, layer);
+            //printf("Key down %x, layer %d, mapped to keysym %x\n", vk, layer, nk.keysym);
+
+            if (layer >= 3) {
+                eat = true;
+                sendNeoKey(nk, true);
+            }
+        }
+        break;
+
+        case WM_KEYUP:
+        if (vk == VK_LSHIFT) {
+            leftShiftDown = false;
+        } else if (vk == VK_RSHIFT) {
+            rightShiftDown = false;
+        } else if (vk == 0x8A) {
+            leftMod3Down = false;
+        } else if (vk == 0x8B) {
+            rightMod3Down = false;
+        } else if (vk == 0x8C) {
+            leftMod4Down = false;
+        } else if (vk == 0x8D) {
+            rightMod4Down = false;
+        }
         break;
         default:
         break;
     }
+
+    if (eat) {
+        return -1;
+    }
+
     return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 
