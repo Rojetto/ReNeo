@@ -1,0 +1,709 @@
+#configinfo mathematische und physikalische Zeichen (≥ ∉ ℏ ℃)
+
+# additional Definitions by Neo keyboard layout - mathematical symbols
+
+# mathematical functions and operators
+<Multi_key> <3> <radical>                  : "∛"   U221B # CUBE ROOT
+<Multi_key> <radical> <3>                  : "∛"   U221B # CUBE ROOT
+<Multi_key> <KP_3> <radical>               : "∛"   U221B # CUBE ROOT
+<Multi_key> <radical> <KP_3>               : "∛"   U221B # CUBE ROOT
+<Multi_key> <4> <radical>                  : "∜"   U221C # FOURTH ROOT
+<Multi_key> <radical> <4>                  : "∜"   U221C # FOURTH ROOT
+<Multi_key> <KP_4> <radical>               : "∜"   U221C # FOURTH ROOT
+<Multi_key> <radical> <KP_4>               : "∜"   U221C # FOURTH ROOT
+<Multi_key> <integral> <2>                 : "∬"   U222C # DOUBLE INTEGRAL
+<Multi_key> <2> <integral>                 : "∬"   U222C # DOUBLE INTEGRAL
+<Multi_key> <integral> <integral>          : "∬"   U222C # DOUBLE INTEGRAL
+<Multi_key> <integral> <KP_2>              : "∬"   U222C # DOUBLE INTEGRAL
+<Multi_key> <KP_2> <integral>              : "∬"   U222C # DOUBLE INTEGRAL
+<Multi_key> <integral> <3>                 : "∭"   U222D # TRIPLE INTEGRAL
+<Multi_key> <3> <integral>                 : "∭"   U222D # TRIPLE INTEGRAL
+<Multi_key> <integral> <KP_3>              : "∭"   U222D # TRIPLE INTEGRAL
+<Multi_key> <KP_3> <integral>              : "∭"   U222D # TRIPLE INTEGRAL
+<Multi_key> <integral> <4>                 : "⨌"   U2A0C # QUADRUPLE INTEGRAL OPERATOR
+<Multi_key> <4> <integral>                 : "⨌"   U2A0C # QUADRUPLE INTEGRAL OPERATOR
+<Multi_key> <integral> <KP_4>              : "⨌"   U2A0C # QUADRUPLE INTEGRAL OPERATOR
+<Multi_key> <KP_4> <integral>              : "⨌"   U2A0C # QUADRUPLE INTEGRAL OPERATOR
+<dead_abovering> <integral>                : "∮"   U222E # CONTOUR INTEGRAL
+<Multi_key> <o> <integral>                 : "∮"   U222E # CONTOUR INTEGRAL
+<Multi_key> <jot> <integral>               : "∮"   U222E # CONTOUR INTEGRAL
+<dead_abovering> <2> <integral>            : "∯"   U222F # SURFACE INTEGRAL
+<dead_abovering> <KP_2> <integral>         : "∯"   U222F # SURFACE INTEGRAL
+<Multi_key> <o> <2> <integral>             : "∯"   U222F # SURFACE INTEGRAL
+<Multi_key> <o> <KP_2> <integral>          : "∯"   U222F # SURFACE INTEGRAL
+<Multi_key> <jot> <2> <integral>           : "∯"   U222F # SURFACE INTEGRAL
+<Multi_key> <jot> <KP_2> <integral>        : "∯"   U222F # SURFACE INTEGRAL
+<dead_abovering> <3> <integral>            : "∰"   U2230 # VOLUME U222E
+<dead_abovering> <KP_3> <integral>         : "∰"   U2230 # VOLUME U222E
+<Multi_key> <o> <3> <integral>             : "∰"   U2230 # VOLUME U222E
+<Multi_key> <o> <KP_3> <integral>          : "∰"   U2230 # VOLUME U222E
+<Multi_key> <jot> <3> <integral>           : "∰"   U2230 # VOLUME U222E
+<Multi_key> <jot> <KP_3> <integral>        : "∰"   U2230 # VOLUME U222E
+<Multi_key> <asciicircum> <bracketleft>    : "⌈"   U2308 # LEFT CEILING
+<Multi_key> <underscore> <bracketleft>     : "⌊"   U230A # LEFT FLOOR
+<Multi_key> <asciicircum> <bracketright>   : "⌉"   U2309 # RIGHT CEILING
+<Multi_key> <underscore> <bracketright>    : "⌋"   U230B # RIGHT FLOOR
+<Multi_key> <greater> <period>             : "∴"   U2234 # THEREFORE
+<Multi_key> <ellipsis> <logicaland>        : "∴"   U2234 # THEREFORE
+<Multi_key> <less> <period>                : "∵"   U2235 # BECAUSE
+<Multi_key> <ellipsis> <logicalor>         : "∵"   U2235 # BECAUSE
+<Multi_key> <2> <colon>                    : "∷"   U2237 # PROPORTION
+<Multi_key> <KP_2> <colon>                 : "∷"   U2237 # PROPORTION
+<Multi_key> <asciitilde> <equal>           : "≅"   U2245 # APPROXIMATELY EQUAL TO
+<Multi_key> <equal> <asciitilde>           : "≅"   U2245 # APPROXIMATELY EQUAL TO
+<dead_tilde> <equal>                       : "≅"   U2245 # APPROXIMATELY EQUAL TO
+<Multi_key> <asciitilde> <asciitilde>      : "≈"   U2248 # ALMOST EQUAL TO
+<dead_tilde> <asciitilde>                  : "≈"   U2248 # ALMOST EQUAL TO
+<dead_macron> <asciitilde>                 : "≃"   U2243 # ASYMPTOTICALLY EQUAL TO
+<dead_tilde> <minus>                       : "≃"   U2243 # ASYMPTOTICALLY EQUAL TO
+<Multi_key> <equal> <equal>                : "≡"   U2261 # IDENTICAL TO
+<dead_abovedot> <identical>                : "⩧"   U2A67 # IDENTICAL WITH DOT ABOVE
+<dead_abovedot> <Multi_key> <equal> <equal>: "⩧"   U2A67 # IDENTICAL WITH DOT ABOVE
+<Multi_key> <colon> <equal>                : "≔"   U2254 # COLON EQUALS
+<Multi_key> <equal> <colon>                : "≕"   U2255 # EQUALS COLON
+<Multi_key> <KP_Equal> <colon>             : "≕"   U2255 # EQUALS COLON
+<Multi_key> <greater> <equal>              : "≥"   U2265 # GREATER-THAN OR EQUAL TO
+<Multi_key> <equal> <greater>              : "≥"   U2265 # GREATER-THAN OR EQUAL TO
+<Multi_key> <less> <equal>                 : "≤"   U2264 # LESS-THAN OR EQUAL TO
+<Multi_key> <equal> <less>                 : "≤"   U2264 # LESS-THAN OR EQUAL TO
+<dead_macron> <less>                       : "≤"   U2264 # LESS-THAN OR EQUAL TO
+<dead_macron> <greater>                    : "≥"   U2265 # GREATER-THAN OR EQUAL TO
+<Multi_key> <equal> <degree>               : "≗"   U2257 # RING EQUAL TO
+<Multi_key> <degree> <equal>               : "≗"   U2257 # RING EQUAL TO
+<dead_abovering> <equal>                   : "≗"   U2257 # RING EQUAL TO
+<dead_caron> <equal>                       : "≚"   U225A # EQUIANGULAR TO
+<dead_circumflex> <equal>                  : "≙"   U2259 # ESTIMATES
+<Multi_key> <equal> <asciicircum>          : "≙"   U2259 # ESTIMATES
+<Multi_key> <Greek_DELTA> <equal>          : "≜"   U225C # DELTA EQUAL TO
+<Multi_key> <equal> <Greek_DELTA>          : "≜"   U225C # DELTA EQUAL TO
+<Multi_key> <equal> <question>             : "≟"   U225F # QUESTIONED EQUAL TO
+<Multi_key> <question> <equal>             : "≟"   U225F # QUESTIONED EQUAL TO
+<dead_abovedot> <equal>                    : "≐"   U2250 # APPROACHES THE LIMIT
+<dead_belowdot> <equal>                    : "⩦"   U2A66 # EQUALS SIGN WITH DOT BELOW
+<Multi_key> <KP_Add> <KP_Subtract>         : "±"   plusminus # PLUS-MINUS SIGN
+<Multi_key> <KP_Subtract> <KP_Add>         : "∓"   U2213 # MINUS-OR-PLUS SIGN
+<Multi_key> <minus> <plus>                 : "∓"   U2213 # MINUS-OR-PLUS SIGN
+<U21BB> <plusminus>                        : "∓"   U2213 # MINUS-OR-PLUS SIGN
+<U21BB> <U2213>                            : "±"   plusminus # PLUS-MINUS SIGN
+<Multi_key> <s> <u> <m>                    : "∑"   U2211 # N-ARY SUMMATION
+<Multi_key> <i> <n> <t>                    : "∫"   U222B # INTEGRAL
+<Multi_key> <p> <r> <o> <d>                : "∏"   U220F # N-ARY PRODUCT
+<U21BB> <Greek_PI>                         : "∐"   U2210 # N-ARY COPRODUCT
+<Multi_key> <p> <r> <o> <p>                : "∝"   U221D # PROPORTIONAL TO
+<Multi_key> <a> <x>                        : "∝"   U221D # PROPORTIONAL TO
+<Multi_key> <R> <e>                        : "ℜ"   U211C # BLACK-LETTER CAPITAL R
+<Multi_key> <r> <e>                        : "ℜ"   U211C # BLACK-LETTER CAPITAL R
+<Multi_key> <I> <m>                        : "ℑ"   U2111 # BLACK-LETTER CAPITAL I
+<Multi_key> <i> <m>                        : "ℑ"   U2111 # BLACK-LETTER CAPITAL I
+<U21BB> <elementof>                        : "∋"   U220B # CONTAINS AS MEMBER
+<Multi_key> <elementof> <elementof>        : "∋"   U220B # CONTAINS AS MEMBER
+<dead_abovedot> <elementof>                : "⋵"   U22F5 # ELEMENT OF WITH DOT ABOVE
+<Multi_key> <h> <a>                        : "ℵ"   U2135 # ALEF SYMBOL
+<Multi_key> <h> <b>                        : "ℶ"   U2136 # BET SYMBOL
+<Multi_key> <h> <g>                        : "ℷ"   U2137 # GIMEL SYMBOL
+<Multi_key> <h> <d>                        : "ℸ"   U2138 # DALET SYMBOL
+<dead_abovedot> <logicaland>               : "⩑"   U2A51 # LOGICAL AND WITH DOT ABOVE
+<dead_abovedot> <logicalor>                : "⩒"   U2A52 # LOGICAL OR WITH DOT ABOVE
+<dead_macron> <logicaland>                 : "⊼"   U22BC # NAND
+<dead_macron> <logicalor>                  : "⊽"   U22BD # NOR
+<Multi_key> <logicalor> <underscore>       : "⊻"   U22BB # XOR
+<Multi_key> <logicalor> <underbar>         : "⊻"   U22BB # XOR
+<Multi_key> <logicaland> <underscore>      : "⩟"   U2A5F # LOGICAL AND WITH UNDERBAR
+<Multi_key> <logicaland> <underbar>        : "⩟"   U2A5F # LOGICAL AND WITH UNDERBAR
+<Multi_key> <logicalor> <logicalor>        : "⋁"   U22C1 # N-ARY LOGICAL OR
+<Multi_key> <logicaland> <logicaland>      : "⋀"   U22C0 # N-ARY LOGICAL AND
+<Multi_key> <union> <union>                : "⋃"   U22C3 # N-ARY UNION
+<Multi_key> <intersection> <intersection>  : "⋂"   U22C2 # N-ARY INTERSECTION
+<Multi_key> <Greek_SIGMA> <Greek_SIGMA>    : "∑"   U2211 # N-ARY SUMMATION
+<Multi_key> <Greek_PI> <Greek_PI>          : "∏"   U220F # N-ARY PRODUCT
+<Multi_key> <U2299> <U2299>                : "⨀"   U2A00 # N-ARY CIRCLED DOT OPERATOR
+<Multi_key> <U2295> <U2295>                : "⨁"   U2A01 # N-ARY CIRCLED PLUS OPERATOR
+<Multi_key> <U2297> <U2297>                : "⨂"   U2A02 # N-ARY CIRCLED TIMES OPERATOR
+<dead_macron> <includedin>                 : "⊆"   U2286 # SUBSET OF OR EQUAL TO
+<Multi_key> <includedin> <equal>           : "⊆"   U2286 # SUBSET OF OR EQUAL TO
+<Multi_key> <equal> <includedin>           : "⊆"   U2286 # SUBSET OF OR EQUAL TO
+<dead_macron> <includes>                   : "⊇"   U2287 # SUPERSET OF OR EQUAL TO
+<U21BB> <includedin>                       : "⊃"   includes # SUPERSET OF
+<U21BB> <includes>                         : "⊂"   includedin # SUBSET OF
+<U21BB> <U2286>                            : "⊇"   U2287 # SUPERSET OF OR EQUAL TO
+<U21BB> <U2287>                            : "⊆"   U2286 # SUBSET OF OR EQUAL TO
+<dead_abovedot> <U2286>                    : "⫃"   U2AC3 # SUBSET OF OR EQUAL TO WITH DOT ABOVE
+<dead_abovedot> <U2287>                    : "⫄"   U2AC4 # SUPERSET OF OR EQUAL TO WITH DOT ABOVE
+<dead_abovedot> <asciitilde>               : "⩪"   U2A6A # TILDE OPERATOR WITH DOT ABOVE
+<dead_abovedot> <minus>                    : "∸"   U2238 # DOT MINUS
+<dead_circumflex> <approxeq>               : "⩯"   U2A6F # ALMOST EQUAL TO WITH CIRCUMFLEX ACCENT
+<dead_abovering> <plus>                         : "⨢"   U2A22 # PLUS SIGN WITH SMALL CIRCLE ABOVE
+<dead_circumflex> <plus>                   : "⨣"   U2A23 # PLUS SIGN WITH CIRCUMFLEX ACCENT ABOVE
+<dead_tilde> <plus>                        : "⨤"   U2A24 # PLUS SIGN WITH TILDE ABOVE
+<dead_abovedot> <plus>                     : "∔"   U2214 # DOT PLUS
+<dead_abovedot> <multiply>                 : "⨰"   U2A30 # MULTIPLICATION SIGN WITH DOT ABOVE
+<Multi_key> <less> <bar>                   : "⊲"   U22B2 # NORMAL SUBGROUP OF
+<Multi_key> <bar> <less>                   : "⊲"   U22B2 # NORMAL SUBGROUP OF
+<Multi_key> <bar> <greater>                : "⊳"   U22B3 # CONTAINS AS NORMAL SUBGROUP
+<Multi_key> <equal> <bar> <less>           : "⊴"   U22B4 # NORMAL SUBGROUP OF OR EQUAL TO
+<Multi_key> <KP_Equal> <bar> <less>        : "⊴"   U22B4 # NORMAL SUBGROUP OF OR EQUAL TO
+<Multi_key> <equal> <bar> <greater>        : "⊵"   U22B5 # CONTAINS AS NORMAL SUBGROUP OR EQUAL TO
+<Multi_key> <KP_Equal> <bar> <greater>     : "⊵"   U22B5 # CONTAINS AS NORMAL SUBGROUP OR EQUAL TO
+<Multi_key> <backslash> <backslash>        : "∖"   U2216 # SET MINUS
+<Multi_key> <bar> <space>                  : "∣"   U2223 # DIVIDES
+<Multi_key> <bar> <bar>                    : "‖"   U2016 # DOUBLE VERTICAL LINE
+<Multi_key> <bar> <minus>                  : "⊢"   U22A2 # RIGHT TACK
+<Multi_key> <minus> <bar>                  : "⊣"   U22A3 # LEFT TACK
+<Multi_key> <bar> <equal>                  : "⊨"   U22A8 # TRUE
+<Multi_key> <bar> <KP_Equal>               : "⊨"   U22A8 # TRUE
+<Multi_key> <U22A5> <U22A5>                : "⊤"   U22A4 # DOWN TACK
+<U21BB> <U22A5>                            : "⊤"   U22A4 # DOWN TACK
+<Multi_key> <slash> <0>                    : "∅"   U2205 # EMPTY SET
+<dead_stroke> <0>                          : "∅"   U2205 # EMPTY SET
+<Multi_key> <0> <dead_stroke> <dead_stroke>: "∅"   U2205 # EMPTY SET
+<dead_abovering> <emptyset>                : "⦲"   U29B2 # EMPTY SET WITH SMALL CIRCLE ABOVE
+<U21BB> <emptyset>                         : "⦰"   U29B0 # REVERSED EMPTY SET
+<dead_macron> <emptyset>                   : "⦱"   U29B1 # EMPTY SET WITH OVERBAR
+
+<Multi_key> <asterisk> <asterisk>          : "∗"   U2217 # ASTERISK OPERATOR
+<Multi_key> <KP_Multiply> <KP_Multiply>    : "∗"   U2217 # ASTERISK OPERATOR
+<Multi_key> <2> <greater>                  : "≫"  U226B # MUCH GREATER-THAN
+<Multi_key> <KP_2> <greater>               : "≫"  U226B # MUCH GREATER-THAN
+<Multi_key> <2> <less>                     : "≪"  U226A # MUCH LESS-THAN
+<Multi_key> <KP_2> <less>                  : "≪"  U226A # MUCH LESS-THAN
+<Multi_key> <3> <greater>                  : "⋙"  U22D9 # VERY MUCH GREATER-THAN
+<Multi_key> <KP_3> <greater>               : "⋙"  U22D9 # VERY MUCH GREATER-THAN
+<Multi_key> <3> <less>                     : "⋘"  U22D8 # VERY MUCH LESS-THAN
+<Multi_key> <KP_3> <less>                  : "⋘"  U22D8 # VERY MUCH LESS-THAN
+# overwrites »« combinations
+<Multi_key> <greater> <greater>            : "≫"  U226B # MUCH GREATER-THAN
+<Multi_key> <less> <less>                  : "≪"  U226A # MUCH LESS-THAN
+<Multi_key> <2> <equal>                    : "⩵"  U2A75 # TWO CONSECUTIVE EQUALS SIGNS
+<Multi_key> <KP_2> <equal>                 : "⩵"  U2A75 # TWO CONSECUTIVE EQUALS SIGNS
+<Multi_key> <3> <equal>                    : "⩶"  U2A76 # THREE CONSECUTIVE EQUALS SIGNS
+<Multi_key> <KP_3> <equal>                 : "⩶"  U2A76 # THREE CONSECUTIVE EQUALS SIGNS
+
+# enclosed symbols
+<Multi_key> <o> <plus>                     : "⊕"   U2295 # CIRCLED PLUS
+<Multi_key> <o> <KP_Add>                   : "⊕"   U2295 # CIRCLED PLUS
+<Multi_key> <o> <minus>                    : "⊖"   U2296 # CIRCLED MINUS
+<Multi_key> <o> <KP_Subtract>              : "⊖"   U2296 # CIRCLED MINUS
+<Multi_key> <o> <multiply>                 : "⊗"   U2297 # CIRCLED TIMES
+<Multi_key> <o> <slash>                    : "⊘"   U2298 # CIRCLED DIVISION SLASH
+<Multi_key> <o> <KP_Divide>                : "⊘"   U2298 # CIRCLED DIVISION SLASH
+<Multi_key> <o> <period>                   : "⊙"   U2299 # CIRCLED DOT OPERATOR
+<Multi_key> <o> <jot>                      : "⊚"   U229A # CIRCLED RING OPERATOR
+<Multi_key> <o> <degree>                   : "⊚"   U229A # CIRCLED RING OPERATOR
+<Multi_key> <o> <asterisk>                 : "⊛"   U229B # CIRCLED ASTERISK OPERATOR
+<Multi_key> <o> <equal>                    : "⊜"   U229C # CIRCLED EQUALS
+<Multi_key> <o> <KP_Equal>                 : "⊜"   U229C # CIRCLED EQUALS
+<Multi_key> <o> <U22A5>                    : "⦹"   U29B9 # CIRCLED PERPENDICULAR
+<Multi_key> <o> <U2225>                    : "⦷"   U29B7 # CIRCLED PARALLEL
+<Multi_key> <o> <less>                     : "⧀"   U29C0 # CIRCLED LESS-THAN
+<Multi_key> <o> <greater>                  : "⧁"   U29C1 # CIRCLED GREATER-THAN
+<Multi_key> <Greek_DELTA> <plus>           : "⨹"   U2A39 # PLUS SIGN IN TRIANGLE
+<Multi_key> <plus> <Greek_DELTA>           : "⨹"   U2A39 # PLUS SIGN IN TRIANGLE
+<Multi_key> <Greek_DELTA> <minus>          : "⨺"   U2A3A # MINUS SIGN IN TRIANGLE
+<Multi_key> <minus> <Greek_DELTA>          : "⨺"   U2A3A # MINUS SIGN IN TRIANGLE
+<Multi_key> <Greek_DELTA> <multiply>       : "⨻"   U2A3B # MULTIPLICATION SIGN IN TRIANGLE
+<Multi_key> <multiply> <Greek_DELTA>       : "⨻"   U2A3B # MULTIPLICATION SIGN IN TRIANGLE
+
+# new ideas (to be discussed)
+<dead_belowdot> <logicaland>               : "⟑"   U27D1 # AND WITH DOT
+<Multi_key> <minus> <integral>             : "⨍"   U2A0D # FINITE PART INTEGRAL
+<Multi_key> <equal> <integral>             : "⨎"   U2A0E # INTEGRAL WITH DOUBLE STROKE
+<Multi_key> <integral> <equal>             : "⨎"   U2A0E # INTEGRAL WITH DOUBLE STROKE
+<Multi_key> <multiply> <integral>          : "⨘"   U2A18 # INTEGRAL WITH TIMES SIGN
+<Multi_key> <integral> <multiply>          : "⨘"   U2A18 # INTEGRAL WITH TIMES SIGN
+<Multi_key> <intersection> <integral>      : "⨙"   U2A19 # INTEGRAL WITH INTERSECTION
+<Multi_key> <integral> <intersection>      : "⨙"   U2A19 # INTEGRAL WITH INTERSECTION
+<Multi_key> <union> <integral>             : "⨚"   U2A1A # INTEGRAL WITH UNION
+<Multi_key> <integral> <union>             : "⨚"   U2A1A # INTEGRAL WITH UNION
+<dead_macron> <integral>                   : "⨛"   U2A1B # INTEGRAL WITH OVERBAR
+<Multi_key> <underscore> <integral>        : "⨜"   U2A1C # INTEGRAL WITH UNDERBAR
+<Multi_key> <underbar> <integral>          : "⨜"   U2A1C # INTEGRAL WITH UNDERBAR
+<Multi_key> <slash> <integral>             : "⨏"   U2A0F # INTEGRAL AVERAGE WITH SLASH
+<dead_stroke> <integral>                   : "⨏"   U2A0F # INTEGRAL AVERAGE WITH SLASH
+<Multi_key> <underscore> <multiply>        : "⨱"   U2A31 # MULTIPLICATION SIGN WITH UNDERBAR
+<Multi_key> <underbar> <multiply>          : "⨱"   U2A31 # MULTIPLICATION SIGN WITH UNDERBAR
+<dead_macron> <union>                      : "⩂"   U2A42 # UNION WITH OVERBAR
+<dead_macron> <intersection>               : "⩃"   U2A43 # INTERSECTION WITH OVERBAR
+<Multi_key> <less> <parenright>            : "⪦"   U2AA6 # LESS-THAN CLOSED BY CURVE
+<Multi_key> <parenleft> <greater>          : "⪧"   U2AA7 # GREATER-THAN CLOSED BY CURVE
+<Multi_key> <multiply> <multiply>          : "⨯"   U2A2F # VECTOR OR CROSS PRODUCT
+<Multi_key> <question> <less>              : "⩻"   U2A7B # LESS-THAN WITH QUESTION MARK ABOVE
+<Multi_key> <less> <question>              : "⩻"   U2A7B # LESS-THAN WITH QUESTION MARK ABOVE
+<Multi_key> <question> <greater>           : "⩼"   U2A7C # GREATER-THAN WITH QUESTION MARK ABOVE
+<Multi_key> <greater> <question>           : "⩼"   U2A7C # GREATER-THAN WITH QUESTION MARK ABOVE
+
+# misc. symbols
+<Multi_key> <bar> <multiply> <bar>         : "⋈"   U22C8 # BOWTIE
+<Multi_key> <bar> <multiply> <space>       : "⋉"   U22C9 # LEFT NORMAL FACTOR SEMIDIRECT PRODUCT
+<Multi_key> <multiply> <bar>               : "⋊"   U22CA # RIGHT NORMAL FACTOR SEMIDIRECT PRODUCT
+<U21BB> <asciitilde>                       : "≀"   U2240 # WREATH PRODUCT
+<U21BB> <U2221>                            : "∢"   U2222 # SPHERICAL ANGLE
+<U21BB> <ampersand>                        : "⅋"   U214B # TURNED AMPERSAND
+<Multi_key> <minus> <colon>                : "∹"   U2239 # EXCESS
+<U21BB> <numbersign>                       : "⨳"   U2A33 # SMASH PRODUCT
+<dead_abovedot> <Greek_DELTA>              : "⧊"   U29CA # TRIANGLE WITH DOT ABOVE
+
+# mathematical negations
+<Multi_key> <slash> <equal>                                 : "≠"   U2260 # NOT EQUAL TO
+<dead_stroke> <equal>                                       : "≠"   U2260 # NOT EQUAL TO
+<Multi_key> <equal> <dead_stroke> <dead_stroke>             : "≠"   U2260 # NOT EQUAL TO
+<Multi_key> <KP_Divide> <KP_Equal>                          : "≠"   U2260 # NOT EQUAL TO
+<dead_stroke> <KP_Equal>                                    : "≠"   U2260 # NOT EQUAL TO
+<Multi_key> <KP_Equal> <dead_stroke> <dead_stroke>          : "≠"   U2260 # NOT EQUAL TO
+<Multi_key> <less> <greater>                                : "≠"   U2260 # NOT EQUAL TO
+<dead_stroke> <U21D2>                                       : "⇏"   U21CF # RIGHTWARDS DOUBLE ARROW WITH STROKE
+<Multi_key> <slash> <U21D2>                                 : "⇏"   U21CF # RIGHTWARDS DOUBLE ARROW WITH STROKE
+<dead_stroke> <U21D0>                                       : "⇍"   U21CD # LEFTWARDS DOUBLE ARROW WITH STROKE
+<Multi_key> <slash> <U21D0>                                 : "⇍"   U21CD # LEFTWARDS DOUBLE ARROW WITH STROKE
+<dead_stroke> <ifonlyif>                                    : "⇎"   U21CE # LEFT RIGHT DOUBLE ARROW WITH STROKE
+<Multi_key> <slash> <ifonlyif>                              : "⇎"   U21CE # LEFT RIGHT DOUBLE ARROW WITH STROKE
+<dead_stroke> <leftarrow>                                   : "↚"   U219A # LEFTWARDS ARROW WITH STROKE
+<Multi_key> <slash> <leftarrow>                             : "↚"   U219A # LEFTWARDS ARROW WITH STROKE
+<dead_stroke> <rightarrow>                                  : "↛"   U219B # RIGHTWARDS ARROW WITH STROKE
+<Multi_key> <slash> <rightarrow>                            : "↛"   U219B # RIGHTWARDS ARROW WITH STROKE
+<dead_stroke> <U2194>                                       : "↮"   U21AE # LEFT RIGHT ARROW WITH STROKE
+<Multi_key> <slash> <U2194>                                 : "↮"   U21AE # LEFT RIGHT ARROW WITH STROKE
+<Multi_key> <slash> <U2203>                                 : "∄"   U2204 # THERE DOES NOT EXIST
+<dead_stroke> <U2203>                                       : "∄"   U2204 # THERE DOES NOT EXIST
+<Multi_key> <U2203> <dead_stroke> <dead_stroke>             : "∄"   U2204 # THERE DOES NOT EXIST
+<Multi_key> <slash> <elementof>                             : "∉"   U2209 # NOT AN ELEMENT OF
+<dead_stroke> <elementof>                                   : "∉"   U2209 # NOT AN ELEMENT OF
+<Multi_key> <elementof> <dead_stroke> <dead_stroke>         : "∉"   U2209 # NOT AN ELEMENT OF
+<dead_stroke> <U21BB> <elementof>                           : "∌"   U220C # DOES NOT CONTAIN AS MEMBER
+<dead_stroke> <Multi_key> <elementof> <elementof>           : "∌"   U220C # DOES NOT CONTAIN AS MEMBER
+<Multi_key> <slash> <bar>                                   : "∤"   U2224 # DOES NOT DIVIDE
+<dead_stroke> <bar>                                         : "∤"   U2224 # DOES NOT DIVIDE
+<Multi_key> <bar> <dead_stroke> <dead_stroke>               : "∤"   U2224 # DOES NOT DIVIDE
+<Multi_key> <slash> <U2223>                                 : "∤"   U2224 # DOES NOT DIVIDE
+<dead_stroke> <U2223>                                       : "∤"   U2224 # DOES NOT DIVIDE
+<Multi_key> <U2223> <dead_stroke> <dead_stroke>             : "∤"   U2224 # DOES NOT DIVIDE
+<Multi_key> <slash> <U2225>                                 : "∦"   U2226 # NOT PARALLEL TO
+<dead_stroke> <U2225>                                       : "∦"   U2226 # NOT PARALLEL TO
+<Multi_key> <U2225> <dead_stroke> <dead_stroke>             : "∦"   U2226 # NOT PARALLEL TO
+<Multi_key> <slash> <asciitilde>                            : "≁"   U2241 # NOT TILDE
+<dead_stroke> <asciitilde>                                  : "≁"   U2241 # NOT TILDE
+<Multi_key> <asciitilde> <dead_stroke> <dead_stroke>        : "≁"   U2241 # NOT TILDE
+<Multi_key> <slash> <less>                                  : "≮"   U226E # NOT LESS-THAN
+<dead_stroke> <less>                                        : "≮"   U226E # NOT LESS-THAN
+<Multi_key> <less> <dead_stroke> <dead_stroke>              : "≮"   U226E # NOT LESS-THAN
+<Multi_key> <slash> <greater>                               : "≯"   U226F # NOT GREATER-THAN
+<dead_stroke> <greater>                                     : "≯"   U226F # NOT GREATER-THAN
+<Multi_key> <greater> <dead_stroke> <dead_stroke>           : "≯"   U226F # NOT GREATER-THAN
+<Multi_key> <slash> <lessthanequal>                         : "≰"   U2270 # NEITHER LESS-THAN NOR EQUAL TO
+<dead_stroke> <lessthanequal>                               : "≰"   U2270 # NEITHER LESS-THAN NOR EQUAL TO
+<Multi_key> <lessthanequal> <dead_stroke> <dead_stroke>     : "≰"   U2270 # NEITHER LESS-THAN NOR EQUAL TO
+<Multi_key> <slash> <greaterthanequal>                      : "≱"   U2271 # NEITHER GREATER-THAN NOR EQUAL TO
+<dead_stroke> <greaterthanequal>                            : "≱"   U2271 # NEITHER GREATER-THAN NOR EQUAL TO
+<Multi_key> <greaterthanequal> <dead_stroke> <dead_stroke>  : "≱"   U2271 # NEITHER GREATER-THAN NOR EQUAL TO
+<Multi_key> <slash> <includedin>                            : "⊄"   U2284 # NOT A SUBSET OF
+<dead_stroke> <includedin>                                  : "⊄"   U2284 # NOT A SUBSET OF
+<Multi_key> <includedin> <dead_stroke> <dead_stroke>        : "⊄"   U2284 # NOT A SUBSET OF
+<Multi_key> <slash> <includes>                              : "⊅"   U2285 # NOT A SUPERSET OF
+<dead_stroke> <includes>                                    : "⊅"   U2285 # NOT A SUPERSET OF
+<Multi_key> <includes> <dead_stroke> <dead_stroke>          : "⊅"   U2285 # NOT A SUPERSET OF
+<dead_stroke> <Multi_key> <less> <bar>                      : "⋪"   U22EA # NOT NORMAL SUBGROUP OF
+<dead_stroke> <Multi_key> <bar> <greater>                   : "⋫"   U22EB # DOES NOT CONTAIN AS NORMAL SUBGROUP
+<dead_stroke> <Multi_key> <equal> <less> <bar>              : "⋬"   U22EC # NOT NORMAL SUBGROUP OF OR EQUAL TO
+<dead_stroke> <Multi_key> <KP_Equal> <less> <bar>           : "⋬"   U22EC # NOT NORMAL SUBGROUP OF OR EQUAL TO
+<dead_stroke> <Multi_key> <equal> <bar> <greater>           : "⋭"   U22ED # DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL
+<dead_stroke> <Multi_key> <KP_Equal> <bar> <greater>        : "⋭"   U22ED # DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL
+<dead_stroke> <Multi_key> <bar> <minus>                     : "⊬"   U22AC # DOES NOT PROVE
+<dead_stroke> <Multi_key> <bar> <equal>                     : "⊭"   U22AD # NOT TRUE
+<dead_stroke> <Multi_key> <bar> <KP_Equal>                  : "⊭"   U22AD # NOT TRUE
+
+# arrows
+<Multi_key> <less> <minus>                     : "←"   U2190 # LEFTWARDS ARROW
+<U21BB> <rightarrow>                           : "←"   U2190 # LEFTWARDS ARROW
+<Multi_key> <bar> <asciicircum>                : "↑"   U2191 # UPWARDS ARROW
+<Multi_key> <minus> <greater>                  : "→"   U2192 # RIGHTWARDS ARROW
+<Multi_key> <v> <bar>                          : "↓"   U2193 # DOWNWARDS ARROW
+<Multi_key> <less> <rightarrow>                : "↔"   U2194 # LEFT RIGHT ARROW
+<Multi_key> <leftarrow> <greater>              : "↔"   U2194 # LEFT RIGHT ARROW
+<Multi_key> <asciicircum> <bar> <v>            : "↕"   U2195 # UP DOWN ARROW
+<Multi_key> <backslash> <asciicircum>          : "↖"   U2196 # NORTH WEST ARROW
+<Multi_key> <slash> <asciicircum>              : "↗"   U2197 # NORTH EAST ARROW
+<Multi_key> <backslash> <v>                    : "↘"   U2198 # SOUTH EAST ARROW
+<Multi_key> <slash> <v>                        : "↙"   U2199 # SOUTH WEST ARROW
+<Multi_key> <asciicircum> <backslash> <v>      : "⤡"   U2921 # NORTH WEST AND SOUTH EAST ARROW
+<Multi_key> <v> <slash> <asciicircum>          : "⤢"   U2922 # NORTH EAST AND SOUTH WEST ARROW
+<Multi_key> <leftarrow> <bar>                  : "↤"   U21A4 # LEFTWARDS ARROW FROM BAR
+<U21BB> <U21A6>                                : "↤"   U21A4 # LEFTWARDS ARROW FROM BAR
+<Multi_key> <uparrow> <bar>                    : "↥"   U21A5 # UPWARDS ARROW FROM BAR
+<Multi_key> <bar> <rightarrow>                 : "↦"   U21A6 # RIGHTWARDS ARROW FROM BAR
+<Multi_key> <downarrow> <bar>                  : "↧"   U21A7 # DOWNWARDS ARROW FROM BAR
+<Multi_key> <rightarrow> <bar>                 : "⇥"   U21E5 # RIGHTWARDS ARROW TO BAR
+<Multi_key> <bar> <leftarrow>                  : "⇤"   U21E4 # LEFTWARDS ARROW TO BAR
+<Multi_key> <bar> <U21BB> <rightarrow>         : "⇤"   U21E4 # LEFTWARDS ARROW TO BAR
+<Multi_key> <U2195> <bar>                      : "↨"   U21A8 # UP DOWN ARROW WITH BASE
+<Multi_key> <rightarrow> <leftarrow>           : "⇄"   U21C4 # RIGHTWARDS ARROW OVER LEFTWARDS ARROW
+<Multi_key> <uparrow> <downarrow>              : "⇅"   U21C5 # UPWARDS ARROW LEFTWARDS OF DOWNWARDS ARROW
+<Multi_key> <leftarrow> <rightarrow>           : "⇆"   U21C6 # LEFTWARDS ARROW OVER RIGHTWARDS ARROW
+<Multi_key> <leftarrow> <leftarrow>            : "⇇"   U21C7 # LEFTWARDS PAIRED ARROWS
+<Multi_key> <uparrow> <uparrow>                : "⇈"   U21C8 # UPWARDS PAIRED ARROWS
+<Multi_key> <rightarrow> <rightarrow>          : "⇉"   U21C9 # RIGHTWARDS PAIRED ARROWS
+<Multi_key> <downarrow> <downarrow>            : "⇊"   U21CA # DOWNWARDS PAIRED ARROWS
+<Multi_key> <downarrow> <uparrow>              : "⇵"   U21F5 # DOWNWARDS ARROW LEFTWARDS OF UPWARDS ARROW
+<Multi_key> <w> <i> <d>                        : "↯"   U21AF # DOWNWARDS ZIGZAG ARROW
+<Multi_key> <z> <rightarrow>                   : "↯"   U21AF # DOWNWARDS ZIGZAG ARROW
+<U21BB> <ifonlyif>                             : "⇕"   U21D5 # UP DOWN DOUBLE ARROW
+<Multi_key> <bar> <uparrow>                    : "⇑"   U21D1 # UPWARDS DOUBLE ARROW
+<Multi_key> <bar> <downarrow>                  : "⇓"   U21D3 # DOWNWARDS DOUBLE ARROW
+<Multi_key> <bar> <backslash> <asciicircum>    : "⇖"   U21D6 # NORTH WEST DOUBLE ARROW
+<Multi_key> <bar> <slash> <asciicircum>        : "⇗"   U21D7 # NORTH EAST DOUBLE ARROW
+<Multi_key> <bar> <backslash> <v>              : "⇘"   U21D8 # SOUTH EAST DOUBLE ARROW
+<Multi_key> <bar> <slash> <v>                  : "⇙"   U21D9 # SOUTH WEST DOUBLE ARROW
+<Multi_key> <bar> <U21D2>                      : "⤇"   U2907 # RIGHTWARDS DOUBLE ARROW FROM BAR
+<Multi_key> <U21D0> <bar>                      : "⤆"   U2906 # LEFTWARDS DOUBLE ARROW FROM BAR
+<U02DE> <rightarrow>                           : "↪"   U21AA # RIGHTWARDS ARROW WITH HOOK
+<U02DE> <Multi_key> <minus> <greater>          : "↪"   U21AA # RIGHTWARDS ARROW WITH HOOK
+<U02DE> <leftarrow>                            : "↩"   U21A9 # LEFTWARDS ARROW WITH HOOK
+<U02DE> <Multi_key> <less> <minus>             : "↩"   U21A9 # LEFTWARDS ARROW WITH HOOK
+<U02DE> <U21BB> <rightarrow>                   : "↩"   U21A9 # LEFTWARDS ARROW WITH HOOK
+<U21BB> <U02DE> <rightarrow>                   : "↩"   U21A9 # LEFTWARDS ARROW WITH HOOK
+<U02DE> <Multi_key> <backslash> <asciicircum>  : "⤣"   U2923 # NORTH WEST ARROW WITH HOOK
+<U02DE> <Multi_key> <slash> <asciicircum>      : "⤤"   U2924 # NORTH EAST ARROW WITH HOOK
+<U02DE> <Multi_key> <backslash> <v>            : "⤥"   U2925 # SOUTH EAST ARROW WITH HOOK
+<U02DE> <Multi_key> <slash> <v>                : "⤦"   U2926 # SOUTH WEST ARROW WITH HOOK
+<Multi_key> <ellipsis> <uparrow>               : "⇡"   U21E1 # UPWARDS DASHED ARROW
+<Multi_key> <ellipsis> <bar> <asciicircum>     : "⇡"   U21E1 # UPWARDS DASHED ARROW
+<Multi_key> <ellipsis> <downarrow>             : "⇣"   U21E3 # DOWNWARDS DASHED ARROW
+<Multi_key> <ellipsis> <v> <bar>               : "⇣"   U21E3 # DOWNWARDS DASHED ARROW
+<Multi_key> <ellipsis> <rightarrow>            : "⇢"   U21E2 # RIGHTWARDS DASHED ARROW
+<Multi_key> <ellipsis> <minus> <greater>       : "⇢"   U21E2 # RIGHTWARDS DASHED ARROW
+<Multi_key> <ellipsis> <leftarrow>             : "⇠"   U21E0 # LEFTWARDS DASHED ARROW
+<Multi_key> <ellipsis> <less> <minus>          : "⇠"   U21E0 # LEFTWARDS DASHED ARROW
+<Multi_key> <ellipsis> <U21BB> <rightarrow>    : "⇠"   U21E0 # LEFTWARDS DASHED ARROW
+<Multi_key> <minus> <rightarrow>               : "⟶"   U27F6 # LONG RIGHTWARDS ARROW
+<Multi_key> <leftarrow> <minus>                : "⟵"   U27F5 # LONG LEFTWARDS ARROW
+<Multi_key> <U21BB> <rightarrow> <minus>       : "⟵"   U27F5 # LONG LEFTWARDS ARROW
+<Multi_key> <equal> <U21D2>                    : "⟹"   U27F9 # LONG RIGHTWARDS DOUBLE ARROW
+<Multi_key> <U21D0> <equal>                    : "⟸"   U27F8 # LONG LEFTWARDS DOUBLE ARROW
+<Multi_key> <U21D0> <U21D2>                    : "⟺"   U27FA # LONG LEFT RIGHT DOUBLE ARROW
+<Multi_key> <equal> <uparrow>                  : "⇞"   U21DE # UPWARDS ARROW WITH DOUBLE STROKE
+<Multi_key> <equal> <downarrow>                : "⇟"   U21DF # DOWNWARDS ARROW WITH DOUBLE STROKE
+<dead_circumflex> <leftarrow>                  : "↞"   U219E # LEFTWARDS TWO HEADED ARROW
+<dead_circumflex> <U21BB> <rightarrow>         : "↞"   U219E # LEFTWARDS TWO HEADED ARROW
+<Multi_key> <guillemotleft> <minus>            : "↞"   U219E # LEFTWARDS TWO HEADED ARROW
+<dead_circumflex> <uparrow>                    : "↟"   U219F # UPWARDS TWO HEADED ARROW
+<Multi_key> <guillemotleft> <bar>              : "↟"   U219F # UPWARDS TWO HEADED ARROW
+<dead_circumflex> <rightarrow>                 : "↠"   U21A0 # RIGHTWARDS TWO HEADED ARROW
+<Multi_key> <minus> <guillemotright>           : "↠"   U21A0 # RIGHTWARDS TWO HEADED ARROW
+<dead_circumflex> <downarrow>                  : "↡"   U21A1 # DOWNWARDS TWO HEADED ARROW
+<Multi_key> <bar> <guillemotright>             : "↡"   U21A1 # DOWNWARDS TWO HEADED ARROW
+<Multi_key> <greater> <rightarrow>             : "↣"   U21A3 # RIGHTWARDS ARROW WITH TAIL
+<dead_caron> <rightarrow>                      : "↣"   U21A3 # RIGHTWARDS ARROW WITH TAIL
+<Multi_key> <leftarrow> <less>                 : "↢"   U21A2 # LEFTWARDS ARROW WITH TAIL
+<Multi_key> <U21BB> <rightarrow> <less>        : "↢"   U21A2 # LEFTWARDS ARROW WITH TAIL
+<dead_caron> <leftarrow>                       : "↢"   U21A2 # LEFTWARDS ARROW WITH TAIL
+<Multi_key> <minus> <less>                     : "⤙"   U2919 # LEFTWARDS ARROW-TAIL
+<Multi_key> <greater> <minus>                  : "⤚"   U291A # RIGHTWARDS ARROW-TAIL
+<Multi_key> <minus> <guillemotleft>            : "⤛"   U291B # LEFTWARDS DOUBLE ARROW-TAIL
+<Multi_key> <guillemotright> <minus>           : "⤜"   U291C # RIGHTWARDS DOUBLE ARROW-TAIL
+<dead_acute> <leftarrow>                       : "↼"   U21BC # LEFTWARDS HARPOON WITH BARB UPWARDS
+<dead_acute> <uparrow>                         : "↿"   U21BF # UPWARDS HARPOON WITH BARB LEFTWARDS
+<dead_acute> <rightarrow>                      : "⇁"   U21C1 # RIGHTWARDS HARPOON WITH BARB DOWNWARDS
+<dead_acute> <downarrow>                       : "⇂"   U21C2 # DOWNWARDS HARPOON WITH BARB RIGHTWARDS
+<dead_grave> <leftarrow>                       : "↽"   U21BD # LEFTWARDS HARPOON WITH BARB DOWNWARDS
+<dead_grave> <uparrow>                         : "↾"   U21BE # UPWARDS HARPOON WITH BARB RIGHTWARDS
+<dead_grave> <rightarrow>                      : "⇀"   U21C0 # RIGHTWARDS HARPOON WITH BARB UPWARDS
+<dead_grave> <downarrow>                       : "⇃"   U21C3 # DOWNWARDS HARPOON WITH BARB LEFTWARDS
+<dead_tilde> <leftarrow>                       : "↜"   U219C # LEFTWARDS WAVE ARROW
+<dead_tilde> <U21BB> <rightarrow>              : "↜"   U219C # LEFTWARDS WAVE ARROW
+<dead_tilde> <rightarrow>                      : "↝"   U219D # RIGHTWARDS WAVE ARROW
+<dead_tilde> <U2194>                           : "↭"   U21AD # LEFT RIGHT WAVE ARROW
+<dead_abovering> <leftarrow>                        : "↫"   U21AB # LEFTWARDS ARROW WITH LOOP
+<dead_abovering> <U21BB> <rightarrow>               : "↫"   U21AB # LEFTWARDS ARROW WITH LOOP
+<dead_abovering> <rightarrow>                       : "↬"   U21AC # RIGHTWARDS ARROW WITH LOOP
+<Multi_key> <colon> <rightarrow>               : "⧴"  U29F4 # RULE-DELAYED
+<dead_circumflex> <rightarrow>                 : "⃗"    U20D7 # COMBINING RIGHT ARROW ABOVE
+<dead_circumflex> <greater>                    : "⃗"    U20D7 # COMBINING RIGHT ARROW ABOVE
+<Multi_key> <asciicircum> <greater>            : "⃗"    U20D7 # COMBINING RIGHT ARROW ABOVE
+<Multi_key> <asciicircum> <rightarrow>         : "⃗"    U20D7 # COMBINING RIGHT ARROW ABOVE
+<U21BB> <U20D7>                                : "⃖"    U20D6 # COMBINING LEFT ARROW ABOVE
+<dead_circumflex> <leftarrow>                  : "⃖"    U20D6 # COMBINING LEFT ARROW ABOVE
+<dead_circumflex> <U21BB> <rightarrow>         : "⃖"    U20D6 # COMBINING LEFT ARROW ABOVE
+<dead_circumflex> <less>                       : "⃖"    U20D6 # COMBINING LEFT ARROW ABOVE
+<Multi_key> <asciicircum> <less>               : "⃖"    U20D6 # COMBINING LEFT ARROW ABOVE
+<Multi_key> <asciicircum> <leftarrow>          : "⃖"    U20D6 # COMBINING LEFT ARROW ABOVE
+<Multi_key> <asciicircum> <U21BB> <rightarrow> : "⃖"    U20D6 # COMBINING LEFT ARROW ABOVE
+# possible additions:
+# ˙: ⇠⇡⇢⇣
+# ¯: ↤↥↦↧↨
+
+# superscripts and subscripts
+<dead_circumflex> <minus>                  : "⁻"   U207B # SUPERSCRIPT MINUS
+<Multi_key> <asciicircum> <minus>          : "⁻"   U207B # SUPERSCRIPT MINUS
+<dead_circumflex> <KP_Subtract>            : "⁻"   U207B # SUPERSCRIPT MINUS
+<Multi_key> <asciicircum> <KP_Subtract>    : "⁻"   U207B # SUPERSCRIPT MINUS
+<Multi_key> <underscore> <minus>           : "₋"   U208B # SUBSCRIPT MINUS
+<Multi_key> <underbar> <minus>             : "₋"   U208B # SUBSCRIPT MINUS
+<Multi_key> <underscore> <KP_Subtract>     : "₋"   U208B # SUBSCRIPT MINUS
+<Multi_key> <underbar> <KP_Subtract>       : "₋"   U208B # SUBSCRIPT MINUS
+<Multi_key> <asciicircum> <equal>          : "⁼"   U207C # SUPERSCRIPT EQUALS SIGN
+
+<Multi_key> <asciicircum> <a>              : "ᵃ"   U1D43 # MODIFIER LETTER SMALL A
+<Multi_key> <asciicircum> <b>              : "ᵇ"   U1D47 # MODIFIER LETTER SMALL B
+<Multi_key> <asciicircum> <c>              : "ᶜ"   U1D9C # MODIFIER LETTER SMALL C
+<Multi_key> <asciicircum> <d>              : "ᵈ"   U1D48 # MODIFIER LETTER SMALL D
+<Multi_key> <asciicircum> <e>              : "ᵉ"   U1D49 # MODIFIER LETTER SMALL E
+<Multi_key> <asciicircum> <f>              : "ᶠ"   U1DA0 # MODIFIER LETTER SMALL F
+<Multi_key> <asciicircum> <g>              : "ᵍ"   U1D4D # MODIFIER LETTER SMALL G
+<Multi_key> <asciicircum> <h>              : "ʰ"   U02B0 # MODIFIER LETTER SMALL H
+<Multi_key> <asciicircum> <i>              : "ⁱ"   U2071 # SUPERSCRIPT LATIN SMALL LETTER I
+<Multi_key> <asciicircum> <j>              : "ʲ"   U02B2 # MODIFIER LETTER SMALL J
+<Multi_key> <asciicircum> <k>              : "ᵏ"   U1D4F # MODIFIER LETTER SMALL K
+<Multi_key> <asciicircum> <l>              : "ˡ"   U02E1 # MODIFIER LETTER SMALL L
+<Multi_key> <asciicircum> <m>              : "ᵐ"   U1D50 # MODIFIER LETTER SMALL M
+<Multi_key> <asciicircum> <n>              : "ⁿ"   U207F # SUPERSCRIPT LATIN SMALL LETTER N
+<Multi_key> <asciicircum> <o>              : "ᵒ"   U1D52 # MODIFIER LETTER SMALL O
+<Multi_key> <asciicircum> <p>              : "ᵖ"   U1D56 # MODIFIER LETTER SMALL P
+<Multi_key> <asciicircum> <r>              : "ʳ"   U02B3 # MODIFIER LETTER SMALL R
+<Multi_key> <asciicircum> <s>              : "ˢ"   U02E2 # MODIFIER LETTER SMALL S
+<Multi_key> <asciicircum> <t>              : "ᵗ"   U1D57 # MODIFIER LETTER SMALL T
+<Multi_key> <asciicircum> <u>              : "ᵘ"   U1D58 # MODIFIER LETTER SMALL U
+<Multi_key> <asciicircum> <v>              : "ᵛ"   U1D5B # MODIFIER LETTER SMALL V
+<Multi_key> <asciicircum> <w>              : "ʷ"   U02B7 # MODIFIER LETTER SMALL W
+<Multi_key> <asciicircum> <x>              : "ˣ"   U02E3 # MODIFIER LETTER SMALL X
+<Multi_key> <asciicircum> <y>              : "ʸ"   U02B8 # MODIFIER LETTER SMALL Y
+<Multi_key> <asciicircum> <z>              : "ᶻ"   U1DBB # MODIFIER LETTER SMALL Z
+
+<Multi_key> <asciicircum> <A>              : "ᴬ"   U1D2C # MODIFIER LETTER CAPITAL A
+<Multi_key> <asciicircum> <B>              : "ᴮ"   U1D2E # MODIFIER LETTER CAPITAL B
+<Multi_key> <asciicircum> <D>              : "ᴰ"   U1D30 # MODIFIER LETTER CAPITAL D
+<Multi_key> <asciicircum> <E>              : "ᴱ"   U1D31 # MODIFIER LETTER CAPITAL E
+<Multi_key> <asciicircum> <G>              : "ᴳ"   U1D33 # MODIFIER LETTER CAPITAL G
+<Multi_key> <asciicircum> <H>              : "ᴴ"   U1D34 # MODIFIER LETTER CAPITAL H
+<Multi_key> <asciicircum> <I>              : "ᴵ"   U1D35 # MODIFIER LETTER CAPITAL I
+<Multi_key> <asciicircum> <J>              : "ᴶ"   U1D36 # MODIFIER LETTER CAPITAL J
+<Multi_key> <asciicircum> <K>              : "ᴷ"   U1D37 # MODIFIER LETTER CAPITAL K
+<Multi_key> <asciicircum> <L>              : "ᴸ"   U1D38 # MODIFIER LETTER CAPITAL L
+<Multi_key> <asciicircum> <M>              : "ᴹ"   U1D39 # MODIFIER LETTER CAPITAL M
+<Multi_key> <asciicircum> <N>              : "ᴺ"   U1D3A # MODIFIER LETTER CAPITAL N
+<Multi_key> <asciicircum> <O>              : "ᴼ"   U1D3C # MODIFIER LETTER CAPITAL O
+<Multi_key> <asciicircum> <P>              : "ᴾ"   U1D3E # MODIFIER LETTER CAPITAL P
+<Multi_key> <asciicircum> <R>              : "ᴿ"   U1D3F # MODIFIER LETTER CAPITAL R
+<Multi_key> <asciicircum> <T>              : "ᵀ"   U1D40 # MODIFIER LETTER CAPITAL T
+<Multi_key> <asciicircum> <U>              : "ᵁ"   U1D41 # MODIFIER LETTER CAPITAL U
+<Multi_key> <asciicircum> <V>              : "ⱽ"   U2C7D # MODIFIER LETTER CAPITAL V
+<Multi_key> <asciicircum> <W>              : "ᵂ"   U1D42 # MODIFIER LETTER CAPITAL W
+
+<Multi_key> <asciicircum> <Greek_alpha>    : "ᵅ"   U1D45 # MODIFIER LETTER SMALL ALPHA
+<Multi_key> <asciicircum> <Greek_beta>     : "ᵝ"   U1D5D # MODIFIER LETTER SMALL BETA
+<Multi_key> <asciicircum> <Greek_gamma>    : "ᵞ"   U1D5E # MODIFIER LETTER SMALL GREEK GAMMA
+<Multi_key> <asciicircum> <Greek_delta>    : "ᵟ"   U1D5F # MODIFIER LETTER SMALL DELTA
+<Multi_key> <asciicircum> <Greek_epsilon>  : "ᵋ"   U1D4B # MODIFIER LETTER SMALL OPEN E
+<Multi_key> <asciicircum> <Greek_phi>      : "ᵠ"   U1D60 # MODIFIER LETTER SMALL GREEK PHI
+<Multi_key> <asciicircum> <U03D5>          : "ᶲ"   U1DB2 # MODIFIER LETTER SMALL PHI
+<Multi_key> <asciicircum> <Greek_chi>      : "ᵡ"   U1D61 # MODIFIER LETTER SMALL CHI
+<Multi_key> <asciicircum> <Greek_theta>    : "ᶿ"   U1DBF # MODIFIER LETTER SMALL THETA
+<Multi_key> <asciicircum> <Greek_upsilon>  : "ᶷ"   U1DB7 # MODIFIER LETTER SMALL UPSILON
+
+<Multi_key> <underscore> <a>               : "ₐ"   U2090 # LATIN SUBSCRIPT SMALL LETTER A
+<Multi_key> <underbar> <a>                 : "ₐ"   U2090 # LATIN SUBSCRIPT SMALL LETTER A
+<Multi_key> <underscore> <e>               : "ₑ"   U2091 # LATIN SUBSCRIPT SMALL LETTER E
+<Multi_key> <underbar> <e>                 : "ₑ"   U2091 # LATIN SUBSCRIPT SMALL LETTER E
+<Multi_key> <underscore> <h>               : "ₕ"   U2095 # LATIN SUBSCRIPT SMALL LETTER H
+<Multi_key> <underbar> <h>                 : "ₕ"   U2095 # LATIN SUBSCRIPT SMALL LETTER H
+<Multi_key> <underscore> <i>               : "ᵢ"   U1D62 # LATIN SUBSCRIPT SMALL LETTER I
+<Multi_key> <underbar> <i>                 : "ᵢ"   U1D62 # LATIN SUBSCRIPT SMALL LETTER I
+<Multi_key> <underscore> <j>               : "ⱼ"   U2C7C # LATIN SUBSCRIPT SMALL LETTER J
+<Multi_key> <underbar> <j>                 : "ⱼ"   U2C7C # LATIN SUBSCRIPT SMALL LETTER J
+<Multi_key> <underscore> <k>               : "ₖ"   U2096 # LATIN SUBSCRIPT SMALL LETTER K
+<Multi_key> <underbar> <k>                 : "ₖ"   U2096 # LATIN SUBSCRIPT SMALL LETTER K
+<Multi_key> <underscore> <l>               : "ₗ"   U2097 # LATIN SUBSCRIPT SMALL LETTER L
+<Multi_key> <underbar> <l>                 : "ₗ"   U2097 # LATIN SUBSCRIPT SMALL LETTER L
+<Multi_key> <underscore> <m>               : "ₘ"   U2098 # LATIN SUBSCRIPT SMALL LETTER M
+<Multi_key> <underbar> <m>                 : "ₘ"   U2098 # LATIN SUBSCRIPT SMALL LETTER M
+<Multi_key> <underscore> <n>               : "ₙ"   U2099 # LATIN SUBSCRIPT SMALL LETTER N
+<Multi_key> <underbar> <n>                 : "ₙ"   U2099 # LATIN SUBSCRIPT SMALL LETTER N
+<Multi_key> <underscore> <o>               : "ₒ"   U2092 # LATIN SUBSCRIPT SMALL LETTER O
+<Multi_key> <underbar> <o>                 : "ₒ"   U2092 # LATIN SUBSCRIPT SMALL LETTER O
+<Multi_key> <underscore> <p>               : "ₚ"   U209A # LATIN SUBSCRIPT SMALL LETTER P
+<Multi_key> <underbar> <p>                 : "ₚ"   U209A # LATIN SUBSCRIPT SMALL LETTER P
+<Multi_key> <underscore> <r>               : "ᵣ"   U1D63 # LATIN SUBSCRIPT SMALL LETTER R
+<Multi_key> <underbar> <r>                 : "ᵣ"   U1D63 # LATIN SUBSCRIPT SMALL LETTER R
+<Multi_key> <underscore> <s>               : "ₛ"   U209B # LATIN SUBSCRIPT SMALL LETTER S
+<Multi_key> <underbar> <s>                 : "ₛ"   U209B # LATIN SUBSCRIPT SMALL LETTER S
+<Multi_key> <underscore> <t>               : "ₜ"   U209C # LATIN SUBSCRIPT SMALL LETTER T
+<Multi_key> <underbar> <t>                 : "ₜ"   U209C # LATIN SUBSCRIPT SMALL LETTER T
+<Multi_key> <underscore> <u>               : "ᵤ"   U1D64 # LATIN SUBSCRIPT SMALL LETTER U
+<Multi_key> <underbar> <u>                 : "ᵤ"   U1D64 # LATIN SUBSCRIPT SMALL LETTER U
+<Multi_key> <underscore> <v>               : "ᵥ"   U1D65 # LATIN SUBSCRIPT SMALL LETTER V
+<Multi_key> <underbar> <v>                 : "ᵥ"   U1D65 # LATIN SUBSCRIPT SMALL LETTER V
+<Multi_key> <underscore> <x>               : "ₓ"   U2093 # LATIN SUBSCRIPT SMALL LETTER X
+<Multi_key> <underbar> <x>                 : "ₓ"   U2093 # LATIN SUBSCRIPT SMALL LETTER X
+
+<Multi_key> <underscore> <Greek_beta>      : "ᵦ"   U1D66 # GREEK SUBSCRIPT SMALL LETTER BETA
+<Multi_key> <underbar> <Greek_beta>        : "ᵦ"   U1D66 # GREEK SUBSCRIPT SMALL LETTER BETA
+<Multi_key> <underscore> <Greek_gamma>     : "ᵧ"   U1D67 # GREEK SUBSCRIPT SMALL LETTER GAMMA
+<Multi_key> <underbar> <Greek_gamma>       : "ᵧ"   U1D67 # GREEK SUBSCRIPT SMALL LETTER GAMMA
+<Multi_key> <underscore> <Greek_rho>       : "ᵨ"   U1D68 # GREEK SUBSCRIPT SMALL LETTER RHO
+<Multi_key> <underbar> <Greek_rho>         : "ᵨ"   U1D68 # GREEK SUBSCRIPT SMALL LETTER RHO
+<Multi_key> <underscore> <Greek_phi>       : "ᵩ"   U1D69 # GREEK SUBSCRIPT SMALL LETTER PHI
+<Multi_key> <underbar> <Greek_phi>         : "ᵩ"   U1D69 # GREEK SUBSCRIPT SMALL LETTER PHI
+<Multi_key> <underscore> <Greek_chi>       : "ᵪ"   U1D6A # GREEK SUBSCRIPT SMALL LETTER CHI
+<Multi_key> <underbar> <Greek_chi>         : "ᵪ"   U1D6A # GREEK SUBSCRIPT SMALL LETTER CHI
+
+# script letters
+<Multi_key> <s> <c> <g>                    : "ℊ"   U210A # SCRIPT SMALL G
+<Multi_key> <s> <c> <H>                    : "ℋ"   U210B # SCRIPT CAPITAL H
+<Multi_key> <s> <c> <I>                    : "ℐ"   U2110 # SCRIPT CAPITAL I
+<Multi_key> <s> <c> <L>                    : "ℒ"   U2112 # SCRIPT CAPITAL L
+<Multi_key> <s> <c> <l>                    : "ℓ"   U2113 # SCRIPT SMALL L
+<Multi_key> <e> <l> <l>                    : "ℓ"   U2113 # SCRIPT SMALL L
+<Multi_key> <s> <c> <P>                    : "℘"   U2118 # SCRIPT CAPITAL P
+<Multi_key> <w> <p>                        : "℘"   U2118 # SCRIPT CAPITAL P
+<Multi_key> <s> <c> <R>                    : "ℛ"   U211B # SCRIPT CAPITAL R
+<Multi_key> <s> <c> <B>                    : "ℬ"   U212C # SCRIPT CAPITAL B
+<Multi_key> <s> <c> <e>                    : "ℯ"   U212F # SCRIPT SMALL E
+<Multi_key> <s> <c> <E>                    : "ℰ"   U2130 # SCRIPT CAPITAL E
+<Multi_key> <s> <c> <F>                    : "ℱ"   U2131 # SCRIPT CAPITAL F
+<Multi_key> <s> <c> <M>                    : "ℳ"   U2133 # SCRIPT CAPITAL M
+<Multi_key> <s> <c> <o>                    : "ℴ"   U2134 # SCRIPT SMALL O
+
+# double-struck letters
+<Multi_key> <bar> <A>                     : "𝔸"   U1D538 # MATHEMATICAL DOUBLE-STRUCK CAPITAL A
+<Multi_key> <bar> <B>                     : "𝔹"   U1D539 # MATHEMATICAL DOUBLE-STRUCK CAPITAL B
+<Multi_key> <bar> <C>                     : "ℂ"   U02102 # DOUBLE-STRUCK CAPITAL C
+<Multi_key> <bar> <D>                     : "𝔻"   U1D53B # MATHEMATICAL DOUBLE-STRUCK CAPITAL D
+<Multi_key> <bar> <E>                     : "𝔼"   U1D53C # MATHEMATICAL DOUBLE-STRUCK CAPITAL E
+<Multi_key> <bar> <F>                     : "𝔽"   U1D53D # MATHEMATICAL DOUBLE-STRUCK CAPITAL F
+<Multi_key> <bar> <G>                     : "𝔾"   U1D53E # MATHEMATICAL DOUBLE-STRUCK CAPITAL G
+<Multi_key> <bar> <H>                     : "ℍ"   U0210D # DOUBLE-STRUCK CAPITAL H
+<Multi_key> <bar> <I>                     : "𝕀"   U1D540 # MATHEMATICAL DOUBLE-STRUCK CAPITAL I
+<Multi_key> <bar> <J>                     : "𝕁"   U1D541 # MATHEMATICAL DOUBLE-STRUCK CAPITAL J
+<Multi_key> <bar> <K>                     : "𝕂"   U1D542 # MATHEMATICAL DOUBLE-STRUCK CAPITAL K
+<Multi_key> <bar> <L>                     : "𝕃"   U1D543 # MATHEMATICAL DOUBLE-STRUCK CAPITAL L
+<Multi_key> <bar> <M>                     : "𝕄"   U1D544 # MATHEMATICAL DOUBLE-STRUCK CAPITAL M
+<Multi_key> <bar> <N>                     : "ℕ"   U02115 # DOUBLE-STRUCK CAPITAL N
+<Multi_key> <bar> <O>                     : "𝕆"   U1D546 # MATHEMATICAL DOUBLE-STRUCK CAPITAL O
+<Multi_key> <bar> <P>                     : "ℙ"   U02119 # DOUBLE-STRUCK CAPITAL P
+<Multi_key> <bar> <Q>                     : "ℚ"   U0211A # DOUBLE-STRUCK CAPITAL Q
+<Multi_key> <bar> <R>                     : "ℝ"   U0211D # DOUBLE-STRUCK CAPITAL R
+<Multi_key> <bar> <S>                     : "𝕊"   U1D54A # MATHEMATICAL DOUBLE-STRUCK CAPITAL S
+<Multi_key> <bar> <T>                     : "𝕋"   U1D54B # MATHEMATICAL DOUBLE-STRUCK CAPITAL T
+<Multi_key> <bar> <U>                     : "𝕌"   U1D54C # MATHEMATICAL DOUBLE-STRUCK CAPITAL U
+<Multi_key> <bar> <V>                     : "𝕍"   U1D54D # MATHEMATICAL DOUBLE-STRUCK CAPITAL V
+<Multi_key> <bar> <W>                     : "𝕎"   U1D54E # MATHEMATICAL DOUBLE-STRUCK CAPITAL W
+<Multi_key> <bar> <X>                     : "𝕏"   U1D54F # MATHEMATICAL DOUBLE-STRUCK CAPITAL X
+<Multi_key> <bar> <Y>                     : "𝕐"   U1D550 # MATHEMATICAL DOUBLE-STRUCK CAPITAL Y
+<Multi_key> <bar> <Z>                     : "ℤ"   U02124 # DOUBLE-STRUCK CAPITAL Z
+<Multi_key> <bar> <a>                     : "𝕒"   U1D552 # MATHEMATICAL DOUBLE-STRUCK SMALL A
+<Multi_key> <bar> <b>                     : "𝕓"   U1D553 # MATHEMATICAL DOUBLE-STRUCK SMALL B
+<Multi_key> <bar> <c>                     : "𝕔"   U1D554 # MATHEMATICAL DOUBLE-STRUCK SMALL C
+<Multi_key> <bar> <d>                     : "𝕕"   U1D555 # MATHEMATICAL DOUBLE-STRUCK SMALL D
+<Multi_key> <bar> <e>                     : "𝕖"   U1D556 # MATHEMATICAL DOUBLE-STRUCK SMALL E
+<Multi_key> <bar> <f>                     : "𝕗"   U1D557 # MATHEMATICAL DOUBLE-STRUCK SMALL F
+<Multi_key> <bar> <g>                     : "𝕘"   U1D558 # MATHEMATICAL DOUBLE-STRUCK SMALL G
+<Multi_key> <bar> <h>                     : "𝕙"   U1D559 # MATHEMATICAL DOUBLE-STRUCK SMALL H
+<Multi_key> <bar> <i>                     : "𝕚"   U1D55A # MATHEMATICAL DOUBLE-STRUCK SMALL I
+<Multi_key> <bar> <j>                     : "𝕛"   U1D55B # MATHEMATICAL DOUBLE-STRUCK SMALL J
+<Multi_key> <bar> <k>                     : "𝕜"   U1D55C # MATHEMATICAL DOUBLE-STRUCK SMALL K
+<Multi_key> <bar> <l>                     : "𝕝"   U1D55D # MATHEMATICAL DOUBLE-STRUCK SMALL L
+<Multi_key> <bar> <m>                     : "𝕞"   U1D55E # MATHEMATICAL DOUBLE-STRUCK SMALL M
+<Multi_key> <bar> <n>                     : "𝕟"   U1D55F # MATHEMATICAL DOUBLE-STRUCK SMALL N
+<Multi_key> <bar> <o>                     : "𝕠"   U1D560 # MATHEMATICAL DOUBLE-STRUCK SMALL O
+<Multi_key> <bar> <p>                     : "𝕡"   U1D561 # MATHEMATICAL DOUBLE-STRUCK SMALL P
+<Multi_key> <bar> <q>                     : "𝕢"   U1D562 # MATHEMATICAL DOUBLE-STRUCK SMALL Q
+<Multi_key> <bar> <r>                     : "𝕣"   U1D563 # MATHEMATICAL DOUBLE-STRUCK SMALL R
+<Multi_key> <bar> <s>                     : "𝕤"   U1D564 # MATHEMATICAL DOUBLE-STRUCK SMALL S
+<Multi_key> <bar> <t>                     : "𝕥"   U1D565 # MATHEMATICAL DOUBLE-STRUCK SMALL T
+<Multi_key> <bar> <u>                     : "𝕦"   U1D566 # MATHEMATICAL DOUBLE-STRUCK SMALL U
+<Multi_key> <bar> <v>                     : "𝕧"   U1D567 # MATHEMATICAL DOUBLE-STRUCK SMALL V
+<Multi_key> <bar> <w>                     : "𝕨"   U1D568 # MATHEMATICAL DOUBLE-STRUCK SMALL W
+<Multi_key> <bar> <x>                     : "𝕩"   U1D569 # MATHEMATICAL DOUBLE-STRUCK SMALL X
+<Multi_key> <bar> <y>                     : "𝕪"   U1D56A # MATHEMATICAL DOUBLE-STRUCK SMALL Y
+<Multi_key> <bar> <z>                     : "𝕫"   U1D56B # MATHEMATICAL DOUBLE-STRUCK SMALL Z
+<Multi_key> <bar> <0>                     : "𝟘"   U1D7D8 # MATHEMATICAL DOUBLE-STRUCK DIGIT ZERO
+<Multi_key> <bar> <KP_0>                  : "𝟘"   U1D7D8 # MATHEMATICAL DOUBLE-STRUCK DIGIT ZERO
+<Multi_key> <bar> <1>                     : "𝟙"   U1D7D9 # MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
+<Multi_key> <bar> <KP_1>                  : "𝟙"   U1D7D9 # MATHEMATICAL DOUBLE-STRUCK DIGIT ONE
+<Multi_key> <bar> <2>                     : "𝟚"   U1D7DA # MATHEMATICAL DOUBLE-STRUCK DIGIT TWO
+<Multi_key> <bar> <KP_2>                  : "𝟚"   U1D7DA # MATHEMATICAL DOUBLE-STRUCK DIGIT TWO
+<Multi_key> <bar> <3>                     : "𝟛"   U1D7DB # MATHEMATICAL DOUBLE-STRUCK DIGIT THREE
+<Multi_key> <bar> <KP_3>                  : "𝟛"   U1D7DB # MATHEMATICAL DOUBLE-STRUCK DIGIT THREE
+<Multi_key> <bar> <4>                     : "𝟜"   U1D7DC # MATHEMATICAL DOUBLE-STRUCK DIGIT FOUR
+<Multi_key> <bar> <KP_4>                  : "𝟜"   U1D7DC # MATHEMATICAL DOUBLE-STRUCK DIGIT FOUR
+<Multi_key> <bar> <5>                     : "𝟝"   U1D7DD # MATHEMATICAL DOUBLE-STRUCK DIGIT FIVE
+<Multi_key> <bar> <KP_5>                  : "𝟝"   U1D7DD # MATHEMATICAL DOUBLE-STRUCK DIGIT FIVE
+<Multi_key> <bar> <6>                     : "𝟞"   U1D7DE # MATHEMATICAL DOUBLE-STRUCK DIGIT SIX
+<Multi_key> <bar> <KP_6>                  : "𝟞"   U1D7DE # MATHEMATICAL DOUBLE-STRUCK DIGIT SIX
+<Multi_key> <bar> <7>                     : "𝟟"   U1D7DF # MATHEMATICAL DOUBLE-STRUCK DIGIT SEVEN
+<Multi_key> <bar> <KP_7>                  : "𝟟"   U1D7DF # MATHEMATICAL DOUBLE-STRUCK DIGIT SEVEN
+<Multi_key> <bar> <8>                     : "𝟠"   U1D7E0 # MATHEMATICAL DOUBLE-STRUCK DIGIT EIGHT
+<Multi_key> <bar> <KP_8>                  : "𝟠"   U1D7E0 # MATHEMATICAL DOUBLE-STRUCK DIGIT EIGHT
+<Multi_key> <bar> <9>                     : "𝟡"   U1D7E1 # MATHEMATICAL DOUBLE-STRUCK DIGIT NINE
+<Multi_key> <bar> <KP_9>                  : "𝟡"   U1D7E1 # MATHEMATICAL DOUBLE-STRUCK DIGIT NINE
+<Multi_key> <bar> <Greek_gamma>           : "ℽ"   U0213D # DOUBLE-STRUCK SMALL GAMMA
+<Multi_key> <bar> <Greek_GAMMA>           : "ℾ"   U0213E # DOUBLE-STRUCK CAPITAL GAMMA
+<Multi_key> <bar> <Greek_pi>              : "ℼ"   U0213C # DOUBLE-STRUCK SMALL PI
+<Multi_key> <bar> <Greek_PI>              : "ℿ"   U0213F # DOUBLE-STRUCK CAPITAL PI
+<Multi_key> <bar> <notsign>               : "⫬"   U2AEC  # DOUBLE STROKE NOT SIGN
+<Multi_key> <bar> <Greek_SIGMA>		: "⅀" U2140 # DOUBLE-STRUCK N-ARY SUMMATION
+
+# white brackets (double-struck)
+<Multi_key> <bar> <parenleft>             : "⦅"   U2985 # LEFT WHITE PARENTHESIS
+<Multi_key> <parenleft> <parenleft>       : "⦅"   U2985 # LEFT WHITE PARENTHESIS
+<Multi_key> <bar> <parenright>            : "⦆"   U2986 # RIGHT WHITE PARENTHESIS
+<Multi_key> <parenright> <parenright>     : "⦆"   U2986 # RIGHT WHITE PARENTHESIS
+<Multi_key> <bar> <bracketleft>           : "⟦"   U27E6 # MATHEMATICAL LEFT WHITE SQUARE BRACKET
+<Multi_key> <bracketleft> <bracketleft>   : "⟦"   U27E6 # MATHEMATICAL LEFT WHITE SQUARE BRACKET
+<Multi_key> <bar> <bracketright>          : "⟧"   U27E7 # MATHEMATICAL RIGHT WHITE SQUARE BRACKET
+<Multi_key> <bracketright> <bracketright> : "⟧"   U27E7 # MATHEMATICAL RIGHT WHITE SQUARE BRACKET
+<Multi_key> <bar> <braceleft>             : "⦃"   U2983 # LEFT WHITE CURLY BRACKET
+<Multi_key> <braceleft> <braceleft>       : "⦃"   U2983 # LEFT WHITE CURLY BRACKET
+<Multi_key> <bar> <braceright>            : "⦄"   U2984 # RIGHT WHITE CURLY BRACKET
+<Multi_key> <braceright> <braceright>     : "⦄"   U2984 # RIGHT WHITE CURLY BRACKET
+
+# Mathematical Boxes (like arrays, etc.)
+<Multi_key> <x> <parenleft> <2>           : "⎛⎞\n⎝⎠"
+<Multi_key> <x> <parenleft> <3>           : "⎛⎞\n⎜⎟\n⎝⎠"
+<Multi_key> <x> <parenleft> <4>           : "⎛⎞\n⎜⎟\n⎜⎟\n⎝⎠"
+<Multi_key> <x> <parenleft> <5>           : "⎛⎞\n⎜⎟\n⎜⎟\n⎜⎟\n⎝⎠"
+<Multi_key> <x> <bracketleft> <2>         : "⎡⎤\n⎣⎦"
+<Multi_key> <x> <bracketleft> <3>         : "⎡⎤\n⎢⎥\n⎣⎦"
+<Multi_key> <x> <bracketleft> <4>         : "⎡⎤\n⎢⎥\n⎢⎥\n⎣⎦"
+<Multi_key> <x> <bracketleft> <5>         : "⎡⎤\n⎢⎥\n⎢⎥\n⎢⎥\n⎣⎦"
+<Multi_key> <x> <braceleft> <2>           : "⎧⎫\n⎩⎭"
+<Multi_key> <x> <braceleft> <3>           : "⎧⎫\n⎨⎬\n⎩⎭"
+<Multi_key> <x> <braceleft> <4>           : "⎧⎫\n⎨⎬\n⎪⎪\n⎩⎭"
+<Multi_key> <x> <braceleft> <5>           : "⎧⎫\n⎪⎪\n⎨⎬\n⎪⎪\n⎩⎭"
+
+# dots for vectors and matrices
+<Multi_key> <ellipsis> <bar>              : "⋮" U22EE # VERTICAL ELLIPSIS
+<Multi_key> <ellipsis> <slash>            : "⋰" U22F0 # UP RIGHT DIAGONAL ELLIPSIS
+<Multi_key> <ellipsis> <backslash>        : "⋱" U22F1 # DOWN RIGHT DIAGONAL ELLIPSIS
+<Multi_key> <ellipsis> <emdash>           : "⋯" U22EF # MIDLINE HORIZONTAL ELLIPSIS
+<Multi_key> <ellipsis> <endash>           : "⋯" U22EF # MIDLINE HORIZONTAL ELLIPSIS
+<dead_circumflex> <ellipsis>              : "⋯" U22EF # MIDLINE HORIZONTAL ELLIPSIS
+
+
+# physical symbols
+# physical constants
+<Multi_key> <p> <h> <space>               : "ℎ"   U210E # PLANCK CONSTANT
+<Multi_key> <minus> <p> <h>               : "ℏ"   U210F # PLANCK CONSTANT OVER TWO PI
+<Multi_key> <p> <h> <minus>               : "ℏ"   U210F # PLANCK CONSTANT OVER TWO PI
+<Multi_key> <KP_Subtract> <p> <h>         : "ℏ"   U210F # PLANCK CONSTANT OVER TWO PI
+<Multi_key> <p> <h> <KP_Subtract>         : "ℏ"   U210F # PLANCK CONSTANT OVER TWO PI
+<dead_macron> <p> <h>                     : "ℏ"   U210F # PLANCK CONSTANT OVER TWO PI
+<dead_stroke> <p> <h>                     : "ℏ"   U210F # PLANCK CONSTANT OVER TWO PI
+
+# physical units
+<Multi_key> <m> <i> <c> <r> <o>           : "µ"   U00B5 # MICRO SIGN
+<Multi_key> <Greek_mu> <Greek_mu>         : "µ"   U00B5 # MICRO SIGN
+<Multi_key> <degree> <C>                  : "℃"   U2103 # DEGREE CELSIUS
+<Multi_key> <degree> <F>                  : "℉"   U2109 # DEGREE FAHRENHEIT
+<Multi_key> <w> <degree>                  : "°"   U00B0 # DEGREE SIGN
+<Multi_key> <w> <apostrophe>              : "′"   U2032 # PRIME
+<Multi_key> <w> <quotedbl>                : "″"   U2033 # DOUBLE PRIME
+<Multi_key> <w> <3>                       : "‴"   U2034 # TRIPLE PRIME
+<Multi_key> <w> <KP_3>                    : "‴"   U2034 # TRIPLE PRIME
+<Multi_key> <w> <4>                       : "⁗"   U2057 # QUADRUPLE PRIME
+<Multi_key> <w> <KP_4>                    : "⁗"   U2057 # QUADRUPLE PRIME
+<U21BB> <U2032>                           : "‵"   U2035 # REVERSED PRIME
+<U21BB> <Multi_key> <w> <apostrophe>      : "‵"   U2035 # REVERSED PRIME
+<U21BB> <U2033>                           : "‶"   U2036 # REVERSED DOUBLE PRIME
+<U21BB> <Multi_key> <w> <quotedbl>        : "‶"   U2036 # REVERSED DOUBLE PRIME
+<U21BB> <Multi_key> <w> <3>               : "‷"   U2037 # REVERSED TRIPLE PRIME
+<U21BB> <Multi_key> <w> <KP_3>            : "‷"   U2037 # REVERSED TRIPLE PRIME
+
+# End of additional Definitions (mathematical symbols) by Neo keyboard layout

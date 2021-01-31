@@ -11,6 +11,7 @@ import clipboard_windows;
 
 import squire;
 import mapping;
+import composer;
 
 HHOOK hHook;
 
@@ -66,6 +67,7 @@ void main() {
 	printf("Started\n");
     initKeysyms();
     initMapping();
+    initCompose();
 
     bool squire_mode;
 

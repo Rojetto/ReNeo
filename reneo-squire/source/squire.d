@@ -8,6 +8,7 @@ import std.conv;
 import core.sys.windows.windows;
 
 import mapping;
+import composer;
 
 
 alias VK = DWORD;
@@ -115,6 +116,25 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
     }
 
     SendInput(1, &input_struct, INPUT.sizeof);
+}
+
+void sendString(wstring content) nothrow {
+    INPUT[] inputs;
+    inputs.length = content.length * 2;
+
+    for (uint i = 0; i < content.length; i++) {    
+        inputs[2*i].type = INPUT_KEYBOARD;
+        inputs[2*i].ki.wVk = 0;
+        inputs[2*i].ki.wScan = content[i];
+        inputs[2*i].ki.dwFlags = KEYEVENTF_UNICODE;
+        
+        inputs[2*i + 1].type = INPUT_KEYBOARD;
+        inputs[2*i + 1].ki.wVk = 0;
+        inputs[2*i + 1].ki.wScan = content[i];
+        inputs[2*i + 1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+    }
+
+    SendInput(1, inputs.ptr, INPUT.sizeof);
 }
 
 void sendNeoKey(NeoKey nk, bool down) nothrow {
@@ -242,11 +262,21 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     //printf("Key down %x, layer %d, mapped to keysym %x\n", vk, layer, nk.keysym);
 
     if (down) {
-        heldKeys[vk] = nk;
+        auto composeResult = compose(nk);
 
-        if (layer >= 3) {
+        if (composeResult.type == ComposeResultType.PASS) {
+            heldKeys[vk] = nk;
+
+            if (layer >= 3) {
+                eat = true;
+                sendNeoKey(nk, true);
+            }
+        } else {
             eat = true;
-            sendNeoKey(nk, true);
+
+            if (composeResult.type == ComposeResultType.FINISH || composeResult.type == ComposeResultType.ABORT) {
+                sendString(composeResult.result);
+            }
         }
     } else {
         if (layer >= 3) {
