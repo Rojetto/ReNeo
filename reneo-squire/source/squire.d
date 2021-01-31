@@ -134,7 +134,7 @@ void sendString(wstring content) nothrow {
         inputs[2*i + 1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
     }
 
-    SendInput(1, inputs.ptr, INPUT.sizeof);
+    SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
 
 void sendNeoKey(NeoKey nk, bool down) nothrow {
