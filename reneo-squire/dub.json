@@ -3,10 +3,13 @@
 		"Robert Heedt"
 	],
 	"copyright": "Copyright © 2021, Robert Heedt",
+	"dependencies": {
+		"arsd-official:terminal": "~>9.1.2"
+	},
 	"description": "Supplementary application for ReNEO keyboard driver, implementing layer 3 and upwards.",
+	"libs": [
+		"user32"
+	],
 	"license": "proprietary",
-    "name": "reneo-squire",
-    "libs": [
-        "user32"
-    ]
+	"name": "reneo-squire"
 }

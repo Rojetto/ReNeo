@@ -1,10 +1,13 @@
 import std.stdio;
 import std.utf;
-import std.regex;
 import std.conv;
+import std.format;
 
 import core.runtime;
 import core.sys.windows.windows;
+
+import arsd.terminal;
+import clipboard_windows;
 
 import squire;
 import mapping;
@@ -19,6 +22,7 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     bool eat = keyboardHook(wParam, msg_struct);
 
     if (eat) {
+        // TODO: is this a sensible value?
         return -1;
     }
 
@@ -62,47 +66,78 @@ void main() {
 	printf("Started\n");
     initKeysyms();
     initMapping();
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
 
-    // Register the window class.
-    auto classNameDString = "Sample Window Class";
+    bool squire_mode;
 
-    WNDCLASS wc = { };
+    if (squire_mode) {
+        HINSTANCE hInstance = GetModuleHandle(NULL);
+        hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
 
-    wc.lpfnWndProc   = &WindowProc;
-    wc.hInstance     = hInstance;
-    wc.lpszClassName = classNameDString.toUTF16z;
+        // Register the window class.
+        auto classNameDString = "Sample Window Class";
 
-    RegisterClass(&wc);
+        WNDCLASS wc = { };
 
-    // Create the window.
+        wc.lpfnWndProc   = &WindowProc;
+        wc.hInstance     = hInstance;
+        wc.lpszClassName = classNameDString.toUTF16z;
 
-    HWND hwnd = CreateWindowEx(
-        0,                              // Optional window styles.
-        classNameDString.toUTF16z,                     // Window class
-        "Learn to Program Windows".toUTF16z,    // Window text
-        WS_OVERLAPPEDWINDOW,            // Window style
+        RegisterClass(&wc);
 
-        // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        // Create the window.
 
-        NULL,       // Parent window    
-        NULL,       // Menu
-        hInstance,  // Instance handle
-        NULL        // Additional application data
-        );
+        HWND hwnd = CreateWindowEx(
+            0,                              // Optional window styles.
+            classNameDString.toUTF16z,                     // Window class
+            "Learn to Program Windows".toUTF16z,    // Window text
+            WS_OVERLAPPEDWINDOW,            // Window style
 
-    if (hwnd == NULL)
-    {
-        return;
-    }
+            // Size and position
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 
-    ShowWindow(hwnd, SW_SHOW);
-    
-    MSG msg;
-    while(GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+            NULL,       // Parent window    
+            NULL,       // Menu
+            hInstance,  // Instance handle
+            NULL        // Additional application data
+            );
+
+        if (hwnd == NULL)
+        {
+            return;
+        }
+
+        ShowWindow(hwnd, SW_SHOW);
+        
+        MSG msg;
+        while(GetMessage(&msg, NULL, 0, 0)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        // TODO: release hook
+    } else {
+        while (true) {
+            auto terminal = Terminal(ConsoleOutputType.linear);
+	        string input = terminal.getline();
+            wstring input_wstring = input.to!(wstring);
+            wchar searchChar = input_wstring[0];
+            
+            string keysym_str;
+
+            foreach (entry; keysymdefs.byKeyValue()) {
+                if (entry.value.unicode_char == searchChar) {
+                    keysym_str = entry.key;
+                }
+            }
+
+            if (!keysym_str) {
+                keysym_str = format("U%04X", searchChar);
+            }
+
+            string callStr = format("mCH(\"%s\", '%s')", keysym_str, searchChar);
+            writeln(" => ", callStr);
+
+            writeClipboard(callStr.to!(wstring));
+        }
     }
 }
