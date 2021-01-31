@@ -19,6 +19,9 @@ struct ComposeNode {
 
 ComposeNode composeRoot;
 
+bool active;
+ComposeNode *currentNode;
+
 enum ComposeResultType {
     PASS,
     EAT,
@@ -32,7 +35,7 @@ struct ComposeResult {
 }
 
 void initCompose() {
-    loadModule("compose/math.module");
+    loadModule("compose/base.module");
 }
 
 void loadModule(string fname) {
@@ -71,5 +74,46 @@ void loadModule(string fname) {
 }
 
 ComposeResult compose(NeoKey nk) nothrow {
+    if (!active) {
+        foreach (startNode; composeRoot.next) {
+            if (startNode.keysym == nk.keysym) {
+                active = true;
+                currentNode = &composeRoot;
+                break;
+            }
+        }
+
+        if (!active) {
+            return ComposeResult(ComposeResultType.PASS, ""w);
+        }
+    }
+
+    if (active) {
+        ComposeNode *next;
+        bool foundNext;
+
+        foreach (nextIter; currentNode.next) {
+            if (nextIter.keysym == nk.keysym) {
+                foundNext = true;
+                next = nextIter;
+                break;
+            }
+        }
+
+        if (foundNext) {
+            if (next.next.length == 0) {
+                // this was the final key
+                active = false;
+                return ComposeResult(ComposeResultType.FINISH, next.result);
+            } else {
+                currentNode = next;
+                return ComposeResult(ComposeResultType.EAT, ""w);
+            }
+        } else {
+            active = false;
+            return ComposeResult(ComposeResultType.ABORT, ""w);
+        }
+    }
+    
     return ComposeResult(ComposeResultType.PASS, ""w);
 }
