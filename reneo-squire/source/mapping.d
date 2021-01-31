@@ -34,9 +34,17 @@ void initMapping() {
 
     M[VK_TAB]           = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("Multi_key", '♫'),          mVK("Tab", VK_TAB),         VOID_KEY,                   VOID_KEY];
 
-    M['E']              = [mVK("e", 'E'),                   mVK("E", 'E'),                  mCH("braceright", '}'),         mVK("Right", VK_RIGHT),     mCH("Greek_epsilon", 'ε'),  mCH("U2203", '∃')];
-
-    M['S']              = [mVK("s", 'S'),                   mVK("S", 'S'),                  mCH("question", '?'),           mCH("questiondown", '¿'),   mCH("Greek_sigma", 'σ'),    mCH("Greek_SIGMA", 'Σ')];
+    M['U']              = [mVK("u", 'U'),                   mVK("U", 'U'),                  mCH("backslash", '\\'),             mVK("Home", VK_HOME),               VOID_KEY,                   mCH("leftshoe", '⊂')];
+    M['I']              = [mVK("i", 'I'),                   mVK("I", 'I'),                  mCH("slash", '/'),                  mVK("Left", VK_LEFT),               mCH("Greek_iota", 'ι'),     mCH("integral", '∫')];
+    M['A']              = [mVK("a", 'A'),                   mVK("A", 'A'),                  mCH("braceleft", '{'),              mVK("Down", VK_DOWN),               mCH("Greek_alpha", 'α'),    mCH("U2200", '∀')];
+    M['E']              = [mVK("e", 'E'),                   mVK("E", 'E'),                  mCH("braceright", '}'),             mVK("Right", VK_RIGHT),             mCH("Greek_epsilon", 'ε'),  mCH("U2203", '∃')];
+    M['O']              = [mVK("o", 'O'),                   mVK("O", 'O'),                  mCH("asterisk", '*'),               mVK("End", VK_END),                 mCH("Greek_omicron", 'ο'),  mCH("elementof", '∈')];
+    M['S']              = [mVK("s", 'S'),                   mVK("S", 'S'),                  mCH("question", '?'),               mCH("questiondown", '¿'),           mCH("Greek_sigma", 'σ'),    mCH("Greek_SIGMA", 'Σ')];
+    M['N']              = [mVK("n", 'N'),                   mVK("N", 'N'),                  mCH("parenleft", '('),              mVK("KP_4", VK_NUMPAD4),            mCH("Greek_nu", 'ν'),       mCH("U2115", 'ℕ')];
+    M['R']              = [mVK("r", 'R'),                   mVK("R", 'R'),                  mCH("parenright", ')'),             mVK("KP_5", VK_NUMPAD5),            mCH("Greek_rho", 'ρ'),      mCH("U211D", 'ℝ')];
+    M['T']              = [mVK("t", 'T'),                   mVK("T", 'T'),                  mCH("minus", '-'),                  mVK("KP_6", VK_NUMPAD6),            mCH("Greek_tau", 'τ'),      mCH("partdifferential", '∂')];
+    M['D']              = [mVK("d", 'D'),                   mVK("D", 'D'),                  mCH("colon", ':'),                  mVK("KP_Separator", VK_SEPARATOR),  mCH("Greek_delta", 'δ'),    mCH("Greek_DELTA", 'Δ')];
+    M['Y']              = [mVK("y", 'Y'),                   mVK("Y", 'Y'),                  mCH("at", '@'),                     mVK("KP_Decimal", VK_DECIMAL),      mCH("Greek_upsilon", 'υ'),  mCH("nabla", '∇')];
 
     M[VK_OEM_PERIOD]    = [mVK("period", VK_OEM_PERIOD),    mCH("enfilledcircbullet", '•'), mCH("apostrophe", '\''),        mVK("KP_3", VK_NUMPAD3),    mCH("U03D1", 'ϑ'),          mCH("U21A6", '↦')];
 }
