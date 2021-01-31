@@ -34,6 +34,8 @@ NeoKey mapChar(string keysym_str, wchar char_code) {
 
 
 NeoKey[6][VK] mapping;
+// Key is mapped to no action
+const uint KEYSYM_VOID = 0xFFFFFF;
 NeoKey VOID_KEY;
 
 struct KeySymEntry {
@@ -86,7 +88,7 @@ uint parseKeysym(string keysym) {
     }
 
     writeln("Keysym ", keysym, " not found.");
-    return 0xffffff;
+    return KEYSYM_VOID;
 }
 
 void initMapping() {
@@ -170,6 +172,11 @@ bool rightMod3Down;
 bool leftMod4Down;
 bool rightMod4Down;
 
+uint previousLayer = 1;
+
+// when we press a VK, store what NeoKey we send so that we can release it correctly later
+NeoKey[VK] heldKeys;
+
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
@@ -177,6 +184,8 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     
     auto scan = msg_ptr.scanCode;
     bool down = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
+    // TODO: do we need to use this somewhere?
+    bool sys = wParam == WM_SYSKEYDOWN || wParam == WM_SYSKEYUP;
 
     // ignore all simulated keypresses
     // TODO: use LLKHF_INJECTED
@@ -207,17 +216,12 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
         }
     } else if (vk == 0x8A) {
         leftMod3Down = down;
-        // eat all mod 3 and mod 4 keypresses
-        eat = true;
     } else if (vk == 0x8B) {
         rightMod3Down = down;
-        eat = true;
     } else if (vk == 0x8C) {
         leftMod4Down = down;
-        eat = true;
     } else if (vk == 0x8D) {
         rightMod4Down = down;
-        eat = true;
     }
 
     bool shiftDown = leftShiftDown || rightShiftDown;
@@ -239,14 +243,57 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
         layer = 2;
     }
 
+    // We want to treat layers 1 and 2 the same in terms of checking whether we switched
+    // This is because pressing or releasing shift should not send a keyup for all held keys
+    // (where as it should for keys from all other layers)
+    uint patchedLayer = layer;
+    if (patchedLayer == 2) {
+        patchedLayer = 1;
+    }
+    bool changedLayer = patchedLayer != previousLayer;
+    previousLayer = patchedLayer;
+
+    // if we switched layers release all currently held keys
+    if (changedLayer) {
+        foreach (entry; heldKeys.byKeyValue()) {
+            sendNeoKey(entry.value, false);
+        }
+        heldKeys.clear();
+    }
+
+    // early exit if key is not in map
+    if (!(vk in mapping)) {
+        return CallNextHookEx(hHook, nCode, wParam, lParam);
+    }
+
     // translate keypress to NEO layout factoring in the current layer
     NeoKey nk = mapToNeo(vk, layer);
     //printf("Key down %x, layer %d, mapped to keysym %x\n", vk, layer, nk.keysym);
 
-    if (wParam == WM_KEYDOWN) {
+    if (down) {
+        heldKeys[vk] = nk;
+
         if (layer >= 3) {
             eat = true;
             sendNeoKey(nk, true);
+        }
+    } else {
+        if (layer >= 3) {
+            eat = true;
+
+            // release the key that is held for this vk
+            // don't send a keyup if no key is stored as held
+            if (vk in heldKeys) {
+                auto heldKey = heldKeys[vk];
+                sendNeoKey(heldKey, false);
+                heldKeys.remove(vk);
+            }
+        } else {
+            // layer 1 and 2 keys that are not stored as held
+            // (probably because we ate them when composing or we switched down to this layer and already released the keys)
+            if (!(vk in heldKeys)) {
+                eat = true;
+            }
         }
     }
 
@@ -273,6 +320,9 @@ LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) nothrow {
         return 0;
     case WM_KEYDOWN:
         printf("WM_KEYDOWN wParam %x lParam %x\n", wParam, lParam);
+        break;
+    case WM_KEYUP:
+        printf("WM_KEYUP wParam %x lParam %x\n", wParam, lParam);
         break;
     case WM_CHAR:
         printf("WM_CHAR wParam %x lParam %x\n", wParam, lParam);
