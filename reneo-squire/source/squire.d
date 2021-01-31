@@ -76,14 +76,18 @@ uint parseKeysym(string keysym) {
     if (keysym in keysymdefs) {
         return keysymdefs[keysym].key_code;
     } else if (auto m = matchFirst(keysym, r"^U([0-9a-fA-F]+)$")) {
-        wchar unicode_char = to!wchar(to!ushort(m[1], 16));
-        foreach (KeySymEntry entry; keysymdefs.byValue()) {
-            if (entry.unicode_char == unicode_char) {
-                return entry.key_code;
+        uint codepoint = to!uint(m[1], 16);
+
+        if (codepoint <= 0xFFFF) {
+            wchar unicode_char = to!wchar(codepoint);
+            foreach (KeySymEntry entry; keysymdefs.byValue()) {
+                if (entry.unicode_char == unicode_char) {
+                    return entry.key_code;
+                }
             }
         }
 
-        return to!uint(unicode_char) + 0x01000000;
+        return codepoint + 0x01000000;
     }
 
     writeln("Keysym ", keysym, " not found.");

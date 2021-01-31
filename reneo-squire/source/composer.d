@@ -5,6 +5,7 @@ import std.utf;
 import std.regex;
 import std.algorithm;
 import std.conv;
+import std.file;
 
 import squire;
 
@@ -35,7 +36,15 @@ struct ComposeResult {
 }
 
 void initCompose() {
-    loadModule("compose/base.module");
+    // TODO: determine based on executable location
+    string composeDir = "compose";
+    foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
+        if (dirEntry.isFile) {
+            string fname = dirEntry.name;
+            writeln("Loading compose module ", fname);
+            loadModule(fname);
+        }
+    }
 }
 
 void loadModule(string fname) {
@@ -79,6 +88,7 @@ ComposeResult compose(NeoKey nk) nothrow {
             if (startNode.keysym == nk.keysym) {
                 active = true;
                 currentNode = &composeRoot;
+                //printf("Started compose\n");
                 break;
             }
         }
@@ -92,6 +102,8 @@ ComposeResult compose(NeoKey nk) nothrow {
         ComposeNode *next;
         bool foundNext;
 
+        //printf("compose %x\n", nk.keysym);
+
         foreach (nextIter; currentNode.next) {
             if (nextIter.keysym == nk.keysym) {
                 foundNext = true;
@@ -104,13 +116,20 @@ ComposeResult compose(NeoKey nk) nothrow {
             if (next.next.length == 0) {
                 // this was the final key
                 active = false;
+                //printf("Finished compose\n");
                 return ComposeResult(ComposeResultType.FINISH, next.result);
             } else {
                 currentNode = next;
+                // printf("possible next: ", nk.keysym);
+                // foreach (nextIter; currentNode.next) {
+                //     printf("%x ", nextIter.keysym);
+                // }
+                // printf("\n");
                 return ComposeResult(ComposeResultType.EAT, ""w);
             }
         } else {
             active = false;
+            //printf("Aborted compose\n");
             return ComposeResult(ComposeResultType.ABORT, ""w);
         }
     }
