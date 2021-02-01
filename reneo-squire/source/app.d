@@ -1,13 +1,4 @@
-import std.stdio;
-import std.utf;
-import std.conv;
-import std.format;
-
-import core.runtime;
 import core.sys.windows.windows;
-
-import arsd.terminal;
-import clipboard_windows;
 
 import squire;
 import mapping;
