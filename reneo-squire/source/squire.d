@@ -95,17 +95,25 @@ uint parseKeysym(string keysym) {
 }
 
 void sendVK(int vk, bool down) nothrow {
+    INPUT[] inputs;
+
+    // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
+    bool extended = vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
+
     INPUT input_struct;
     input_struct.type = INPUT_KEYBOARD;
     input_struct.ki.wVk = cast(ushort)vk;
-    input_struct.ki.wScan = 0;
-    if (down) {
-        input_struct.ki.dwFlags = 0x0000;
-    } else {
-        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
+    input_struct.ki.wScan = 0; // todo: maybe use a plausible value here
+    input_struct.ki.dwFlags = 0;
+    if (!down) {
+        input_struct.ki.dwFlags |= KEYEVENTF_KEYUP;
     }
+    if (extended) {
+        input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    }
+    inputs ~= input_struct;
 
-    SendInput(1, &input_struct, INPUT.sizeof);
+    SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
 
 void sendUTF16(wchar unicode_char, bool down) nothrow {

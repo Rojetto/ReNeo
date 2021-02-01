@@ -7,7 +7,8 @@
 - [ ] decide on license
 - [ ] better handling of bad compose modules and keysym file
 - [x] mod 4 lock
-- [ ] Shift while using layer 4 arrow keys
+- [x] Shift while using layer 4 arrow keys
+- [ ] fix layer 4 insert key
 - [ ] general code cleanup
 - [ ] tray icon
 
