@@ -90,7 +90,6 @@ uint parseKeysym(string keysym) {
         return codepoint + 0x01000000;
     }
 
-    writeln("Keysym ", keysym, " not found.");
     return KEYSYM_VOID;
 }
 
@@ -285,7 +284,6 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
 
     // translate keypress to NEO layout factoring in the current layer
     NeoKey nk = mapToNeo(vk, layer);
-    //printf("Key down %x, layer %d, mapped to keysym %x\n", vk, layer, nk.keysym);
 
     if (down) {
         auto composeResult = compose(nk);

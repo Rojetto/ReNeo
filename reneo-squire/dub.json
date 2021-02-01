@@ -9,5 +9,6 @@
 	],
 	"license": "proprietary",
     "name": "reneo-squire",
-    "dflags": ["-g", "-m64"]
+    "dflags": ["-debug", "-m64"],
+    "lflags": ["/SUBSYSTEM:windows", "/ENTRY:mainCRTStartup"]
 }

@@ -41,7 +41,6 @@ void initCompose() {
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
-            writeln("Loading compose module ", fname);
             loadModule(fname);
         }
     }
@@ -88,7 +87,6 @@ ComposeResult compose(NeoKey nk) nothrow {
             if (startNode.keysym == nk.keysym) {
                 active = true;
                 currentNode = &composeRoot;
-                //printf("Started compose\n");
                 break;
             }
         }
@@ -102,8 +100,6 @@ ComposeResult compose(NeoKey nk) nothrow {
         ComposeNode *next;
         bool foundNext;
 
-        //printf("compose %x\n", nk.keysym);
-
         foreach (nextIter; currentNode.next) {
             if (nextIter.keysym == nk.keysym) {
                 foundNext = true;
@@ -116,20 +112,13 @@ ComposeResult compose(NeoKey nk) nothrow {
             if (next.next.length == 0) {
                 // this was the final key
                 active = false;
-                //printf("Finished compose\n");
                 return ComposeResult(ComposeResultType.FINISH, next.result);
             } else {
                 currentNode = next;
-                // printf("possible next: ", nk.keysym);
-                // foreach (nextIter; currentNode.next) {
-                //     printf("%x ", nextIter.keysym);
-                // }
-                // printf("\n");
                 return ComposeResult(ComposeResultType.EAT, ""w);
             }
         } else {
             active = false;
-            //printf("Aborted compose\n");
             return ComposeResult(ComposeResultType.ABORT, ""w);
         }
     }
