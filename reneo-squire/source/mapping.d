@@ -76,7 +76,27 @@ void initMapping() {
     M[VK_OEM_PERIOD]    = [mVK("period", VK_OEM_PERIOD),    mCH("enfilledcircbullet", '•'), mCH("apostrophe", '\''),            mVK("KP_3", VK_NUMPAD3),            mCH("U03D1", 'ϑ'),              mCH("U21A6", '↦')];
     M['J']              = [mVK("j", 'J'),                   mVK("J", 'J'),                  mCH("semicolon", ';'),              mCH("semicolon", ';'),              mCH("Greek_theta", 'θ'),        mCH("Greek_THETA", 'Θ')];
     
-    M[VK_SPACE]         = [mVK("Space", VK_SPACE),          mVK("Space", VK_SPACE),         mVK("Space", VK_SPACES),            mVK("KP_0", VK_NUMPAD0),            mCH("nobreakspace", '\u00a0'),  mCH("U202F", '\u202f')];
-
-    // TODO: map numpad
+    M[VK_SPACE]         = [mVK("space", VK_SPACE),          mVK("space", VK_SPACE),         mVK("space", VK_SPACE),             mVK("KP_0", VK_NUMPAD0),            mCH("nobreakspace", '\u00a0'),  mCH("U202F", '\u202f')];
+    
+    M[VK_NUMLOCK]       = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("equal", '='),                  mCH("notequal", '≠'),               mCH("U2248", '≈'),              mCH("identical", '≡')];
+    M[VK_DIVIDE]        = [mVK("KP_Divide", VK_DIVIDE),     mVK("KP_Divide", VK_DIVIDE),    mCH("division", '÷'),               mCH("U2044", '⁄'),                  mCH("U2300", '⌀'),              mCH("U2223", '∣')];
+    M[VK_MULTIPLY]      = [mVK("KP_Multiply", VK_MULTIPLY), mVK("KP_Multiply", VK_MULTIPLY),mCH("U22C5", '\u22c5'),             mCH("multiply", '×'),               mCH("U2299", '\u2299'),         mCH("U2297", '\u2297')];
+    M[VK_SUBTRACT]      = [mVK("KP_Subtract", VK_SUBTRACT), mVK("KP_Subtract", VK_SUBTRACT),mCH("U2212", '−'),                  mCH("U2216", '∖'),                  mCH("U2296", '\u2296'),         mCH("U2238", '\u2238')];
+    M[VK_ADD]           = [mVK("KP_Add", VK_ADD),           mVK("KP_Add", VK_ADD),          mCH("plusminus", '±'),              mCH("U2213", '∓'),                  mCH("U2295", '\u2295'),         mCH("U2214", '∔')];
+    
+    M[VK_NUMPAD7]       = [mVK("KP_7", VK_NUMPAD7),         mCH("U2714", '\u2714'),         mCH("U2195", '↕'),                  mVK("KP_Home", VK_HOME),            mCH("U226A", '\u226a'),         mCH("upstile", '⌈')];
+    M[VK_NUMPAD8]       = [mVK("KP_8", VK_NUMPAD8),         mCH("U2718", '\u2718'),         mCH("uparrow", '↑'),                mVK("KP_Up", VK_UP),                mCH("intersection", '∩'),       mCH("U22C2", '⋂')];
+    M[VK_NUMPAD9]       = [mVK("KP_9", VK_NUMPAD9),         mCH("dagger", '†'),             mCH("U20D7", '\u20d7'),             mVK("KP_Page_Up", VK_PRIOR),        mCH("U226B", '\u226b'),         mCH("U2309", '⌉')];
+    
+    M[VK_NUMPAD4]       = [mVK("KP_4", VK_NUMPAD4),         mCH("club", '♣'),               mCH("leftarrow", '←'),              mVK("KP_Left", VK_LEFT),            mCH("leftshoe", '⊂'),          mCH("U2286", '⊆')];
+    // TODO: KP 5 layer 4 should be a keyboard simulated left mouse click ‽
+    M[VK_NUMPAD5]       = [mVK("KP_5", VK_NUMPAD5),         mCH("EuroSign", '€'),           mCH("colon", ':'),                  VOID_KEY,                           mCH("U22B6", '⊶'),             mCH("U22B7", '⊷')];
+    M[VK_NUMPAD6]       = [mVK("KP_6", VK_NUMPAD6),         mCH("U2023", '\u2023'),         mCH("rightarrow", '→'),             mVK("KP_Right", VK_RIGHT),          mCH("rightshoe", '⊃'),         mCH("U2287", '⊇')];
+    
+    M[VK_NUMPAD1]       = [mVK("KP_1", VK_NUMPAD1),         mCH("diamond", '♦'),            mCH("U2194", '↔'),                  mVK("KP_End", VK_END),              mCH("lessthanequal", '≤'),      mCH("downstile", '⌊')];
+    M[VK_NUMPAD2]       = [mVK("KP_2", VK_NUMPAD2),         mCH("heart", '♥'),              mCH("downarrow", '↓'),              mVK("KP_Down", VK_DOWN),            mCH("downshoe", '∪'),           mCH("U22C3", '\u22c3')];
+    M[VK_NUMPAD3]       = [mVK("KP_3", VK_NUMPAD3),         mCH("U2660", '♠'),              mCH("U21CC", '\u21cc'),             mVK("KP_Page_Down", VK_NEXT),       mCH("greaterthanequal", '≥'),   mCH("U230B", '⌋')];
+    
+    M[VK_NUMPAD0]       = [mVK("KP_0", VK_NUMPAD0),         mCH("signifblank", '␣'),        mCH("percent", '%'),                mVK("KP_Insert", VK_INSERT),        mCH("permille", '‰'),           mCH("U25A1", '□')];
+    M[VK_SEPARATOR]     = [mVK("KP_Separator", VK_SEPARATOR),mVK("KP_Decimal", VK_DECIMAL), mCH("comma", ','),                  mVK("KP_Delete", VK_DELETE),        mCH("minutes", '′'),            mCH("seconds", '″')];
 }

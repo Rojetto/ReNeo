@@ -11,5 +11,6 @@
 		"user32"
 	],
 	"license": "proprietary",
-	"name": "reneo-squire"
+    "name": "reneo-squire",
+    "dflags": ["-g", "-m64"]
 }

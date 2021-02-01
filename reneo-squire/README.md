@@ -1,6 +1,6 @@
 # Tasks
 - [ ] write readme
-- [ ] map numpad
+- [x] map numpad
 - [ ] clean up native driver
 - [ ] document native driver installation
 - [ ] automate installation and uninstallation
