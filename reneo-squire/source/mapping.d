@@ -18,6 +18,7 @@ void initMapping() {
     |     VK               |      Layer 1                   |      Layer 2                  |        Layer 3                    |      Layer 4                      |     Layer 5                  |      Layer 6
     ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     */
+    // TODO: check unicode symbols
     M[VK_OEM_1]         = [mCH("dead_circumflex", '^'),     mCH("dead_caron", '\u02c7'),    mCH("U21BB", '\u21bb'),             mCH("dead_abovedot", '\u02d9'),     mCH("dead_hook", '\u02de'),    mCH("dead_belowdot", '.')];
     M['1']              = [mVK("1", '1'),                   mCH("degree", '°'),             mCH("onesuperior", '¹'),            mCH("ordfeminine", 'ª'),            mCH("onesubscript", '₁'),      mCH("notsign", '¬')];
     M['2']              = [mVK("2", '2'),                   mCH("section", '§'),            mCH("twosuperior", '²'),            mCH("masculine", 'º'),              mCH("twosubscript", '₂'),      mCH("logicalor", '∨')];
@@ -29,7 +30,9 @@ void initMapping() {
     M['8']              = [mVK("8", '8'),                   mCH("doublelowquotemark", '„'), mCH("singlelowquotemark", '‚'),     VOID_KEY,                           mCH("leftanglebracket", '⟨'),   mCH("infinity", '∞')];
     M['9']              = [mVK("9", '9'),                   mCH("leftdoublequotemark", '“'),mCH("leftsinglequotemark", '‘'),    mVK("KP_Divide", VK_DIVIDE),        mCH("rightanglebracket", '⟩'),  mCH("variation", '∝')];
     M['0']              = [mVK("0", '0'),                   mCH("rightdoublequotemark", '”'),mCH("rightsinglequotemark", '’'),  mVK("KP_Multiply", VK_MULTIPLY),    mCH("zerosubscript", '₀'),     mCH("emptyset", '∅')];
+    // TODO: check correctness
     M[VK_OEM_MINUS]     = [mVK("minus", VK_OEM_MINUS),      mCH("emdash", '—'),             VOID_KEY,                           mVK("minus", VK_OEM_MINUS),         mCH("U2011", '‑'),             mCH("U00AD", '\u00ad')];
+    // TODO: check correctness
     M[VK_OEM_2]         = [mCH("dead_grave", '\u02cb'),     mCH("dead_cedilla", '\u00b8'),  mCH("dead_abovering", '\u02da'),    mCH("dead_diaeresis", '\u00a8'),    mCH("dead_dasia", '\u1ffe'),   mCH("dead_macron", '\u00af')];
 
     M[VK_TAB]           = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("Multi_key", '♫'),              mVK("Tab", VK_TAB),                 VOID_KEY,                       VOID_KEY];
@@ -43,8 +46,12 @@ void initMapping() {
     M['G']              = [mVK("g", 'G'),                   mVK("G", 'G'),                  mCH("rightcaret", '>'),             mVK("KP_8", VK_NUMPAD8),            mCH("Greek_gamma", 'γ'),        mCH("Greek_GAMMA", 'Γ')];
     M['F']              = [mVK("f", 'F'),                   mVK("F", 'F'),                  mCH("equal", '='),                  mVK("KP_9", VK_NUMPAD9),            mCH("Greek_phi", 'φ'),          mCH("Greek_PHI", 'Φ')];
     M['Q']              = [mVK("q", 'Q'),                   mVK("Q", 'Q'),                  mCH("ampersand", '&'),              mVK("KP_Add", VK_ADD),              mCH("U03D5", 'ϕ'),              mCH("U211A", 'ℚ')];
+    // TODO: check correctness
     M[VK_OEM_3]         = [mVK("ssharp", VK_OEM_3),         mVK("U1E9E", VK_OEM_3),         mCH("U017F", 'ſ'),                  mVK("KP_Subtract", VK_SUBTRACT), mCH("Greek_finalsmallsigma", 'ς'), mCH("jot", '∘')];
+    // TODO: check correctness
     M[VK_OEM_4]         = [mCH("dead_acute", '\u02ca'),     mCH("dead_tilde", '\u02dc'),    mCH("dead_stroke", '\u002f'),       mCH("dead_doubleacute", '\u02dd'),  mCH("dead_psili", '\u1fbf'),    mCH("dead_breve", '\u02d8')];
+
+    M[VK_RETURN]        = [mVK("Return", VK_RETURN),        mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN)];
 
     M['U']              = [mVK("u", 'U'),                   mVK("U", 'U'),                  mCH("backslash", '\\'),             mVK("Home", VK_HOME),               VOID_KEY,                       mCH("leftshoe", '⊂')];
     M['I']              = [mVK("i", 'I'),                   mVK("I", 'I'),                  mCH("slash", '/'),                  mVK("Left", VK_LEFT),               mCH("Greek_iota", 'ι'),         mCH("integral", '∫')];
@@ -58,5 +65,18 @@ void initMapping() {
     M['D']              = [mVK("d", 'D'),                   mVK("D", 'D'),                  mCH("colon", ':'),                  mVK("KP_Separator", VK_SEPARATOR),  mCH("Greek_delta", 'δ'),        mCH("Greek_DELTA", 'Δ')];
     M['Y']              = [mVK("y", 'Y'),                   mVK("Y", 'Y'),                  mCH("at", '@'),                     mVK("KP_Decimal", VK_DECIMAL),      mCH("Greek_upsilon", 'υ'),      mCH("nabla", '∇')];
 
-    M[VK_OEM_PERIOD]    = [mVK("period", VK_OEM_PERIOD),    mCH("enfilledcircbullet", '•'), mCH("apostrophe", '\''),        mVK("KP_3", VK_NUMPAD3),    mCH("U03D1", 'ϑ'),          mCH("U21A6", '↦')];
+    M[VK_OEM_5]         = [mVK("udiaeresis", VK_OEM_5),     mVK("Udiaeresis", VK_OEM_5),    mCH("numbersign", '#'),             mVK("Escape", VK_ESCAPE),           VOID_KEY,                       mCH("downshoe", '∪')];
+    M[VK_OEM_6]         = [mVK("odiaeresis", VK_OEM_6),     mVK("Odiaeresis", VK_OEM_6),    mCH("dollar", '$'),                 mVK("Tab", VK_TAB),                 mCH("U03F5", 'ϵ'),              mCH("intersection", '∩')];
+    M[VK_OEM_7]         = [mVK("adiaeresis", VK_OEM_7),     mVK("Adiaeresis", VK_OEM_7),    mCH("bar", '|'),                    mVK("Insert", VK_INSERT),           mCH("Greek_eta", 'η'),          mCH("U2135", 'ℵ')];
+    M['P']              = [mVK("p", 'P'),                   mVK("P", 'P'),                  mCH("asciitilde", '~'),             mVK("Return", VK_RETURN),           mCH("Greek_pi", 'π'),           mCH("Greek_PI", 'Π')];
+    M['Z']              = [mVK("z", 'Z'),                   mVK("Z", 'Z'),                  mCH("grave", '`'),                  VOID_KEY,                           mCH("Greek_zeta", 'ζ'),         mCH("U2124", 'ℤ')];
+    M['B']              = [mVK("b", 'B'),                   mVK("B", 'B'),                  mCH("plus", '+'),                   mCH("colon", ':'),                  mCH("Greek_beta", 'β'),         mCH("U21D0", '⇐')];
+    M['M']              = [mVK("m", 'M'),                   mVK("M", 'M'),                  mCH("percent", '%'),                mVK("KP_1", VK_NUMPAD1),            mCH("Greek_mu", 'μ'),           mCH("ifonlyif", '⇔')];
+    M[VK_OEM_COMMA]     = [mVK("comma", VK_OEM_COMMA),      mVK("endash", '–'),             mCH("quotedbl", '"'),               mVK("KP_2", VK_NUMPAD2),            mCH("U03F1", 'ϱ'),              mCH("implies", '⇒')];
+    M[VK_OEM_PERIOD]    = [mVK("period", VK_OEM_PERIOD),    mCH("enfilledcircbullet", '•'), mCH("apostrophe", '\''),            mVK("KP_3", VK_NUMPAD3),            mCH("U03D1", 'ϑ'),              mCH("U21A6", '↦')];
+    M['J']              = [mVK("j", 'J'),                   mVK("J", 'J'),                  mCH("semicolon", ';'),              mCH("semicolon", ';'),              mCH("Greek_theta", 'θ'),        mCH("Greek_THETA", 'Θ')];
+    
+    M[VK_SPACE]         = [mVK("Space", VK_SPACE),          mVK("Space", VK_SPACE),         mVK("Space", VK_SPACES),            mVK("KP_0", VK_NUMPAD0),            mCH("nobreakspace", '\u00a0'),  mCH("U202F", '\u202f')];
+
+    // TODO: map numpad
 }
