@@ -6,7 +6,8 @@
 - [ ] automate installation and uninstallation
 - [ ] decide on license
 - [ ] better handling of bad compose modules and keysym file
-- [ ] mod 4 lock
+- [x] mod 4 lock
+- [ ] Shift while using layer 4 arrow keys
 - [ ] general code cleanup
 - [ ] tray icon
 

@@ -169,6 +169,8 @@ bool rightMod3Down;
 bool leftMod4Down;
 bool rightMod4Down;
 
+bool mod4Lock;
+
 uint previousLayer = 1;
 
 // when we press a VK, store what NeoKey we send so that we can release it correctly later
@@ -215,8 +217,16 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         rightMod3Down = down;
     } else if (vk == 0x8C) {
         leftMod4Down = down;
+
+        if (down && rightMod4Down) {
+            mod4Lock = !mod4Lock;
+        }
     } else if (vk == 0x8D) {
         rightMod4Down = down;
+
+        if (down && leftMod4Down) {
+            mod4Lock = !mod4Lock;
+        }
     }
 
     bool shiftDown = leftShiftDown || rightShiftDown;
@@ -236,6 +246,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         layer = 3;
     }  else if (shiftDown) {
         layer = 2;
+    }
+
+    if (mod4Lock) {
+        layer = 4;
     }
 
     // We want to treat layers 1 and 2 the same in terms of checking whether we switched
