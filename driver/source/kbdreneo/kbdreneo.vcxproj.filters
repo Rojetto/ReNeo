@@ -18,26 +18,29 @@
     <ClInclude Include="kbd_mod.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="kbdneo2.h">
+    <ClInclude Include="keysym4utf16.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="keysym4utf16.h">
+    <ClInclude Include="kbdreneo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="kbdneo2.c">
+    <ResourceCompile Include="kbdreneo.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="kbdreneo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="kbdneo2.def">
+    <None Include="kbdreneo.def">
       <Filter>Source Files</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="kbdneo2.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>

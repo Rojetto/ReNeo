@@ -1,0 +1,3 @@
+build dll
+copy kbdreneo.dll to C:\Windows\System32
+run install.reg

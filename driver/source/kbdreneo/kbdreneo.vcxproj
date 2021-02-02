@@ -19,12 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F918E44C-4E53-4267-BFDB-71112122DFE2}</ProjectGuid>
+    <ProjectGuid>{C9BBA703-1A29-4436-B246-EFE260D866F3}</ProjectGuid>
     <RootNamespace>$(MSBuildProjectName)</RootNamespace>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
-    <SampleGuid>{410247ED-4375-426C-A52A-1242555AB0AE}</SampleGuid>
-    <ProjectName>kbdgr2</ProjectName>
+    <ProjectName>kbdreneo</ProjectName>
     <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -77,22 +76,23 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
   </ImportGroup>
   <ItemGroup Label="WrappedTaskItems">
-    <ClInclude Include="kbdgr2.h" />
+    <ClInclude Include="kbdreneo.h" />
     <ClInclude Include="kbd_mod.h" />
     <ClInclude Include="keysym4utf16.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>kbdgr2</TargetName>
+    <TargetName>kbdreneo</TargetName>
     <OutDir>x64\</OutDir>
-    <IntDir>obj\x64\</IntDir>
+    <IntDir>x64\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <TargetName>kbdgr2</TargetName>
+    <TargetName>kbdneo2</TargetName>
     <OutDir>x86\</OutDir>
     <IntDir>x86\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-WOW64|Win32'">
-    <TargetName>kbdgr2</TargetName>
+    <TargetName>kbdneo2</TargetName>
     <OutDir>x86-wow64\</OutDir>
     <IntDir>x86-wow64\</IntDir>
   </PropertyGroup>
@@ -168,7 +168,7 @@
     <Link>
       <AdditionalOptions>%(AdditionalOptions) -merge:.edata=.data -merge:.rdata=.data -merge:.text=.data -merge:.bss=.data -section:.data,re</AdditionalOptions>
       <AdditionalOptions>%(AdditionalOptions)  /ignore:4254</AdditionalOptions>
-      <ModuleDefinitionFile>kbdgr2.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>kbdreneo.def</ModuleDefinitionFile>
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ClCompile>
@@ -180,7 +180,7 @@
     <Link>
       <AdditionalOptions>%(AdditionalOptions) -merge:.edata=.data -merge:.rdata=.data -merge:.text=.data -merge:.bss=.data -section:.data,re</AdditionalOptions>
       <AdditionalOptions>%(AdditionalOptions)  /ignore:4254</AdditionalOptions>
-      <ModuleDefinitionFile>kbdgr2.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>kbdneo2.def</ModuleDefinitionFile>
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ClCompile>
@@ -192,7 +192,7 @@
     <Link>
       <AdditionalOptions>%(AdditionalOptions) -merge:.edata=.data -merge:.rdata=.data -merge:.text=.data -merge:.bss=.data -section:.data,re</AdditionalOptions>
       <AdditionalOptions>%(AdditionalOptions)  /ignore:4254</AdditionalOptions>
-      <ModuleDefinitionFile>kbdgr2.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>kbdneo2.def</ModuleDefinitionFile>
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ClCompile>
@@ -204,7 +204,7 @@
     <Link>
       <AdditionalOptions>%(AdditionalOptions) -merge:.edata=.data -merge:.rdata=.data -merge:.text=.data -merge:.bss=.data -section:.data,re</AdditionalOptions>
       <AdditionalOptions>%(AdditionalOptions)  /ignore:4254</AdditionalOptions>
-      <ModuleDefinitionFile>kbdgr2.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>kbdneo2.def</ModuleDefinitionFile>
       <NoEntryPoint>true</NoEntryPoint>
     </Link>
     <ClCompile>
@@ -219,13 +219,13 @@
   <ItemGroup>
     <None Exclude="@(None)" Include="*.txt;*.htm;*.html" />
     <None Exclude="@(None)" Include="*.ico;*.cur;*.bmp;*.dlg;*.rct;*.gif;*.jpg;*.jpeg;*.wav;*.jpe;*.tiff;*.tif;*.png;*.rc2" />
-    <None Include="kbdgr2.def" />
+    <None Include="kbdreneo.def" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="kbdgr2.c" />
+    <ClCompile Include="kbdreneo.c" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="kbdgr2.rc" />
+    <ResourceCompile Include="kbdreneo.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -1,4 +1,4 @@
-LIBRARY KBDGR2
+LIBRARY KBDRENEO
 
 EXPORTS
     KbdLayerDescriptor @1

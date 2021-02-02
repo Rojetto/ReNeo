@@ -1,13 +1,13 @@
 /****************************************************************************\
-* Module Name: KBDNEO2.C
-* Deutsches ergonomische Layout Neo 2.0
+* Module Name: KBDRENEO.C
+* Deutsches ergonomisches Layout Neo 2.0 (ReNEO Treiber)
 \****************************************************************************/
 
 #include <windows.h>
 #include "kbd.h"
 #include "kbd_mod.h"
 #include "keysym4utf16.h"
-#include "kbdneo2.h"
+#include "kbdreneo.h"
 
 #if defined(_M_IA64)
 #pragma section(".data")
