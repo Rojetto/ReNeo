@@ -13,6 +13,12 @@ import composer;
 
 alias VK = DWORD;
 
+void debug_writeln(T...)(T args) {
+    debug {
+        writeln(args);
+    }
+}
+
 enum NeoKeyType {
     VKEY,
     CHAR
@@ -45,13 +51,15 @@ struct KeySymEntry {
 KeySymEntry[string] keysymdefs;
 
 void initKeysyms() {
+    auto keysymfile = "keysymdef.h";
+    debug_writeln("Initializing keysyms from ", keysymfile);
     // group 1: name, group 2: hex, group 3: unicode codepoint
     auto unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\* U\+([0-9A-F]{4,6}) (.*) \*\/\s*$";
     auto unicode_pattern_with_parens = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\*\(U\+([0-9A-F]{4,6}) (.*)\)\*\/\s*$";
     // group 1: name, group 2: hex, group 3 and 4: comment stuff
     auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
 
-    File f = File("keysymdef.h", "r");
+    File f = File(keysymfile, "r");
 	while(!f.eof()) {
 		string l = f.readln();
 		if (auto m = matchFirst(l, unicode_pattern)) {

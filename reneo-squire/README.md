@@ -1,3 +1,8 @@
+# Building
+There are two important build types:
+1. Debug build: Run `dub build`. Among debug symbols and stuff this build also opens a console for showing debug output.
+2. Release build: Run `dub build --build=release`. Optimizations get applied and there is no console when running the app. 
+
 # Tasks
 - [ ] write readme
 - [x] map numpad
@@ -8,7 +13,7 @@
 - [ ] better handling of bad compose modules and keysym file
 - [x] mod 4 lock
 - [x] Shift while using layer 4 arrow keys
-- [ ] work out some conditional compilation thing for opening a console
+- [x] work out some conditional compilation thing for opening a console
 - [ ] check whether app is already running
 - [ ] fix layer 4 insert key
 - [ ] general code cleanup
@@ -19,3 +24,4 @@
 - [ ] optional layers 3,4,5,6 in native driver
 - [ ] some kind of compose UI
 - [ ] integrate into main repository
+- [ ] compatibility with KBDNEO
