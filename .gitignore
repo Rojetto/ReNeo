@@ -1,2 +1,4 @@
 ﻿driver/source/.vs
-driver/source/kbdneo2/x64
+driver/source/kbdreneo/resource.h
+driver/source/kbdreneo/x64
+*.aps
