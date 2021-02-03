@@ -4,6 +4,7 @@ import std.stdio;
 import std.utf;
 import std.regex;
 import std.conv;
+import std.path;
 
 import core.sys.windows.windows;
 
@@ -50,8 +51,8 @@ struct KeySymEntry {
 
 KeySymEntry[string] keysymdefs;
 
-void initKeysyms() {
-    auto keysymfile = "keysymdef.h";
+void initKeysyms(string exeDir) {
+    auto keysymfile = buildPath(exeDir, "keysymdef.h");
     debug_writeln("Initializing keysyms from ", keysymfile);
     // group 1: name, group 2: hex, group 3: unicode codepoint
     auto unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\* U\+([0-9A-F]{4,6}) (.*) \*\/\s*$";

@@ -3,6 +3,7 @@ import core.sys.windows.windows;
 import squire;
 import mapping;
 import composer;
+import std.path;
 
 HHOOK hHook;
 
@@ -35,11 +36,13 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 
-void main() {
+void main(string[] args) {
     debug_writeln("Starting ReNeo squire...");
-    initKeysyms();
+    auto exeDir = dirName(absolutePath(buildNormalizedPath(args[0])));
+    debug_writeln("EXE located in ", exeDir);
+    initKeysyms(exeDir);
     initMapping();
-    initCompose();
+    initCompose(exeDir);
     debug_writeln("Initialization complete!");
 
     HINSTANCE hInstance = GetModuleHandle(NULL);

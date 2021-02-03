@@ -6,6 +6,7 @@ import std.regex;
 import std.algorithm;
 import std.conv;
 import std.file;
+import std.path;
 
 import squire;
 
@@ -35,10 +36,9 @@ struct ComposeResult {
     wstring result;
 }
 
-void initCompose() {
-    // TODO: determine based on executable location
+void initCompose(string exeDir) {
     debug_writeln("Initializing compose");
-    string composeDir = "compose";
+    string composeDir = buildPath(exeDir, "compose");
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
