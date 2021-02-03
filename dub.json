@@ -7,7 +7,7 @@
 	"libs": [
 		"user32"
 	],
-	"license": "proprietary",
+	"license": "GPL-3.0",
     "name": "reneo",
     "buildTypes": {
         "plain": {
