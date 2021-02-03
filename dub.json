@@ -3,12 +3,12 @@
 		"Robert Heedt"
 	],
 	"copyright": "Copyright © 2021, Robert Heedt",
-	"description": "Supplementary application for ReNEO keyboard driver, implementing layer 3 and upwards.",
+	"description": "Supplementary application for native NEO keyboard driver, implementing the upper layers and compose.",
 	"libs": [
 		"user32"
 	],
 	"license": "proprietary",
-    "name": "reneo-squire",
+    "name": "reneo",
     "buildTypes": {
         "plain": {
             "buildOptions": ["debugMode", "debugInfo"]

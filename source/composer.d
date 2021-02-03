@@ -8,7 +8,7 @@ import std.conv;
 import std.file;
 import std.path;
 
-import squire;
+import reneo;
 
 const auto COMPOSE_REGEX = regex(`^(<[a-zA-Z0-9_]+>(?: <[a-zA-Z0-9_]+>)+)\s*:\s*"(.*)"`);
 

@@ -1,6 +1,6 @@
 import core.sys.windows.windows;
 
-import squire;
+import reneo;
 import mapping;
 import composer;
 import std.path;

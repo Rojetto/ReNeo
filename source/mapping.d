@@ -2,7 +2,7 @@ module mapping;
 
 import core.sys.windows.windows;
 
-import squire;
+import reneo;
 
 NeoKey[6][VK] M;
 

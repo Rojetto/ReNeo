@@ -1,4 +1,4 @@
-module squire;
+module reneo;
 
 import std.stdio;
 import std.utf;
