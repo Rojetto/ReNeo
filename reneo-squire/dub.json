@@ -13,7 +13,7 @@
         "plain": {
             "buildOptions": ["debugMode", "debugInfo"]
         },
-    "release": {
+        "release": {
             "lflags": ["/SUBSYSTEM:windows", "/ENTRY:mainCRTStartup"]
         }
     }

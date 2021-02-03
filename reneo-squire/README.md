@@ -24,4 +24,5 @@ There are two important build types:
 - [ ] optional layers 3,4,5,6 in native driver
 - [ ] some kind of compose UI
 - [ ] integrate into main repository
-- [ ] compatibility with KBDNEO
+- [x] compatibility with KBDNEO
+- [ ] investigate performance

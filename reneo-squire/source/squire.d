@@ -216,6 +216,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
 
     // update stored modifier key states
     // GetAsyncKeyState didn't seem to work for multiple simultaneous keys
+    // KBDNEO uses VK_OEM_102 for M3 und VK_OEM_8 for M4
+    // ReNEO uses 0x8A for M3L, 0x8B for M3R, 0x8C for M4L and 0x8D for M4R
     if (vk == VK_LSHIFT) {
         leftShiftDown = down;
 
@@ -232,17 +234,17 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             sendVK(VK_CAPITAL, true);
             sendVK(VK_CAPITAL, false);
         }
-    } else if (vk == 0x8A) {
+    } else if (vk == 0x8A || (vk == VK_OEM_102 && scan == 0x3A)) {
         leftMod3Down = down;
-    } else if (vk == 0x8B) {
+    } else if (vk == 0x8B || (vk == VK_OEM_102 && scan == 0x2B)) {
         rightMod3Down = down;
-    } else if (vk == 0x8C) {
+    } else if (vk == 0x8C || (vk == VK_OEM_8 && scan == 0x56)) {
         leftMod4Down = down;
 
         if (down && rightMod4Down) {
             mod4Lock = !mod4Lock;
         }
-    } else if (vk == 0x8D) {
+    } else if (vk == 0x8D || (vk == VK_OEM_8 && scan == 0x38)) {
         rightMod4Down = down;
 
         if (down && leftMod4Down) {
