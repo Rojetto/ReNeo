@@ -207,8 +207,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
 
     // ignore all simulated keypresses
-    // TODO: use LLKHF_INJECTED
-    if (vk == VK_PACKET || scan == 0) {
+    if (vk == VK_PACKET || (msg_struct.flags & LLKHF_INJECTED)) {
         return false;
     }
 

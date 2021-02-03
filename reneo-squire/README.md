@@ -16,7 +16,7 @@ There are two important build types:
 - [x] work out some conditional compilation thing for opening a console
 - [ ] check whether app is already running
 - [ ] fix layer 4 insert key
-- [ ] general code cleanup
+- [x] general code cleanup
 - [ ] tray icon
 
 # Possible future features
