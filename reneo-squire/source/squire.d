@@ -62,20 +62,24 @@ void initKeysyms() {
     File f = File(keysymfile, "r");
 	while(!f.eof()) {
 		string l = f.readln();
-		if (auto m = matchFirst(l, unicode_pattern)) {
-            string keysym_name = m[1];
-            uint key_code = to!uint(m[2], 16);
-            wchar unicode_char = to!wchar(to!ushort(m[3], 16));
-            keysymdefs[keysym_name] = KeySymEntry(key_code, unicode_char);
-        } else if (auto m = matchFirst(l, unicode_pattern_with_parens)) {
-            string keysym_name = m[1];
-            uint key_code = to!uint(m[2], 16);
-            wchar unicode_char = to!wchar(to!ushort(m[3], 16));
-            keysymdefs[keysym_name] = KeySymEntry(key_code, unicode_char);
-        } else if (auto m = matchFirst(l, no_unicode_pattern)) {
-            string keysym_name = m[1];
-            uint key_code = to!uint(m[2], 16);
-            keysymdefs[keysym_name] = KeySymEntry(key_code);
+        try {
+            if (auto m = matchFirst(l, unicode_pattern)) {
+                string keysym_name = m[1];
+                uint key_code = to!uint(m[2], 16);
+                wchar unicode_char = to!wchar(to!ushort(m[3], 16));
+                keysymdefs[keysym_name] = KeySymEntry(key_code, unicode_char);
+            } else if (auto m = matchFirst(l, unicode_pattern_with_parens)) {
+                string keysym_name = m[1];
+                uint key_code = to!uint(m[2], 16);
+                wchar unicode_char = to!wchar(to!ushort(m[3], 16));
+                keysymdefs[keysym_name] = KeySymEntry(key_code, unicode_char);
+            } else if (auto m = matchFirst(l, no_unicode_pattern)) {
+                string keysym_name = m[1];
+                uint key_code = to!uint(m[2], 16);
+                keysymdefs[keysym_name] = KeySymEntry(key_code);
+            }
+        } catch (Exception e) {
+            debug_writeln("Could not parse line '", l, "', skipping. Error: ", e.msg);
         }
 	}
 }
@@ -97,6 +101,8 @@ uint parseKeysym(string keysym) {
 
         return codepoint + 0x01000000;
     }
+
+    debug_writeln("Keysym ", keysym, " not found.");
 
     return KEYSYM_VOID;
 }

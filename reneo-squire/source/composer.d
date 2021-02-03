@@ -37,10 +37,12 @@ struct ComposeResult {
 
 void initCompose() {
     // TODO: determine based on executable location
+    debug_writeln("Initializing compose");
     string composeDir = "compose";
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
+            debug_writeln("Loading compose module ", fname);
             loadModule(fname);
         }
     }
@@ -51,32 +53,36 @@ void loadModule(string fname) {
 	while(!f.eof()) {
 		string l = f.readln();
         if (auto m = matchFirst(l, COMPOSE_REGEX)) {
-            auto keysyms = split(m[1], regex(" ")).map!(s => parseKeysym(s[1 .. s.length-1]));
-            string result = m[2];
+            try {
+                auto keysyms = split(m[1], regex(" ")).map!(s => parseKeysym(s[1 .. s.length-1]));
+                string result = m[2];
 
-            auto currentNode = &composeRoot;
+                auto currentNode = &composeRoot;
 
-            foreach (keysym; keysyms) {
-                ComposeNode *next;
-                bool foundNext;
+                foreach (keysym; keysyms) {
+                    ComposeNode *next;
+                    bool foundNext;
 
-                foreach (nextIter; currentNode.next) {
-                    if (nextIter.keysym == keysym) {
-                        foundNext = true;
-                        next = nextIter;
-                        break;
+                    foreach (nextIter; currentNode.next) {
+                        if (nextIter.keysym == keysym) {
+                            foundNext = true;
+                            next = nextIter;
+                            break;
+                        }
                     }
+
+                    if (!foundNext) {
+                        next = new ComposeNode(keysym, currentNode, [], ""w);
+                        currentNode.next ~= next;
+                    }
+
+                    currentNode = next;
                 }
 
-                if (!foundNext) {
-                    next = new ComposeNode(keysym, currentNode, [], ""w);
-                    currentNode.next ~= next;
-                }
-
-                currentNode = next;
+                currentNode.result = to!(wstring)(result);
+            } catch (Exception e) {
+                debug_writeln("Could not parse line '", l, "', skipping. Error: ", e.msg);
             }
-
-            currentNode.result = to!(wstring)(result);
         }
     }
 }

@@ -10,7 +10,7 @@ There are two important build types:
 - [ ] document native driver installation
 - [ ] automate installation and uninstallation
 - [ ] decide on license
-- [ ] better handling of bad compose modules and keysym file
+- [x] better handling of bad compose modules and keysym file
 - [x] mod 4 lock
 - [x] Shift while using layer 4 arrow keys
 - [x] work out some conditional compilation thing for opening a console

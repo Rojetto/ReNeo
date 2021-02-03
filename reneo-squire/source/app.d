@@ -36,13 +36,16 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
 }
 
 void main() {
+    debug_writeln("Starting ReNeo squire...");
     initKeysyms();
     initMapping();
     initCompose();
+    debug_writeln("Initialization complete!");
 
     HINSTANCE hInstance = GetModuleHandle(NULL);
     hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
-    
+    debug_writeln("Keyboard hook active!");
+
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
