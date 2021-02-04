@@ -6,8 +6,8 @@ Funktionen wie Capslock, die Steuertasten auf Ebene 4 und Compose können techni
 
 ## Installation
 1. [kbdneo](https://neo-layout.org/Benutzerhandbuch/kbdneo/) normal installieren
-2. Neuesten ReNeo-Release herunterladen und in beliebiges Verzeichnis entpacken
-3. `reneo.exe` zu Autostart hinzufügen
+2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in beliebiges Verzeichnis entpacken
+3. `reneo.exe` starten oder zu Autostart hinzufügen. Dass die Anwendung läuft sieht man momentan nur im Taskmanager.
 
 ## Funktionen
 
