@@ -14,7 +14,7 @@ Funktionen wie Capslock, die Steuertasten auf Ebene 4 und Compose können techni
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
 - Steuertasten auf Ebene 4
 - *Alle* tote Tasten und Compose-Kombinationen. Diese sind auch durch den Nutzer erweiterbar, alle `.module`-Dateien im Verzeichnis „compose“ werden beim Start geladen.
-- Verbesserte Kompatibilität mit Qt- und GKT-Anwendungen. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
+- Verbesserte Kompatibilität mit Qt- und GTK-Anwendungen. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
 - Compose-Taste `M3+Tab` sendet keinen Tab mehr an Anwendung. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/397).
 
 ## Vergleich mit anderen Windows-Treibern
