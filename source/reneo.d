@@ -211,8 +211,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         return false;
     }
 
-    // setting eat = true stops the keypress from propagating further
-    bool eat = false;
+    // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
+    bool isNeoModifier;
 
     // update stored modifier key states
     // GetAsyncKeyState didn't seem to work for multiple simultaneous keys
@@ -236,16 +236,20 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
     } else if (vk == 0x8A || (vk == VK_OEM_102 && scan == 0x3A)) {
         leftMod3Down = down;
+        isNeoModifier = true;
     } else if (vk == 0x8B || (vk == VK_OEM_102 && scan == 0x2B)) {
         rightMod3Down = down;
+        isNeoModifier = true;
     } else if (vk == 0x8C || (vk == VK_OEM_8 && scan == 0x56)) {
         leftMod4Down = down;
+        isNeoModifier = true;
 
         if (down && rightMod4Down) {
             mod4Lock = !mod4Lock;
         }
     } else if (vk == 0x8D || (vk == VK_OEM_8 && scan == 0x38)) {
         rightMod4Down = down;
+        isNeoModifier = true;
 
         if (down && leftMod4Down) {
             mod4Lock = !mod4Lock;
@@ -293,10 +297,17 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         heldKeys.clear();
     }
 
+    // immediately eat M3 and M4 keys
+    if (isNeoModifier) {
+        return true;
+    }
     // early exit if key is not in map
     if (!(vk in M)) {
         return false;
     }
+
+    // setting eat = true stops the keypress from propagating further
+    bool eat = false;
 
     // translate keypress to NEO layout factoring in the current layer
     NeoKey nk = mapToNeo(vk, layer);
