@@ -276,7 +276,12 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
 
     if (mod4Lock) {
-        layer = 4;
+        if (mod4Down) {
+            // switch back to layer 1 while holding mod 4
+            layer = 1;
+        } else {
+            layer = 4;
+        }
     }
 
     // We want to treat layers 1 and 2 the same in terms of checking whether we switched

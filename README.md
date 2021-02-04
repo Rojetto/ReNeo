@@ -5,7 +5,7 @@ There are two important build types:
 
 # Tasks
 - [x] investigate telegram problem
-- [ ] temporary lock override
+- [x] temporary lock override
 - [ ] write readme
 - [ ] check if app is already running
 - [ ] executable icon
