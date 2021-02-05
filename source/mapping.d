@@ -62,8 +62,10 @@ void initMapping() {
     M['N']              = [mVK("n", 'N'),                   mVK("N", 'N'),                  mCH("parenleft", '('),              mVK("KP_4", VK_NUMPAD4),            mCH("Greek_nu", 'ν'),           mCH("U2115", 'ℕ')];
     M['R']              = [mVK("r", 'R'),                   mVK("R", 'R'),                  mCH("parenright", ')'),             mVK("KP_5", VK_NUMPAD5),            mCH("Greek_rho", 'ρ'),          mCH("U211D", 'ℝ')];
     M['T']              = [mVK("t", 'T'),                   mVK("T", 'T'),                  mCH("minus", '-'),                  mVK("KP_6", VK_NUMPAD6),            mCH("Greek_tau", 'τ'),          mCH("partdifferential", '∂')];
-    M['D']              = [mVK("d", 'D'),                   mVK("D", 'D'),                  mCH("colon", ':'),                  mVK("KP_Separator", VK_SEPARATOR),  mCH("Greek_delta", 'δ'),        mCH("Greek_DELTA", 'Δ')];
-    M['Y']              = [mVK("y", 'Y'),                   mVK("Y", 'Y'),                  mCH("at", '@'),                     mVK("KP_Decimal", VK_DECIMAL),      mCH("Greek_upsilon", 'υ'),      mCH("nabla", '∇')];
+    // Layer 4 on this one is weird. According to spec it should send KP_Separator which allegedly corresponds to a comma. However, the Windows equivalent VK_SEPARATOR doesn't generate any character.
+    // Instead, VK_DECIMAL generates a comma, whereas I would have expected it to generate a period. So for compose purposes we label this KP_Separator, but actually send a VK_DECIMAL which results in a comma.
+    M['D']              = [mVK("d", 'D'),                   mVK("D", 'D'),                  mCH("colon", ':'),                  mVK("KP_Separator", VK_DECIMAL),    mCH("Greek_delta", 'δ'),        mCH("Greek_DELTA", 'Δ')];
+    M['Y']              = [mVK("y", 'Y'),                   mVK("Y", 'Y'),                  mCH("at", '@'),                     mCH("period", '.'),                 mCH("Greek_upsilon", 'υ'),      mCH("nabla", '∇')];
 
     M[VK_OEM_5]         = [mVK("udiaeresis", VK_OEM_5),     mVK("Udiaeresis", VK_OEM_5),    mCH("numbersign", '#'),             mVK("Escape", VK_ESCAPE),           VOID_KEY,                       mCH("downshoe", '∪')];
     M[VK_OEM_6]         = [mVK("odiaeresis", VK_OEM_6),     mVK("Odiaeresis", VK_OEM_6),    mCH("dollar", '$'),                 mVK("Tab", VK_TAB),                 mCH("U03F5", 'ϵ'),              mCH("intersection", '∩')];
