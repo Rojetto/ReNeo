@@ -219,21 +219,21 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // KBDNEO uses VK_OEM_102 for M3 und VK_OEM_8 for M4
     // ReNEO uses 0x8A for M3L, 0x8B for M3R, 0x8C for M4L and 0x8D for M4R
     if (vk == VK_LSHIFT) {
-        leftShiftDown = down;
-
         // CAPSLOCK by pressing both Shift keys
-        // TODO: Handle repeat correctly
-        if (down && rightShiftDown) {
+        // leftShiftDown contains previous state
+        if (!leftShiftDown && down && rightShiftDown) {
             sendVK(VK_CAPITAL, true);
             sendVK(VK_CAPITAL, false);
         }
-    } else if (vk == VK_RSHIFT) {
-        rightShiftDown = down;
 
-        if (down && leftShiftDown) {
+        leftShiftDown = down;
+    } else if (vk == VK_RSHIFT) {
+        if (!rightShiftDown && down && leftShiftDown) {
             sendVK(VK_CAPITAL, true);
             sendVK(VK_CAPITAL, false);
         }
+
+        rightShiftDown = down;
     } else if (vk == 0x8A || (vk == VK_OEM_102 && scan == 0x3A)) {
         leftMod3Down = down;
         isNeoModifier = true;
