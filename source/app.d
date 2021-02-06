@@ -1,14 +1,32 @@
 import core.sys.windows.windows;
+import core.stdc.stdio;
+import core.stdc.wchar_;
 
 import reneo;
 import mapping;
 import composer;
 import std.path;
+import std.utf;
+import std.string;
+import std.conv;
 
 HHOOK hHook;
+HWINEVENTHOOK foregroundHook;
+
+bool keyboardHookActive;
+bool foregroundWindowChanged;
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
+    if (foregroundWindowChanged) {
+        checkKeyboardLayout();
+        foregroundWindowChanged = false;
+    }
+
+    if (!keyboardHookActive) {
+        return CallNextHookEx(hHook, nCode, wParam, lParam);
+    }
+
     auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
     auto msg_struct = *msg_ptr;
 
@@ -36,6 +54,55 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 
+bool isKbdneoActive() nothrow @nogc {
+    HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
+    
+    return doesInputLocaleUseKbdneo(inputLocale);
+}
+
+bool doesInputLocaleUseKbdneo(HKL inputLocale) nothrow @nogc {
+    // because of @nogc we can't use most of the nice phobos string functions here :(
+    // Getting the layout name (which we can then look up in the registry) is a little tricky
+    // https://stackoverflow.com/a/19321020/1610421
+    ActivateKeyboardLayout(inputLocale, KLF_SETFORPROCESS);
+    wchar[KL_NAMELENGTH] layoutName;
+    GetKeyboardLayoutNameW(layoutName.ptr);
+
+    wchar[256] regKey;
+    wcscpy(regKey.ptr, r"SYSTEM\ControlSet001\Control\Keyboard Layouts\"w.ptr);
+    wcscat(regKey.ptr, layoutName.ptr);
+
+    wstring valueName = "Layout File\0"w;
+
+    wchar[256] layoutFile;
+    uint bufferSize = layoutFile.length;
+    auto readResult = RegGetValueW(HKEY_LOCAL_MACHINE, regKey.ptr, valueName.ptr, RRF_RT_REG_SZ, NULL, layoutFile.ptr, &bufferSize);
+    if (readResult != ERROR_SUCCESS) {
+        debug_writeln("Could not read active keyboard layout DLL from registry");
+        // If the user is running this script they probably also mainly use Neo so we'd rather have the app running.
+        return true;
+    }
+
+    return wcscmp(layoutFile.ptr, "kbdneo2.dll"w.ptr) == 0;
+}
+
+void checkKeyboardLayout() nothrow @nogc {
+    bool kbdneoActive = isKbdneoActive();
+
+    if (!keyboardHookActive && kbdneoActive) {
+        debug_writeln("Keyboard layout changed, activating ReNeo");
+    } else if (keyboardHookActive && !kbdneoActive) {
+        debug_writeln("Keyboard layout changed, deactivating ReNeo");
+    }
+
+    keyboardHookActive = kbdneoActive;
+}
+
+extern (Windows)
+void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow @nogc {
+    foregroundWindowChanged = true;
+}
+
 void main(string[] args) {
     debug_writeln("Starting ReNeo squire...");
     auto exeDir = dirName(absolutePath(buildNormalizedPath(args[0])));
@@ -45,14 +112,27 @@ void main(string[] args) {
     initCompose(exeDir);
     debug_writeln("Initialization complete!");
 
+    checkKeyboardLayout();
+
     HINSTANCE hInstance = GetModuleHandle(NULL);
     hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
     debug_writeln("Keyboard hook active!");
+
+    // We want to detect when the selected keyboard layout changes so that we can activate or deactivate ReNeo as necessary.
+    // Listening to input locale events directly is difficult and not very robust. So we listen to the foreground window changes
+    // (which also fire when the language bar is activated) and then recheck the keyboard layout on the next keypress.
+    foregroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
+    if (foregroundHook) {
+        debug_writeln("Foreground window hook active!");
+    } else {
+        debug_writeln("Could not install foreground window hook!");
+    }
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+        debug_writeln("Message loop");
     }
 
     UnhookWindowsHookEx(hHook);

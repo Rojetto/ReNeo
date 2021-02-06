@@ -43,6 +43,7 @@ Es gibt zwei wichtige Kompilationsvarianten:
 2. Release mit `dub build --build=release`: Optimierungen sind aktiviert und es wird keine Konsole geöffnet.
 
 ## Offene Aufgaben
+- [x] Automatisch deaktivieren, wenn anderes Tastaturlayout aktiv
 - [ ] Prüfung ob Anwendung bereits läuft
 - [ ] Icon für EXE
 - [ ] Tray Icon (braucht man das tatsächlich?)

@@ -9,6 +9,7 @@
 	],
 	"license": "GPL-3.0",
     "name": "reneo",
+    "versions": ["Windows10"],
     "buildTypes": {
         "plain": {
             "buildOptions": ["debugMode", "debugInfo"]
