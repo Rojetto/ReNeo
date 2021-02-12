@@ -176,8 +176,8 @@ void sendNeoKey(NeoKey nk, bool down) nothrow {
 }
 
 NeoKey mapToNeo(VK vk, uint layer) nothrow {
-    if (vk in M) {
-        return M[vk][layer - 1];
+    if (vk in MAPS[activeLayout]) {
+        return MAPS[activeLayout][vk][layer - 1];
     }
 
     return VOID_KEY;
@@ -197,6 +197,8 @@ uint previousLayer = 1;
 
 // when we press a VK, store what NeoKey we send so that we can release it correctly later
 NeoKey[VK] heldKeys;
+
+LayoutName activeLayout = LayoutName.NEO;
 
 
 bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
@@ -307,7 +309,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         return true;
     }
     // early exit if key is not in map
-    if (!(vk in M)) {
+    if (!(vk in MAPS[activeLayout])) {
         return false;
     }
 
