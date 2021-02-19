@@ -54,13 +54,13 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 
-bool isKbdneoActive() nothrow @nogc {
+int getNeoLayoutName() nothrow @nogc {
     HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
     
-    return doesInputLocaleUseKbdneo(inputLocale);
+    return inputLocaleToLayoutName(inputLocale);
 }
 
-bool doesInputLocaleUseKbdneo(HKL inputLocale) nothrow @nogc {
+int inputLocaleToLayoutName(HKL inputLocale) nothrow @nogc {
     // because of @nogc we can't use most of the nice phobos string functions here :(
     // Getting the layout name (which we can then look up in the registry) is a little tricky
     // https://stackoverflow.com/a/19321020/1610421
@@ -83,19 +83,36 @@ bool doesInputLocaleUseKbdneo(HKL inputLocale) nothrow @nogc {
         return true;
     }
 
-    return wcscmp(layoutFile.ptr, "kbdneo2.dll"w.ptr) == 0;
+    if (wcscmp(layoutFile.ptr, "kbdneo2.dll"w.ptr) == 0) {
+        return LayoutName.NEO;
+    } else if (wcscmp(layoutFile.ptr, "kbdbone.dll"w.ptr) == 0) {
+        return LayoutName.BONE;
+    } else if (wcscmp(layoutFile.ptr, "kbdgr2.dll"w.ptr) == 0) {
+        return LayoutName.NEOQWERTZ;
+    }
+
+    return -1;
 }
 
 void checkKeyboardLayout() nothrow @nogc {
-    bool kbdneoActive = isKbdneoActive();
+    int layoutName = getNeoLayoutName();
 
-    if (!keyboardHookActive && kbdneoActive) {
-        debug_writeln("Keyboard layout changed, activating ReNeo");
-    } else if (keyboardHookActive && !kbdneoActive) {
-        debug_writeln("Keyboard layout changed, deactivating ReNeo");
+    if (layoutName >= 0) {
+        if (!keyboardHookActive) {
+            debug_writeln("Activating keyboard hook");
+        }
+
+        keyboardHookActive = true;
+        if (setActiveLayout(cast(LayoutName) layoutName)) {
+            debug_writeln("Changing keyboard layout to ", cast(LayoutName) layoutName);
+        }
+    } else {
+        if (keyboardHookActive) {
+            debug_writeln("Deactivating keyboard hook");
+        }
+
+        keyboardHookActive = false;
     }
-
-    keyboardHookActive = kbdneoActive;
 }
 
 extern (Windows)

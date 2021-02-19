@@ -201,6 +201,13 @@ NeoKey[VK] heldKeys;
 LayoutName activeLayout = LayoutName.NEO;
 
 
+bool setActiveLayout(LayoutName newLayout) nothrow @nogc {
+    bool changed = newLayout != activeLayout;
+    activeLayout = newLayout;
+    return changed;
+}
+
+
 bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     auto vk = msg_struct.vkCode;
     auto scan = msg_struct.scanCode;
