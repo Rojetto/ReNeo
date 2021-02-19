@@ -16,6 +16,7 @@ Funktionen wie Capslock, die Steuertasten auf Ebene 4 und Compose können techni
 - *Alle* tote Tasten und Compose-Kombinationen. Diese sind auch durch den Nutzer erweiterbar, alle `.module`-Dateien im Verzeichnis „compose“ werden beim Start geladen.
 - Verbesserte Kompatibilität mit Qt- und GTK-Anwendungen. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
 - Compose-Taste `M3+Tab` sendet keinen Tab mehr an Anwendung. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/397).
+- Funktioniert mit Bone (`kbdbone.dll`) und NeoQwertz (`kbdgr2.dll`). Das aktive Layout wird auf Basis des DLL-Namens erkannt und es wird automatisch umgeschaltet, wenn der Nutzer in Windows das Layout wechselt.
 
 ## Vergleich mit anderen Windows-Treibern
 Der Vergleich bezieht sich auf die Kombination kbdneo+ReNeo.
@@ -24,7 +25,6 @@ Der Vergleich bezieht sich auf die Kombination kbdneo+ReNeo.
 🟢 Alle CoKos, durch Nutzer anpassbar  
 🟢 Behebung der o.g. Bugs  
 🟠 Keine Bildschirmtastatur für obere Ebenen  
-🟠 (noch) keine Unterstützung alternativer Buchstabenanordnungen (Bone etc.)
 
 ### NeoVars
 🟢 Native Integration in Windows Layoutauflistung  
@@ -33,7 +33,6 @@ Der Vergleich bezieht sich auf die Kombination kbdneo+ReNeo.
 🟢 CoKos ohne Rekompilation erweiterbar  
 🟡 Installation von kbdneo braucht Adminrechte  
 🟠 Keine Bildschirmtastatur für obere Ebenen  
-🟠 (noch) keine Unterstützung alternativer Buchstabenanordnungen (Bone etc.)  
 🟠 Keine Extra-Features (Einhandmodus, ſ-Modus, Taschenrechner…)
 
 ## Kompilieren
@@ -53,5 +52,5 @@ Es gibt zwei wichtige Kompilationsvarianten:
 ## Fernziele
 - [ ] Integration in Hauptrepository
 - [ ] Flexibleres Mappingformat
-- [ ] Kompatibilität mit anderen Neo-verwandten Layouts
+- [x] Kompatibilität mit anderen Neo-verwandten Layouts (NeoQwertz und Bone)
 - [ ] UI für Compose
