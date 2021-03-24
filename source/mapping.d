@@ -33,7 +33,7 @@ void initMapping() {
 */
 // ***** Universal mappings *****
 // TODO: check unicode symbols
-M[VK_OEM_1]         = [mCH("dead_circumflex", '^'),     mCH("dead_caron", '\u02c7'),    mCH("U21BB", '\u21bb'),             mCH("dead_abovedot", '\u02d9'),     mCH("dead_hook", '\u02de'),    mCH("dead_belowdot", '.')];
+M[VK_OEM_1]         = [mCH("dead_circumflex", '^'),     mCH("dead_caron", '\u02c7'),    mCH("U21BB", '\u21bb'),             mCH("dead_abovedot", '\u02d9'),     mCH("U02DE", '\u02de'),    mCH("dead_belowdot", '.')];
 // TODO: check correctness
 M[VK_OEM_2]         = [mCH("dead_grave", '\u02cb'),     mCH("dead_cedilla", '\u00b8'),  mCH("dead_abovering", '\u02da'),    mCH("dead_diaeresis", '\u00a8'),    mCH("dead_dasia", '\u1ffe'),   mCH("dead_macron", '\u00af')];
 // TODO: check correctness
