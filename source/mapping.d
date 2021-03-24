@@ -42,17 +42,17 @@ M[VK_OEM_4]         = [mCH("dead_acute", '\u02ca'),     mCH("dead_tilde", '\u02d
 M['1']              = [mVK("1", '1'),                   mCH("degree", '°'),             mCH("onesuperior", '¹'),            mCH("ordfeminine", 'ª'),            mCH("onesubscript", '₁'),      mCH("notsign", '¬')];
 M['2']              = [mVK("2", '2'),                   mCH("section", '§'),            mCH("twosuperior", '²'),            mCH("masculine", 'º'),              mCH("twosubscript", '₂'),      mCH("logicalor", '∨')];
 M['3']              = [mVK("3", '3'),                   mCH("U2113", 'ℓ'),              mCH("threesuperior", '³'),          mCH("numerosign", '№'),             mCH("threesubscript", '₃'),    mCH("logicaland", '∧')];
-M['4']              = [mVK("4", '4'),                   mCH("guillemotright", '»'),     mCH("U203A", '›'),                  mCH("U22EE", '\u22ee'),             mCH("femalesymbol", '♀'),      mCH("uptack", '⊥')];
+M['4']              = [mVK("4", '4'),                   mCH("guillemotright", '»'),     mCH("U203A", '›'),                  VOID_KEY,                           mCH("femalesymbol", '♀'),      mCH("uptack", '⊥')];
 M['5']              = [mVK("5", '5'),                   mCH("guillemotleft", '«'),      mCH("U2039", '‹'),                  mCH("periodcentered", '·'),         mCH("malesymbol", '♂'),        mCH("U2221", '∡')];
 M['6']              = [mVK("6", '6'),                   mCH("dollar", '$'),             mCH("cent", '¢'),                   mCH("sterling", '£'),               mCH("U26A5", '⚥'),             mCH("U2225", '∥')];
 M['7']              = [mVK("7", '7'),                   mCH("EuroSign", '€'),           mCH("yen", '¥'),                    mCH("currency", '¤'),               mCH("U03F0", 'ϰ'),             mCH("rightarrow", '→')];
-M['8']              = [mVK("8", '8'),                   mCH("doublelowquotemark", '„'), mCH("singlelowquotemark", '‚'),     VOID_KEY,                           mCH("leftanglebracket", '⟨'),   mCH("infinity", '∞')];
+M['8']              = [mVK("8", '8'),                   mCH("doublelowquotemark", '„'), mCH("singlelowquotemark", '‚'),     mVK("Tab", VK_TAB),                 mCH("leftanglebracket", '⟨'),   mCH("infinity", '∞')];
 M['9']              = [mVK("9", '9'),                   mCH("leftdoublequotemark", '“'),mCH("leftsinglequotemark", '‘'),    mVK("KP_Divide", VK_DIVIDE),        mCH("rightanglebracket", '⟩'),  mCH("variation", '∝')];
 M['0']              = [mVK("0", '0'),                   mCH("rightdoublequotemark", '”'),mCH("rightsinglequotemark", '’'),  mVK("KP_Multiply", VK_MULTIPLY),    mCH("zerosubscript", '₀'),     mCH("emptyset", '∅')];
 
 // We need to map Return so that compose knows about it
 M[VK_RETURN]        = [mVK("Return", VK_RETURN),        mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN)];
-M[VK_TAB]           = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("Multi_key", '♫'),              mVK("Tab", VK_TAB),                 VOID_KEY,                       VOID_KEY];
+M[VK_TAB]           = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("Multi_key", '♫'),              VOID_KEY,                           VOID_KEY,                       VOID_KEY];
 M[VK_SPACE]         = [mVK("space", VK_SPACE),          mVK("space", VK_SPACE),         mVK("space", VK_SPACE),             mVK("KP_0", VK_NUMPAD0),            mCH("nobreakspace", '\u00a0'),  mCH("U202F", '\u202f')];
 
 M[VK_NUMLOCK]       = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("equal", '='),                  mCH("notequal", '≠'),               mCH("U2248", '≈'),              mCH("identical", '≡')];
@@ -83,7 +83,7 @@ switch (mn) {
 // Layer 4 on 'D' is weird. According to spec it should send KP_Separator which allegedly corresponds to a comma. However, the Windows equivalent VK_SEPARATOR doesn't generate any character.
 // Instead, VK_DECIMAL generates a comma, whereas I would have expected it to generate a period. So for compose purposes we label this KP_Separator, but actually send a VK_DECIMAL which results in a comma.
 case LayoutName.NEO:
-M[VK_OEM_MINUS]     = [mVK("minus", VK_OEM_MINUS),      mCH("emdash", '—'),             VOID_KEY,                           mVK("minus", VK_OEM_MINUS),         mCH("U2011", '‑'),                 mCH("U00AD", '\u00ad')];
+M[VK_OEM_MINUS]     = [mVK("minus", VK_OEM_MINUS),      mCH("emdash", '—'),             VOID_KEY,                           mVK("KP_Subtract", VK_SUBTRACT),    mCH("U2011", '‑'),                 mCH("U00AD", '\u00ad')];
 
 M['X']              = [mVK("x", 'X'),                   mVK("X", 'X'),                  mCH("ellipsis", '…'),               mVK("Page_Up", VK_PRIOR),           mCH("Greek_xi", 'ξ'),              mCH("Greek_XI", 'Ξ')];
 M['V']              = [mVK("v", 'V'),                   mVK("V", 'V'),                  mCH("underbar", '_'),               mVK("BackSpace", VK_BACK),          VOID_KEY,                          mCH("radical", '√')];
@@ -95,7 +95,7 @@ M['H']              = [mVK("h", 'H'),                   mVK("H", 'H'),          
 M['G']              = [mVK("g", 'G'),                   mVK("G", 'G'),                  mCH("rightcaret", '>'),             mVK("KP_8", VK_NUMPAD8),            mCH("Greek_gamma", 'γ'),           mCH("Greek_GAMMA", 'Γ')];
 M['F']              = [mVK("f", 'F'),                   mVK("F", 'F'),                  mCH("equal", '='),                  mVK("KP_9", VK_NUMPAD9),            mCH("Greek_phi", 'φ'),             mCH("Greek_PHI", 'Φ')];
 M['Q']              = [mVK("q", 'Q'),                   mVK("Q", 'Q'),                  mCH("ampersand", '&'),              mVK("KP_Add", VK_ADD),              mCH("U03D5", 'ϕ'),                 mCH("U211A", 'ℚ')];
-M[VK_OEM_3]         = [mVK("ssharp", VK_OEM_3),         mVK("U1E9E", VK_OEM_3),         mCH("U017F", 'ſ'),                  mVK("KP_Subtract", VK_SUBTRACT),    mCH("Greek_finalsmallsigma", 'ς'), mCH("jot", '∘')];
+M[VK_OEM_3]         = [mVK("ssharp", VK_OEM_3),         mVK("U1E9E", VK_OEM_3),         mCH("U017F", 'ſ'),                  mCH("U2212", '−'),                  mCH("Greek_finalsmallsigma", 'ς'), mCH("jot", '∘')];
 
 M['U']              = [mVK("u", 'U'),                   mVK("U", 'U'),                  mCH("backslash", '\\'),             mVK("Home", VK_HOME),               VOID_KEY,                          mCH("leftshoe", '⊂')];
 M['I']              = [mVK("i", 'I'),                   mVK("I", 'I'),                  mCH("slash", '/'),                  mVK("Left", VK_LEFT),               mCH("Greek_iota", 'ι'),            mCH("integral", '∫')];
@@ -122,7 +122,7 @@ M['J']              = [mVK("j", 'J'),                   mVK("J", 'J'),          
 break;
 
 case LayoutName.BONE:
-M[VK_OEM_MINUS]     = [mVK("minus", VK_OEM_MINUS),      mCH("emdash", '—'),             VOID_KEY,                           mVK("minus", VK_OEM_MINUS),         mCH("U2011", '‑'),                 mCH("U00AD", '\u00ad')];
+M[VK_OEM_MINUS]     = [mVK("minus", VK_OEM_MINUS),      mCH("emdash", '—'),             VOID_KEY,                           mVK("KP_Subtract", VK_SUBTRACT),    mCH("U2011", '‑'),                 mCH("U00AD", '\u00ad')];
 
 M['J']              = [mVK("j", 'J'),                   mVK("J", 'J'),                  mCH("ellipsis", '…'),               mVK("Page_Up", VK_PRIOR),           mCH("Greek_theta", 'θ'),           mCH("Greek_THETA", 'Θ')];
 M['D']              = [mVK("d", 'D'),                   mVK("D", 'D'),                  mCH("underbar", '_'),               mVK("BackSpace", VK_BACK),          mCH("Greek_delta", 'δ'),           mCH("Greek_DELTA", 'Δ')];
@@ -134,7 +134,7 @@ M['H']              = [mVK("h", 'H'),                   mVK("H", 'H'),          
 M['L']              = [mVK("l", 'L'),                   mVK("L", 'L'),                  mCH("rightcaret", '>'),             mVK("KP_8", VK_NUMPAD8),            mCH("Greek_lamda", 'λ'),           mCH("Greek_LAMDA", 'Λ')];
 M['M']              = [mVK("m", 'M'),                   mVK("M", 'M'),                  mCH("equal", '='),                  mVK("KP_9", VK_NUMPAD9),            mCH("Greek_mu", 'μ'),              mCH("ifonlyif", '⇔')];
 M['W']              = [mVK("w", 'W'),                   mVK("W", 'W'),                  mCH("ampersand", '&'),              mVK("KP_Add", VK_ADD),              mCH("Greek_omega", 'ω'),           mCH("Greek_OMEGA", 'Ω')];
-M[VK_OEM_3]         = [mVK("ssharp", VK_OEM_3),         mVK("U1E9E", VK_OEM_3),         mCH("U017F", 'ſ'),                  mVK("KP_Subtract", VK_SUBTRACT),    mCH("Greek_finalsmallsigma", 'ς'), mCH("jot", '∘')];
+M[VK_OEM_3]         = [mVK("ssharp", VK_OEM_3),         mVK("U1E9E", VK_OEM_3),         mCH("U017F", 'ſ'),                  mCH("U2212", '−'),                  mCH("Greek_finalsmallsigma", 'ς'), mCH("jot", '∘')];
 
 M['C']              = [mVK("c", 'C'),                   mVK("C", 'C'),                  mCH("backslash", '\\'),             mVK("Home", VK_HOME),               mCH("Greek_chi", 'χ'),             mCH("U2102", 'ℂ')];
 M['T']              = [mVK("t", 'T'),                   mVK("T", 'T'),                  mCH("slash", '/'),                  mVK("Left", VK_LEFT),               mCH("Greek_tau", 'τ'),             mCH("partdifferential", '∂')];
@@ -161,7 +161,7 @@ M['K']              = [mVK("k", 'K'),                   mVK("K", 'K'),          
 break;
 
 case LayoutName.NEOQWERTZ:
-M[VK_OEM_3]         = [mVK("ssharp", VK_OEM_3),         mVK("U1E9E", VK_OEM_3),         VOID_KEY,                           mVK("minus", VK_OEM_MINUS),         mCH("Greek_finalsmallsigma", 'ς'), mCH("jot", '∘')];
+M[VK_OEM_3]         = [mVK("ssharp", VK_OEM_3),         mVK("U1E9E", VK_OEM_3),         VOID_KEY,                           mVK("KP_Subtract", VK_SUBTRACT),    mCH("Greek_finalsmallsigma", 'ς'), mCH("jot", '∘')];
 
 M['Q']              = [mVK("q", 'Q'),                   mVK("Q", 'Q'),                  mCH("ellipsis", '…'),               mVK("Page_Up", VK_PRIOR),           mCH("U03D5", 'ϕ'),                 mCH("U211A", 'ℚ')];
 M['W']              = [mVK("w", 'W'),                   mVK("W", 'W'),                  mCH("underbar", '_'),               mVK("BackSpace", VK_BACK),          mCH("Greek_omega", 'ω'),           mCH("Greek_OMEGA", 'Ω')];
@@ -173,7 +173,7 @@ M['U']              = [mVK("u", 'U'),                   mVK("U", 'U'),          
 M['I']              = [mVK("i", 'I'),                   mVK("I", 'I'),                  mCH("rightcaret", '>'),             mVK("KP_8", VK_NUMPAD8),            mCH("Greek_iota", 'ι'),            mCH("integral", '∫')];
 M['O']              = [mVK("o", 'O'),                   mVK("O", 'O'),                  mCH("equal", '='),                  mVK("KP_9", VK_NUMPAD9),            mCH("Greek_omicron", 'ο'),         mCH("elementof", '∈')];
 M['P']              = [mVK("p", 'P'),                   mVK("P", 'P'),                  mCH("ampersand", '&'),              mVK("KP_Add", VK_ADD),              mCH("Greek_pi", 'π'),              mCH("Greek_PI", 'Π')];
-M[VK_OEM_5]         = [mVK("udiaeresis", VK_OEM_5),     mVK("Udiaeresis", VK_OEM_5),    mCH("U017F", 'ſ'),                  mVK("KP_Subtract", VK_SUBTRACT),    VOID_KEY,                          mCH("downshoe", '∪')];
+M[VK_OEM_5]         = [mVK("udiaeresis", VK_OEM_5),     mVK("Udiaeresis", VK_OEM_5),    mCH("U017F", 'ſ'),                  mCH("U2212", '−'),                  VOID_KEY,                          mCH("downshoe", '∪')];
 
 M['A']              = [mVK("a", 'A'),                   mVK("A", 'A'),                  mCH("backslash", '\\'),             mVK("Home", VK_HOME),               mCH("Greek_alpha", 'α'),           mCH("U2200", '∀')];
 M['S']              = [mVK("s", 'S'),                   mVK("S", 'S'),                  mCH("slash", '/'),                  mVK("Left", VK_LEFT),               mCH("Greek_sigma", 'σ'),           mCH("Greek_SIGMA", 'Σ')];
