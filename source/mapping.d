@@ -52,7 +52,7 @@ M['0']              = [mVK("0", '0'),                   mCH("rightdoublequotemar
 
 // We need to map Return so that compose knows about it
 M[VK_RETURN]        = [mVK("Return", VK_RETURN),        mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN)];
-M[VK_TAB]           = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("Multi_key", '♫'),              VOID_KEY,                           VOID_KEY,                       VOID_KEY];
+M[VK_TAB]           = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("Multi_key", '♫'),              mVK("Tab", VK_TAB),                 VOID_KEY,                       VOID_KEY];
 M[VK_SPACE]         = [mVK("space", VK_SPACE),          mVK("space", VK_SPACE),         mVK("space", VK_SPACE),             mVK("KP_0", VK_NUMPAD0),            mCH("nobreakspace", '\u00a0'),  mCH("U202F", '\u202f')];
 
 M[VK_NUMLOCK]       = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("equal", '='),                  mCH("notequal", '≠'),               mCH("U2248", '≈'),              mCH("identical", '≡')];
