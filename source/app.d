@@ -5,6 +5,7 @@ import core.stdc.wchar_;
 import reneo;
 import mapping;
 import composer;
+import trayicon;
 import std.path;
 import std.utf;
 import std.string;
@@ -15,6 +16,17 @@ HWINEVENTHOOK foregroundHook;
 
 bool keyboardHookActive;
 bool foregroundWindowChanged;
+bool appEnabled;
+
+HMENU contextMenu;
+HICON iconEnabled;
+HICON iconDisabled;
+
+const UINT ID_MYTRAYICON = 0x1000;
+
+const APPNAME            = "ReNeo";
+
+TrayIcon trayIcon;
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
@@ -115,6 +127,20 @@ void checkKeyboardLayout() nothrow @nogc {
     }
 }
 
+
+extern(Windows)
+LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
+    switch (msg) {
+        case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+
+        default: break;
+    }
+
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
 extern (Windows)
 void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow @nogc {
     foregroundWindowChanged = true;
@@ -144,6 +170,24 @@ void main(string[] args) {
     } else {
         debug_writeln("Could not install foreground window hook!");
     }
+
+    HWND hwnd;
+    WNDCLASS wndclass;
+
+    // The necessary actions for getting a handle without displaying an actual window
+    wndclass.lpszClassName = "MyWindow";
+    wndclass.lpfnWndProc   = &WndProc;
+    RegisterClass(&wndclass);
+    hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, hInstance, NULL);
+    ShowWindow(hwnd, 1);
+    UpdateWindow(hwnd);
+
+    // Install icon in notification area, based on the hwnd
+    iconEnabled = LoadImage(NULL, "neo_enabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+    iconDisabled = LoadImage(NULL, "neo_disabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+
+    trayIcon = new TrayIcon(hwnd, ID_MYTRAYICON, iconEnabled, APPNAME.to!(wchar[]));
+    trayIcon.show();
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
