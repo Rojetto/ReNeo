@@ -143,6 +143,11 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
 
     switch (msg) {
         case WM_DESTROY:
+        // Hide the tray icon and cleanup before closing the application
+        trayIcon.hide();
+        DestroyMenu(contextMenu);
+        // Not necessary to unload icons loaded from file
+        
         PostQuitMessage(0);
         break;
 
@@ -180,8 +185,6 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             break;
 
             case ID_TRAY_QUIT_CONTEXTMENU:
-            // Hide the tray icon before gracefully closing the application
-            trayIcon.hide();
             SendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
 
@@ -210,10 +213,10 @@ void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
 
 void updateContextMenu() {
     if (!keyboardHookActive) {
-        trayIcon.icon(iconDisabled);
+        trayIcon.setIcon(iconDisabled);
         modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, enableAppMenuMsg);
     } else {
-        trayIcon.icon(iconEnabled);
+        trayIcon.setIcon(iconEnabled);
         modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg);
     }
 }

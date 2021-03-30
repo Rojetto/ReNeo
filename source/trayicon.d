@@ -1,7 +1,6 @@
 module trayicon;
 
 import core.sys.windows.windows;
-import std.conv;
 
 const UINT WM_TRAYICON = WM_USER + 10;
 
@@ -22,7 +21,7 @@ class TrayIcon {
         // handle keyboard and mouse events differently beginning with Windows 2000.
         nid.uVersion = NOTIFYICON_VERSION;
 
-        this.tip(tooltip);
+        this.setTip(tooltip);
     }
     
     ~this() {
@@ -59,7 +58,7 @@ class TrayIcon {
         return nid.szTip[0 .. tipLen];
     }
 
-    void tip(wchar[] newTip) {
+    void setTip(wchar[] newTip) {
         tipLen = (newTip.length > MAX_TIPLEN) ? MAX_TIPLEN : newTip.length;
         nid.szTip[0 .. tipLen] = newTip[0 .. tipLen];
         nid.szTip[tipLen] = 0;
@@ -72,7 +71,7 @@ class TrayIcon {
         return nid.hIcon;
     }   
 
-    void icon(HICON hnewIcon) {
+    void setIcon(HICON hnewIcon) {
         nid.hIcon = hnewIcon;
         if(visible) {
             Shell_NotifyIcon(NIM_MODIFY, &nid);
@@ -80,13 +79,11 @@ class TrayIcon {
     }
 
     void showContextMenu(HWND hwndParent, HMENU menu) {
-        // TODO positional argument for displaying the menu (top/bottom, left/right)
         POINT curPoint;
         GetCursorPos(&curPoint);
 
         SetForegroundWindow(hwndParent);
-        TrackPopupMenuEx(menu, TPM_LEFTBUTTON | TPM_RIGHTBUTTON, curPoint.x, curPoint.y, hwndParent, NULL);
+        // Alignment for contextmenu left/bottom, which seems the most practical and common use
+        TrackPopupMenuEx(menu, TPM_LEFTBUTTON | TPM_RIGHTBUTTON | TPM_LEFTALIGN | TPM_BOTTOMALIGN, curPoint.x, curPoint.y, hwndParent, NULL);
     }
-
-
 }
