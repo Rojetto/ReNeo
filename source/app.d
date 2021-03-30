@@ -221,7 +221,7 @@ void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idOb
 
 void main(string[] args) {
     debug_writeln("Starting ReNeo squire...");
-    auto exeDir = dirName(absolutePath(buildNormalizedPath(args[0])));
+    auto exeDir = dirName(buildNormalizedPath(absolutePath(args[0])));
     debug_writeln("EXE located in ", exeDir);
     initKeysyms(exeDir);
     initMapping();
