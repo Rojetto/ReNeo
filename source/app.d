@@ -14,7 +14,7 @@ import std.conv;
 HHOOK hHook;
 HWINEVENTHOOK foregroundHook;
 
-bool keyboardHookActive;
+bool bypassMode;
 bool foregroundWindowChanged;
 bool appEnabled;
 
@@ -43,7 +43,7 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
         foregroundWindowChanged = false;
     }
 
-    if (!keyboardHookActive) {
+    if (bypassMode) {
         return CallNextHookEx(hHook, nCode, wParam, lParam);
     }
 
@@ -118,20 +118,20 @@ void checkKeyboardLayout() nothrow @nogc {
     int layoutName = getNeoLayoutName();
 
     if (layoutName >= 0) {
-        if (!keyboardHookActive) {
-            debug_writeln("Activating keyboard hook");
+        if (bypassMode) {
+            debug_writeln("No bypassing keyboard input");
         }
 
-        keyboardHookActive = true;
+        bypassMode = false;
         if (setActiveLayout(cast(LayoutName) layoutName)) {
             debug_writeln("Changing keyboard layout to ", cast(LayoutName) layoutName);
         }
     } else {
-        if (keyboardHookActive) {
-            debug_writeln("Deactivating keyboard hook");
+        if (!bypassMode) {
+            debug_writeln("Starting bypass mode");
         }
 
-        keyboardHookActive = false;
+        bypassMode = true;
     }
 }
 
