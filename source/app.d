@@ -16,7 +16,7 @@ HWINEVENTHOOK foregroundHook;
 
 bool bypassMode;
 bool foregroundWindowChanged;
-bool appEnabled;
+bool keyboardHookActive;
 
 HMENU contextMenu;
 HICON iconEnabled;
@@ -170,7 +170,8 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         case WM_COMMAND:
         switch (wParam) {
             case ID_TRAY_ACTIVATE_CONTEXTMENU:
-            switchApplicationStatus();
+            switchKeyboardHook();
+            updateContextMenu();
             break;
 
             case ID_TRAY_RELOAD_CONTEXTMENU:
@@ -207,18 +208,28 @@ void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
     SetMenuItemInfo(hMenu, id, 0, &mii);
 }
 
-void switchApplicationStatus() {
-    // TODO Remove / Reinstall keyboard hook on changing the application status
-
-    if (appEnabled) {
+void updateContextMenu() {
+    if (!keyboardHookActive) {
         trayIcon.icon(iconDisabled);
         modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, enableAppMenuMsg);
-        appEnabled = false;
     } else {
         trayIcon.icon(iconEnabled);
         modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg);
-        appEnabled = true;
     }
+}
+
+void switchKeyboardHook() {
+    if (!keyboardHookActive) {
+        HINSTANCE hInstance = GetModuleHandle(NULL);
+        hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
+        debug_writeln("Keyboard hook active!");
+        checkKeyboardLayout();
+    } else {
+        UnhookWindowsHookEx(hHook);
+        debug_writeln("Keyboard hook inactive!");
+    }
+
+    keyboardHookActive = !keyboardHookActive;
 }
 
 
@@ -232,7 +243,6 @@ void initialize() {
     initMapping();
     initCompose(executableDir);
     debug_writeln("Initialization complete!");
-    checkKeyboardLayout();
 }
 
 void main(string[] args) {
@@ -240,9 +250,8 @@ void main(string[] args) {
     executableDir = dirName(buildNormalizedPath(absolutePath(args[0])));
     initialize();
 
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
-    debug_writeln("Keyboard hook active!");
+    keyboardHookActive = false;
+    switchKeyboardHook();
 
     // We want to detect when the selected keyboard layout changes so that we can activate or deactivate ReNeo as necessary.
     // Listening to input locale events directly is difficult and not very robust. So we listen to the foreground window changes
@@ -261,7 +270,7 @@ void main(string[] args) {
     wndclass.lpszClassName = "MyWindow";
     wndclass.lpfnWndProc   = &WndProc;
     RegisterClass(&wndclass);
-    hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, hInstance, NULL);
+    hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, GetModuleHandle(NULL), NULL);
 
     // Install icon in notification area, based on the hwnd
     iconEnabled = LoadImage(NULL, "neo_enabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
@@ -269,7 +278,6 @@ void main(string[] args) {
 
     trayIcon = new TrayIcon(hwnd, ID_MYTRAYICON, iconEnabled, APPNAME.to!(wchar[]));
     trayIcon.show();
-    appEnabled = true;
 
     // Define context menu
     contextMenu = CreatePopupMenu();
@@ -286,5 +294,5 @@ void main(string[] args) {
         debug_writeln("Message loop");
     }
 
-    UnhookWindowsHookEx(hHook);
+    if (keyboardHookActive) { switchKeyboardHook(); }
 }
