@@ -59,6 +59,7 @@ void initKeysyms(string exeDir) {
     auto unicode_pattern_with_parens = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\*\(U\+([0-9A-F]{4,6}) (.*)\)\*\/\s*$";
     // group 1: name, group 2: hex, group 3 and 4: comment stuff
     auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
+    keysymdefs.clear();
 
     File f = File(keysymfile, "r");
 	while(!f.eof()) {

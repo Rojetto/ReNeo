@@ -24,12 +24,15 @@ HICON iconDisabled;
 
 const UINT ID_MYTRAYICON = 0x1000;
 const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
-const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x1101;
+const UINT ID_TRAY_RELOAD_CONTEXTMENU = 0x1101;
+const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x110F;
 string disableAppMenuMsg = "ReNeo deaktivieren";
 string enableAppMenuMsg  = "ReNeo aktivieren";
+string reloadMenuMsg     = "Neu laden";
 string quitMenuMsg       = "ReNeo beenden";
 
 const APPNAME            = "ReNeo";
+string executableDir;
 
 TrayIcon trayIcon;
 
@@ -170,6 +173,11 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             switchApplicationStatus();
             break;
 
+            case ID_TRAY_RELOAD_CONTEXTMENU:
+            debug_writeln("Re-initialize...");
+            initialize();
+            break;
+
             case ID_TRAY_QUIT_CONTEXTMENU:
             // Hide the tray icon before gracefully closing the application
             trayIcon.hide();
@@ -219,16 +227,18 @@ void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idOb
     foregroundWindowChanged = true;
 }
 
+void initialize() {
+    initKeysyms(executableDir);
+    initMapping();
+    initCompose(executableDir);
+    debug_writeln("Initialization complete!");
+    checkKeyboardLayout();
+}
+
 void main(string[] args) {
     debug_writeln("Starting ReNeo squire...");
-    auto exeDir = dirName(buildNormalizedPath(absolutePath(args[0])));
-    debug_writeln("EXE located in ", exeDir);
-    initKeysyms(exeDir);
-    initMapping();
-    initCompose(exeDir);
-    debug_writeln("Initialization complete!");
-
-    checkKeyboardLayout();
+    executableDir = dirName(buildNormalizedPath(absolutePath(args[0])));
+    initialize();
 
     HINSTANCE hInstance = GetModuleHandle(NULL);
     hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
@@ -264,6 +274,7 @@ void main(string[] args) {
     // Define context menu
     contextMenu = CreatePopupMenu();
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
     SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
