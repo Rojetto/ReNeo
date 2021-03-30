@@ -23,6 +23,11 @@ HICON iconEnabled;
 HICON iconDisabled;
 
 const UINT ID_MYTRAYICON = 0x1000;
+const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
+const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x1101;
+string disableAppMenuMsg = "ReNeo deaktivieren";
+string enableAppMenuMsg  = "ReNeo aktivieren";
+string quitMenuMsg       = "ReNeo beenden";
 
 const APPNAME            = "ReNeo";
 
@@ -130,16 +135,84 @@ void checkKeyboardLayout() nothrow @nogc {
 
 extern(Windows)
 LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
+    // Huge try block because WndProc is defined as "nothrow"
+    try {
+
     switch (msg) {
         case WM_DESTROY:
         PostQuitMessage(0);
         break;
 
+        case WM_TRAYICON:
+        // From https://docs.microsoft.com/en-us/windows/win32/shell/taskbar#adding-modifying-and-deleting-icons-in-the-notification-area:
+        // The wParam parameter of the message contains the identifier of the taskbar icon in which the event occurred.
+        // The lParam parameter holds the mouse or keyboard message associated with the event.
+
+        // We can omit the check for wParam as we use only a single notification icon
+        switch(lParam) {
+            case WM_LBUTTONDBLCLK:
+            // Execute the same action as the context menu default item
+            auto menuItem = GetMenuDefaultItem(contextMenu, 0, 0);
+            SendMessage(hwnd, WM_COMMAND, menuItem, 0);
+            break;
+
+            case WM_CONTEXTMENU:
+            trayIcon.showContextMenu(hwnd, contextMenu);
+            break;
+
+            default: break;
+        }
+        break;
+
+        case WM_COMMAND:
+        switch (wParam) {
+            case ID_TRAY_ACTIVATE_CONTEXTMENU:
+            switchApplicationStatus();
+            break;
+
+            case ID_TRAY_QUIT_CONTEXTMENU:
+            // Hide the tray icon before gracefully closing the application
+            trayIcon.hide();
+            SendMessage(hwnd, WM_CLOSE, 0, 0);
+            break;
+
+            default: break;
+        }
+        break;
+
         default: break;
+    }
+
+    } catch (Throwable e) {
+        // Doing nothing here. Might better be done in some methods in TrayIcon
     }
 
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
+
+void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
+    // Changing a menu entry is cumbersome by hand (or foot)
+    MENUITEMINFO mii;
+    mii.cbSize = MENUITEMINFO.sizeof;
+    mii.fMask = MIIM_STRING;
+    mii.dwTypeData = toUTFz!(wchar*)(text);
+    SetMenuItemInfo(hMenu, id, 0, &mii);
+}
+
+void switchApplicationStatus() {
+    // TODO Remove / Reinstall keyboard hook on changing the application status
+
+    if (appEnabled) {
+        trayIcon.icon(iconDisabled);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, enableAppMenuMsg);
+        appEnabled = false;
+    } else {
+        trayIcon.icon(iconEnabled);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg);
+        appEnabled = true;
+    }
+}
+
 
 extern (Windows)
 void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow @nogc {
@@ -179,8 +252,6 @@ void main(string[] args) {
     wndclass.lpfnWndProc   = &WndProc;
     RegisterClass(&wndclass);
     hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, hInstance, NULL);
-    ShowWindow(hwnd, 1);
-    UpdateWindow(hwnd);
 
     // Install icon in notification area, based on the hwnd
     iconEnabled = LoadImage(NULL, "neo_enabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
@@ -188,6 +259,14 @@ void main(string[] args) {
 
     trayIcon = new TrayIcon(hwnd, ID_MYTRAYICON, iconEnabled, APPNAME.to!(wchar[]));
     trayIcon.show();
+    appEnabled = true;
+
+    // Define context menu
+    contextMenu = CreatePopupMenu();
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
+    SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
