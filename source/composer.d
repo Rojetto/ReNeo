@@ -49,6 +49,8 @@ struct ComposeFileLine {
 
 void initCompose(string exeDir) {
     debug_writeln("Initializing compose");
+    // reset existing compose tree
+    composeRoot = ComposeNode();
     string composeDir = buildPath(exeDir, "compose");
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
         if (dirEntry.isFile) {
