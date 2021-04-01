@@ -52,11 +52,20 @@ void initCompose(string exeDir) {
     // reset existing compose tree
     composeRoot = ComposeNode();
     string composeDir = buildPath(exeDir, "compose");
+
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
             debug_writeln("Loading compose module ", fname);
             loadModule(fname);
+        }
+    }
+
+    foreach (dirEntry; dirEntries(composeDir, "*.remove", SpanMode.shallow)) {
+        if (dirEntry.isFile) {
+            string fname = dirEntry.name;
+            debug_writeln("Removing compose module ", fname);
+            removeModule(fname);
         }
     }
 }
@@ -104,6 +113,50 @@ void addComposeEntry(ComposeFileLine entry) {
     currentNode.result = entry.result;
 }
 
+void removeComposeEntry(ComposeFileLine entry) {
+    auto currentNode = &composeRoot;
+
+    // navigate to the specified node, abort if it doesn't exist
+    foreach (keysym; entry.keysyms) {
+        bool foundNext;
+
+        foreach (next; currentNode.next) {
+            if (next.keysym == keysym) {
+                foundNext = true;
+                currentNode = next;
+                break;
+            }
+        }
+
+        if (!foundNext) {
+            return;
+        }
+    }
+
+    // check that this node actually outputs what the .remove file expects
+    if (currentNode.result != entry.result) {
+        return;
+    }
+
+    currentNode.result = ""w;
+
+    // then remove nodes in reverse. stop if we reach a node that:
+    // - generates a compose result
+    // - branches off into other compose sequences
+    // - is the root node
+    while (!currentNode.result && currentNode.next.length == 0 && *currentNode != composeRoot) {
+        // remove current node from previous nodes successors
+        for (int i = 0; i < currentNode.prev.next.length; i++) {
+            if (currentNode.prev.next[i].keysym == currentNode.keysym) {
+                currentNode.prev.next = currentNode.prev.next.remove(i);
+                break;
+            }
+        }
+        // move one back
+        currentNode = currentNode.prev;
+    }
+}
+
 void loadModule(string fname) {
     /// Load a .module file and add all entries to the compose tree
     File f = File(fname, "r");
@@ -113,6 +166,21 @@ void loadModule(string fname) {
         try {
             auto entry = parseLine(l);
             addComposeEntry(entry);
+        } catch (Exception e) {
+            // Do nothing, most likely because the line just was a comment
+        }
+    }
+}
+
+void removeModule(string fname) {
+    /// Load a .remove file and remove all matching entries from the compose tree
+    File f = File(fname, "r");
+	while(!f.eof()) {
+		string l = f.readln();
+        
+        try {
+            auto entry = parseLine(l);
+            removeComposeEntry(entry);
         } catch (Exception e) {
             // Do nothing, most likely because the line just was a comment
         }
