@@ -5,6 +5,7 @@ import core.stdc.wchar_;
 import reneo;
 import mapping;
 import composer;
+import trayicon;
 import std.path;
 import std.utf;
 import std.string;
@@ -13,8 +14,27 @@ import std.conv;
 HHOOK hHook;
 HWINEVENTHOOK foregroundHook;
 
-bool keyboardHookActive;
+bool bypassMode;
 bool foregroundWindowChanged;
+bool keyboardHookActive;
+
+HMENU contextMenu;
+HICON iconEnabled;
+HICON iconDisabled;
+
+const UINT ID_MYTRAYICON = 0x1000;
+const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
+const UINT ID_TRAY_RELOAD_CONTEXTMENU = 0x1101;
+const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x110F;
+string disableAppMenuMsg = "ReNeo deaktivieren";
+string enableAppMenuMsg  = "ReNeo aktivieren";
+string reloadMenuMsg     = "Neu laden";
+string quitMenuMsg       = "ReNeo beenden";
+
+const APPNAME            = "ReNeo";
+string executableDir;
+
+TrayIcon trayIcon;
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
@@ -23,7 +43,7 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
         foregroundWindowChanged = false;
     }
 
-    if (!keyboardHookActive) {
+    if (bypassMode) {
         return CallNextHookEx(hHook, nCode, wParam, lParam);
     }
 
@@ -98,42 +118,143 @@ void checkKeyboardLayout() nothrow @nogc {
     int layoutName = getNeoLayoutName();
 
     if (layoutName >= 0) {
-        if (!keyboardHookActive) {
-            debug_writeln("Activating keyboard hook");
+        if (bypassMode) {
+            debug_writeln("No bypassing keyboard input");
         }
 
-        keyboardHookActive = true;
+        bypassMode = false;
         if (setActiveLayout(cast(LayoutName) layoutName)) {
             debug_writeln("Changing keyboard layout to ", cast(LayoutName) layoutName);
         }
     } else {
-        if (keyboardHookActive) {
-            debug_writeln("Deactivating keyboard hook");
+        if (!bypassMode) {
+            debug_writeln("Starting bypass mode");
         }
 
-        keyboardHookActive = false;
+        bypassMode = true;
     }
 }
+
+
+extern(Windows)
+LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
+    // Huge try block because WndProc is defined as "nothrow"
+    try {
+
+    switch (msg) {
+        case WM_DESTROY:
+        // Hide the tray icon and cleanup before closing the application
+        trayIcon.hide();
+        DestroyMenu(contextMenu);
+        // Not necessary to unload icons loaded from file
+        
+        PostQuitMessage(0);
+        break;
+
+        case WM_TRAYICON:
+        // From https://docs.microsoft.com/en-us/windows/win32/shell/taskbar#adding-modifying-and-deleting-icons-in-the-notification-area:
+        // The wParam parameter of the message contains the identifier of the taskbar icon in which the event occurred.
+        // The lParam parameter holds the mouse or keyboard message associated with the event.
+
+        // We can omit the check for wParam as we use only a single notification icon
+        switch(lParam) {
+            case WM_LBUTTONDBLCLK:
+            // Execute the same action as the context menu default item
+            auto menuItem = GetMenuDefaultItem(contextMenu, 0, 0);
+            SendMessage(hwnd, WM_COMMAND, menuItem, 0);
+            break;
+
+            case WM_CONTEXTMENU:
+            trayIcon.showContextMenu(hwnd, contextMenu);
+            break;
+
+            default: break;
+        }
+        break;
+
+        case WM_COMMAND:
+        switch (wParam) {
+            case ID_TRAY_ACTIVATE_CONTEXTMENU:
+            switchKeyboardHook();
+            updateContextMenu();
+            break;
+
+            case ID_TRAY_RELOAD_CONTEXTMENU:
+            debug_writeln("Re-initialize...");
+            initialize();
+            break;
+
+            case ID_TRAY_QUIT_CONTEXTMENU:
+            SendMessage(hwnd, WM_CLOSE, 0, 0);
+            break;
+
+            default: break;
+        }
+        break;
+
+        default: break;
+    }
+
+    } catch (Throwable e) {
+        // Doing nothing here. Might better be done in some methods in TrayIcon
+    }
+
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
+    // Changing a menu entry is cumbersome by hand (or foot)
+    MENUITEMINFO mii;
+    mii.cbSize = MENUITEMINFO.sizeof;
+    mii.fMask = MIIM_STRING;
+    mii.dwTypeData = toUTFz!(wchar*)(text);
+    SetMenuItemInfo(hMenu, id, 0, &mii);
+}
+
+void updateContextMenu() {
+    if (!keyboardHookActive) {
+        trayIcon.setIcon(iconDisabled);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, enableAppMenuMsg);
+    } else {
+        trayIcon.setIcon(iconEnabled);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg);
+    }
+}
+
+void switchKeyboardHook() {
+    if (!keyboardHookActive) {
+        HINSTANCE hInstance = GetModuleHandle(NULL);
+        hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
+        debug_writeln("Keyboard hook active!");
+        checkKeyboardLayout();
+    } else {
+        UnhookWindowsHookEx(hHook);
+        debug_writeln("Keyboard hook inactive!");
+    }
+
+    keyboardHookActive = !keyboardHookActive;
+}
+
 
 extern (Windows)
 void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow @nogc {
     foregroundWindowChanged = true;
 }
 
+void initialize() {
+    initKeysyms(executableDir);
+    initMapping();
+    initCompose(executableDir);
+    debug_writeln("Initialization complete!");
+}
+
 void main(string[] args) {
     debug_writeln("Starting ReNeo squire...");
-    auto exeDir = dirName(absolutePath(buildNormalizedPath(args[0])));
-    debug_writeln("EXE located in ", exeDir);
-    initKeysyms(exeDir);
-    initMapping();
-    initCompose(exeDir);
-    debug_writeln("Initialization complete!");
+    executableDir = dirName(buildNormalizedPath(absolutePath(args[0])));
+    initialize();
 
-    checkKeyboardLayout();
-
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
-    debug_writeln("Keyboard hook active!");
+    keyboardHookActive = false;
+    switchKeyboardHook();
 
     // We want to detect when the selected keyboard layout changes so that we can activate or deactivate ReNeo as necessary.
     // Listening to input locale events directly is difficult and not very robust. So we listen to the foreground window changes
@@ -145,6 +266,30 @@ void main(string[] args) {
         debug_writeln("Could not install foreground window hook!");
     }
 
+    HWND hwnd;
+    WNDCLASS wndclass;
+
+    // The necessary actions for getting a handle without displaying an actual window
+    wndclass.lpszClassName = "MyWindow";
+    wndclass.lpfnWndProc   = &WndProc;
+    RegisterClass(&wndclass);
+    hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, GetModuleHandle(NULL), NULL);
+
+    // Install icon in notification area, based on the hwnd
+    iconEnabled = LoadImage(NULL, "neo_enabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+    iconDisabled = LoadImage(NULL, "neo_disabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
+
+    trayIcon = new TrayIcon(hwnd, ID_MYTRAYICON, iconEnabled, APPNAME.to!(wchar[]));
+    trayIcon.show();
+
+    // Define context menu
+    contextMenu = CreatePopupMenu();
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
+    SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
+
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -152,5 +297,5 @@ void main(string[] args) {
         debug_writeln("Message loop");
     }
 
-    UnhookWindowsHookEx(hHook);
+    if (keyboardHookActive) { switchKeyboardHook(); }
 }
