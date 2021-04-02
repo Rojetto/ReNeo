@@ -184,6 +184,18 @@ NeoKey mapToNeo(VK vk, uint layer) nothrow {
     return VOID_KEY;
 }
 
+bool getKanaState() nothrow {
+    bool state = GetKeyState(VK_KANA) & 0x0001;
+    return state;
+}
+
+void setKanaState(bool state) nothrow {
+    if (getKanaState() != state) {
+        sendVK(VK_KANA, true);
+        sendVK(VK_KANA, false);
+    }
+}
+
 
 bool leftShiftDown;
 bool rightShiftDown;
@@ -220,6 +232,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     if (vk == VK_PACKET || (msg_struct.flags & LLKHF_INJECTED)) {
         return false;
     }
+
+    // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
+    setKanaState(false);
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
     bool isNeoModifier;
