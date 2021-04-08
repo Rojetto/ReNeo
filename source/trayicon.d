@@ -9,7 +9,7 @@ class TrayIcon {
     const MAX_TIPLEN = NOTIFYICONDATA.szTip.sizeof - 1;
 
     bool visible = false;
-    ulong tipLen;
+    size_t tipLen;
 
     this(HWND hwndParent, UINT id, HICON hicon, wchar[] tooltip)	{
         nid.cbSize = NOTIFYICONDATA.sizeof;
