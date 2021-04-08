@@ -7,7 +7,7 @@ Funktionen wie Capslock, die Steuertasten auf Ebene 4 und Compose können techni
 ## Installation
 1. [kbdneo](https://neo-layout.org/Benutzerhandbuch/kbdneo/) normal installieren
 2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in beliebiges Verzeichnis entpacken
-3. `reneo.exe` starten oder zu Autostart hinzufügen. Dass die Anwendung läuft sieht man momentan nur im Taskmanager.
+3. `reneo.exe` starten oder zu Autostart hinzufügen. Über das Trayicon kann das Programm deaktiviert und beendet werden.
 
 ## Funktionen
 
@@ -45,7 +45,7 @@ Es gibt zwei wichtige Kompilationsvarianten:
 - [x] Automatisch deaktivieren, wenn anderes Tastaturlayout aktiv
 - [ ] Prüfung ob Anwendung bereits läuft
 - [ ] Icon für EXE
-- [ ] Tray Icon (braucht man das tatsächlich?)
+- [x] Tray Icon
 - [ ] „Einfg“ auf Ebene 4 untersuchen (scheint in NeoVars aber auch nicht zu gehen)
 - [ ] Latenz messen
 
