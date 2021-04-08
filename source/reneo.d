@@ -14,6 +14,10 @@ import composer;
 
 alias VK = DWORD;
 
+const SC_FAKE_LSHIFT = 0x22A;
+const SC_FAKE_RSHIFT = 0x236;
+const SC_FAKE_LCTRL = 0x21D;
+
 void debug_writeln(T...)(T args) {
     debug {
         writeln(args);
@@ -236,6 +240,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         return false;
     }
 
+    // Numpad 0-9 and separator are dual-state Numpad keys:
+    // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
+    bool isDualStateNumpadKey = (!extended && scan >= 0x47 && scan <= 0x53 && scan != 0x4A && scan != 0x4E);
+
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
     setKanaState(false);
 
@@ -246,7 +254,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // GetAsyncKeyState didn't seem to work for multiple simultaneous keys
     // KBDNEO uses VK_OEM_102 for M3 und VK_OEM_8 for M4
     // ReNEO uses 0x8A for M3L, 0x8B for M3R, 0x8C for M4L and 0x8D for M4R
-    if (vk == VK_LSHIFT) {
+
+    // Do not recognize fake shift events.
+    // For more information see https://github.com/Lexikos/AutoHotkey_L/blob/master/source/keyboard_mouse.h#L139
+    if (vk == VK_LSHIFT && scan != SC_FAKE_LSHIFT) {
         // CAPSLOCK by pressing both Shift keys
         // leftShiftDown contains previous state
         if (!leftShiftDown && down && rightShiftDown) {
@@ -255,7 +266,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
 
         leftShiftDown = down;
-    } else if (vk == VK_RSHIFT) {
+    } else if (vk == VK_RSHIFT && scan != SC_FAKE_RSHIFT) {
         if (!rightShiftDown && down && leftShiftDown) {
             sendVK(VK_CAPITAL, true);
             sendVK(VK_CAPITAL, false);
@@ -334,6 +345,15 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     if (isNeoModifier) {
         return true;
     }
+
+    // Undo keyboard driver feature which changes Numpad virtual keys to cursor control keys if shift is pressed (Numlock active).
+    if (isDualStateNumpadKey && shiftDown && numlock) {
+        // Translate only known virtual keys
+        if (vk in NumpadVKMap) {
+            vk = NumpadVKMap[vk];
+        }
+    }
+
     // early exit if key is not in map
     if (!(vk in MAPS[activeLayout])) {
         return false;
@@ -351,7 +371,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         if (composeResult.type == ComposeResultType.PASS) {
             heldKeys[vk] = nk;
 
-            if (layer >= 3) {
+            // translate all layers for dual state Numpad keys
+            if (layer >= 3 || isDualStateNumpadKey) {
                 eat = true;
                 sendNeoKey(nk, true);
             }

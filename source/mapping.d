@@ -20,6 +20,8 @@ NeoMap[LayoutName] MAPS;
 const uint KEYSYM_VOID = 0xFFFFFF;
 NeoKey VOID_KEY;
 
+VK[VK] NumpadVKMap;
+
 void initMapping() {
     VOID_KEY = mVK("VoidSymbol", 0xFF);
 
@@ -206,4 +208,17 @@ break;
 
         MAPS[mn] = M;
     }
+
+    // initialize translation map for dual-state Numpad keys
+    NumpadVKMap[VK_INSERT] = VK_NUMPAD0;
+    NumpadVKMap[VK_END]    = VK_NUMPAD1;
+    NumpadVKMap[VK_DOWN]   = VK_NUMPAD2;
+    NumpadVKMap[VK_NEXT]   = VK_NUMPAD3;
+    NumpadVKMap[VK_LEFT]   = VK_NUMPAD4;
+    NumpadVKMap[VK_CLEAR]  = VK_NUMPAD5;
+    NumpadVKMap[VK_RIGHT]  = VK_NUMPAD6;
+    NumpadVKMap[VK_HOME]   = VK_NUMPAD7;
+    NumpadVKMap[VK_UP]     = VK_NUMPAD8;
+    NumpadVKMap[VK_PRIOR]  = VK_NUMPAD9;
+    NumpadVKMap[VK_DELETE] = VK_SEPARATOR;
 }
