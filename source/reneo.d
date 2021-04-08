@@ -184,6 +184,24 @@ NeoKey mapToNeo(VK vk, uint layer) nothrow {
     return VOID_KEY;
 }
 
+void sendMouseClick(bool down) nothrow {
+    // Always returns state of logical primary mouse button (contrary to documentation in GetAsyncKeyState)
+    bool mousedown = (GetKeyState(VK_LBUTTON) >> 16) != 0;
+    if (mousedown == down) return;
+
+    INPUT input_struct;
+    input_struct.type = INPUT_MOUSE;
+    input_struct.mi.dx = 0;
+    input_struct.mi.dy = 0;
+    // If primary mouse button is swapped, use rightdown/rightup flags.
+    DWORD dwFlags = down ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP;
+    if (GetSystemMetrics(SM_SWAPBUTTON)) {
+        dwFlags = dwFlags << 2;
+    }
+    input_struct.mi.dwFlags = dwFlags;
+    SendInput(1, &input_struct, INPUT.sizeof);
+}
+
 bool getKanaState() nothrow {
     bool state = GetKeyState(VK_KANA) & 0x0001;
     return state;
@@ -377,6 +395,12 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
                 eat = true;
             }
         }
+    }
+
+    // Handling of special keys or functions that cannot be mapped
+    // Num5(4) = left click
+    if (layer == 4 && vk == VK_NUMPAD5) {
+        sendMouseClick(down);
     }
 
     return eat;
