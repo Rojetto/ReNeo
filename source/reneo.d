@@ -227,6 +227,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool down = msg_type == WM_KEYDOWN || msg_type == WM_SYSKEYDOWN;
     // TODO: do we need to use this somewhere?
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
+    bool extended = (msg_struct.flags & LLKHF_EXTENDED) > 0;
+    bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
+    bool numlock = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
 
     // ignore all simulated keypresses
     if (vk == VK_PACKET || (msg_struct.flags & LLKHF_INJECTED)) {
