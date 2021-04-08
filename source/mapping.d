@@ -50,7 +50,7 @@ M['6']              = [mVK("6", '6'),                   mCH("dollar", '$'),     
 M['7']              = [mVK("7", '7'),                   mCH("EuroSign", '€'),           mCH("yen", '¥'),                    mCH("currency", '¤'),               mCH("U03F0", 'ϰ'),             mCH("rightarrow", '→')];
 M['8']              = [mVK("8", '8'),                   mCH("doublelowquotemark", '„'), mCH("singlelowquotemark", '‚'),     mVK("Tab", VK_TAB),                 mCH("leftanglebracket", '⟨'),   mCH("infinity", '∞')];
 M['9']              = [mVK("9", '9'),                   mCH("leftdoublequotemark", '“'),mCH("leftsinglequotemark", '‘'),    mVK("KP_Divide", VK_DIVIDE),        mCH("rightanglebracket", '⟩'),  mCH("variation", '∝')];
-M['0']              = [mVK("0", '0'),                   mCH("rightdoublequotemark", '”'),mCH("rightsinglequotemark", '’'),  mVK("KP_Multiply", VK_MULTIPLY),    mCH("zerosubscript", '₀'),     mCH("emptyset", '∅')];
+M['0']              = [mVK("0", '0'),                   mCH("rightdoublequotemark",'”'),mCH("rightsinglequotemark", '’'),   mVK("KP_Multiply", VK_MULTIPLY),    mCH("zerosubscript", '₀'),     mCH("emptyset", '∅')];
 
 // We need to map Return so that compose knows about it
 M[VK_RETURN]        = [mVK("Return", VK_RETURN),        mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),           mVK("Return", VK_RETURN),       mVK("Return", VK_RETURN)];
@@ -77,7 +77,7 @@ M[VK_NUMPAD2]       = [mVK("KP_2", VK_NUMPAD2),         mCH("heart", '♥'),    
 M[VK_NUMPAD3]       = [mVK("KP_3", VK_NUMPAD3),         mCH("U2660", '♠'),              mCH("U21CC", '\u21cc'),             mVK("KP_Page_Down", VK_NEXT),       mCH("greaterthanequal", '≥'),   mCH("U230B", '⌋')];
 
 M[VK_NUMPAD0]       = [mVK("KP_0", VK_NUMPAD0),         mCH("signifblank", '␣'),        mCH("percent", '%'),                mVK("KP_Insert", VK_INSERT),        mCH("permille", '‰'),           mCH("U25A1", '□')];
-M[VK_SEPARATOR]     = [mVK("KP_Separator", VK_SEPARATOR),mVK("KP_Decimal", VK_DECIMAL), mCH("comma", ','),                  mVK("KP_Delete", VK_DELETE),        mCH("minutes", '′'),            mCH("seconds", '″')];
+M[VK_DECIMAL]     =   [mVK("KP_Separator", VK_DECIMAL), mCH("period", '.'),             mVK("comma", VK_OEM_COMMA),         mVK("KP_Delete", VK_DELETE),        mCH("minutes", '′'),            mCH("seconds", '″')];
 
 
 // ***** Layout specific mappings *****
@@ -220,5 +220,5 @@ break;
     NumpadVKMap[VK_HOME]   = VK_NUMPAD7;
     NumpadVKMap[VK_UP]     = VK_NUMPAD8;
     NumpadVKMap[VK_PRIOR]  = VK_NUMPAD9;
-    NumpadVKMap[VK_DELETE] = VK_SEPARATOR;
+    NumpadVKMap[VK_DELETE] = VK_DECIMAL;
 }
