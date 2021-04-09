@@ -17,6 +17,7 @@ HWINEVENTHOOK foregroundHook;
 bool bypassMode;
 bool foregroundWindowChanged;
 bool keyboardHookActive;
+bool previousNumlockState;
 
 HMENU contextMenu;
 HICON iconEnabled;
@@ -114,24 +115,47 @@ int inputLocaleToLayoutName(HKL inputLocale) nothrow @nogc {
     return -1;
 }
 
-void checkKeyboardLayout() nothrow @nogc {
+void setNumlockState(bool newState) nothrow {
+    // Get current state, because we cannot set the numlock state directly, only toggle.
+    bool currentNumlock = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
+    if (newState == currentNumlock) return;
+
+    INPUT input_struct;
+    input_struct.type = INPUT_KEYBOARD;
+    input_struct.ki.wVk = VK_NUMLOCK;
+    input_struct.ki.wScan = 0;
+    input_struct.ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
+    SendInput(1, &input_struct, INPUT.sizeof);
+
+    input_struct.ki.dwFlags |= KEYEVENTF_KEYUP;
+    SendInput(1, &input_struct, INPUT.sizeof);
+}
+
+void checkKeyboardLayout() nothrow {
     int layoutName = getNeoLayoutName();
+    bool preBypassMode = bypassMode;
 
     if (layoutName >= 0) {
-        if (bypassMode) {
+        // Need to change the mode now, because changing the Numlock state triggers another keyboard hook call.
+        bypassMode = false;
+
+        if (preBypassMode) {
             debug_writeln("No bypassing keyboard input");
+            previousNumlockState = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
+            setNumlockState(true);
         }
 
-        bypassMode = false;
         if (setActiveLayout(cast(LayoutName) layoutName)) {
             debug_writeln("Changing keyboard layout to ", cast(LayoutName) layoutName);
         }
     } else {
-        if (!bypassMode) {
-            debug_writeln("Starting bypass mode");
-        }
-
+        // Need to change the mode now, because changing the Numlock state triggers another keyboard hook call.
         bypassMode = true;
+
+        if (!preBypassMode) {
+            debug_writeln("Starting bypass mode");
+            setNumlockState(previousNumlockState);
+        }
     }
 }
 
@@ -223,12 +247,21 @@ void updateContextMenu() {
 
 void switchKeyboardHook() {
     if (!keyboardHookActive) {
+        previousNumlockState = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
+        setNumlockState(true);
+
         HINSTANCE hInstance = GetModuleHandle(NULL);
         hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
         debug_writeln("Keyboard hook active!");
+
+        // Activating keyboard hook must start without bypass mode, so that checkKeyboardLayout() does not store
+        // the already active Numlock state.
+        bypassMode = false;
         checkKeyboardLayout();
     } else {
         UnhookWindowsHookEx(hHook);
+        // Only reset Numlock state if we were active before
+        if (!bypassMode) { setNumlockState(previousNumlockState); }
         debug_writeln("Keyboard hook inactive!");
     }
 
