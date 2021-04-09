@@ -5,11 +5,13 @@ import std.utf;
 import std.regex;
 import std.conv;
 import std.path;
+import std.format;
 
 import core.sys.windows.windows;
 
 import mapping;
 import composer;
+import utils;
 
 
 alias VK = DWORD;
@@ -276,10 +278,22 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
     bool extended = (msg_struct.flags & LLKHF_EXTENDED) > 0;
     bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
-    bool numlock = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
+    bool numlock = (GetKeyState(VK_NUMLOCK) & 0x1) > 0;
+    bool injected = (msg_struct.flags & LLKHF_INJECTED) > 0;
+
+    debug {
+        auto injected_text = injected ? "(injected) " : "           ";
+        auto down_text     = down     ? "(down) " : " (up)  ";
+        auto alt_text      = altdown  ? "(Alt) " : "      ";
+        auto extended_text = extended ? "(Ext) " : "      ";
+
+        try {
+            writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scan, to!string(cast(VKEY) vk), vk));
+        } catch(Exception e) {}
+    }
 
     // ignore all simulated keypresses
-    if (vk == VK_PACKET || (msg_struct.flags & LLKHF_INJECTED)) {
+    if (vk == VK_PACKET || injected) {
         return false;
     }
 
@@ -399,6 +413,11 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         // Translate only known virtual keys
         if (vk in NumpadVKMap) {
             vk = NumpadVKMap[vk];
+            debug {
+                try {
+                writeln("                                ------------> " ~ to!string(cast(VKEY) vk));
+                } catch (Exception e) {}
+            }
         }
     }
 
