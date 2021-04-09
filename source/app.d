@@ -283,12 +283,13 @@ void main(string[] args) {
     wndclass.lpszClassName = "MyWindow";
     wndclass.lpfnWndProc   = &WndProc;
     RegisterClass(&wndclass);
-    hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, GetModuleHandle(NULL), NULL);
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, hInstance, NULL);
 
+    // Names of icons are defined in icons.rc
+    iconEnabled = LoadImage(hInstance, "trayenabled", IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
+    iconDisabled = LoadImage(hInstance, "traydisabled", IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
     // Install icon in notification area, based on the hwnd
-    iconEnabled = LoadImage(NULL, "neo_enabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
-    iconDisabled = LoadImage(NULL, "neo_disabled.ico", IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
-
     trayIcon = new TrayIcon(hwnd, ID_MYTRAYICON, iconEnabled, APPNAME.to!(wchar[]));
     trayIcon.show();
 

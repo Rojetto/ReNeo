@@ -7,6 +7,7 @@
 	"libs": [
 		"user32"
 	],
+    "sourceFiles": ["res\\icons.res"],
 	"license": "GPL-3.0",
     "name": "reneo",
     "versions": ["Windows10"],
