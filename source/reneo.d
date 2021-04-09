@@ -357,6 +357,15 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
     }
 
+    // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
+    // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
+    if (vk == VK_NUMLOCK && down) {
+        sendVK(VK_NUMLOCK, false);
+        sendVK(VK_NUMLOCK, true);
+        sendVK(VK_NUMLOCK, false);
+        sendVK(VK_NUMLOCK, true);
+    }
+
     // early exit if key is not in map
     if (!(vk in MAPS[activeLayout])) {
         return false;
