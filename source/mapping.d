@@ -58,10 +58,10 @@ M[VK_TAB]           = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),     
 M[VK_SPACE]         = [mVK("space", VK_SPACE),          mVK("space", VK_SPACE),         mVK("space", VK_SPACE),             mVK("KP_0", VK_NUMPAD0),            mCH("nobreakspace", '\u00a0'),  mCH("U202F", '\u202f')];
 
 M[VK_NUMLOCK]       = [mVK("Tab", VK_TAB),              mVK("Tab", VK_TAB),             mCH("equal", '='),                  mCH("notequal", '≠'),               mCH("U2248", '≈'),              mCH("identical", '≡')];
-M[VK_DIVIDE]        = [mVK("KP_Divide", VK_DIVIDE),     mVK("KP_Divide", VK_DIVIDE),    mCH("division", '÷'),               mCH("U2044", '⁄'),                  mCH("U2300", '⌀'),              mCH("U2223", '∣')];
-M[VK_MULTIPLY]      = [mVK("KP_Multiply", VK_MULTIPLY), mVK("KP_Multiply", VK_MULTIPLY),mCH("U22C5", '\u22c5'),             mCH("multiply", '×'),               mCH("U2299", '\u2299'),         mCH("U2297", '\u2297')];
-M[VK_SUBTRACT]      = [mVK("KP_Subtract", VK_SUBTRACT), mVK("KP_Subtract", VK_SUBTRACT),mCH("U2212", '−'),                  mCH("U2216", '∖'),                  mCH("U2296", '\u2296'),         mCH("U2238", '\u2238')];
-M[VK_ADD]           = [mVK("KP_Add", VK_ADD),           mVK("KP_Add", VK_ADD),          mCH("plusminus", '±'),              mCH("U2213", '∓'),                  mCH("U2295", '\u2295'),         mCH("U2214", '∔')];
+M[VK_DIVIDE]        = [mVK("KP_Divide", VK_DIVIDE),     mCH("slash", '/'),              mCH("division", '÷'),               mCH("U2044", '⁄'),                  mCH("U2300", '⌀'),              mCH("U2223", '∣')];
+M[VK_MULTIPLY]      = [mVK("KP_Multiply", VK_MULTIPLY), mCH("asterisk", '*'),           mCH("U22C5", '\u22c5'),             mCH("multiply", '×'),               mCH("U2299", '\u2299'),         mCH("U2297", '\u2297')];
+M[VK_SUBTRACT]      = [mVK("KP_Subtract", VK_SUBTRACT), mCH("minus", '-'),              mCH("U2212", '−'),                  mCH("U2216", '∖'),                  mCH("U2296", '\u2296'),         mCH("U2238", '\u2238')];
+M[VK_ADD]           = [mVK("KP_Add", VK_ADD),           mCH("plus", '+'),               mCH("plusminus", '±'),              mCH("U2213", '∓'),                  mCH("U2295", '\u2295'),         mCH("U2214", '∔')];
 
 M[VK_NUMPAD7]       = [mVK("KP_7", VK_NUMPAD7),         mCH("U2714", '\u2714'),         mCH("U2195", '↕'),                  mVK("KP_Home", VK_HOME),            mCH("U226A", '\u226a'),         mCH("upstile", '⌈')];
 M[VK_NUMPAD8]       = [mVK("KP_8", VK_NUMPAD8),         mCH("U2718", '\u2718'),         mCH("uparrow", '↑'),                mVK("KP_Up", VK_UP),                mCH("intersection", '∩'),       mCH("U22C2", '⋂')];

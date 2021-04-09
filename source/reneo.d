@@ -243,7 +243,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // Numpad 0-9 and separator are dual-state Numpad keys:
     // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
     bool isDualStateNumpadKey = (!extended && scan >= 0x47 && scan <= 0x53 && scan != 0x4A && scan != 0x4E);
-
+    // All Numpad keys including KP_Enter
+    bool isNumpadKey = isDualStateNumpadKey || vk == VK_NUMLOCK || (extended && vk == VK_RETURN) || 
+                       vk == VK_ADD || vk == VK_SUBTRACT || vk == VK_MULTIPLY || vk == VK_DIVIDE;
+                       
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
     setKanaState(false);
 
@@ -371,8 +374,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         if (composeResult.type == ComposeResultType.PASS) {
             heldKeys[vk] = nk;
 
-            // translate all layers for dual state Numpad keys
-            if (layer >= 3 || isDualStateNumpadKey) {
+            // Translate all layers for Numpad keys
+            if (layer >= 3 || isNumpadKey) {
                 eat = true;
                 sendNeoKey(nk, true);
             }
@@ -384,7 +387,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             }
         }
     } else {
-        if (layer >= 3) {
+        if (layer >= 3 || isNumpadKey) {
             eat = true;
 
             // release the key that is held for this vk
