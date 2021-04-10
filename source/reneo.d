@@ -14,6 +14,10 @@ import composer;
 
 alias VK = DWORD;
 
+const SC_FAKE_LSHIFT = 0x22A;
+const SC_FAKE_RSHIFT = 0x236;
+const SC_FAKE_LCTRL = 0x21D;
+
 void debug_writeln(T...)(T args) {
     debug {
         writeln(args);
@@ -227,12 +231,22 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool down = msg_type == WM_KEYDOWN || msg_type == WM_SYSKEYDOWN;
     // TODO: do we need to use this somewhere?
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
+    bool extended = (msg_struct.flags & LLKHF_EXTENDED) > 0;
+    bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
+    bool numlock = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
 
     // ignore all simulated keypresses
     if (vk == VK_PACKET || (msg_struct.flags & LLKHF_INJECTED)) {
         return false;
     }
 
+    // Numpad 0-9 and separator are dual-state Numpad keys:
+    // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
+    bool isDualStateNumpadKey = (!extended && scan >= 0x47 && scan <= 0x53 && scan != 0x4A && scan != 0x4E);
+    // All Numpad keys including KP_Enter
+    bool isNumpadKey = isDualStateNumpadKey || vk == VK_NUMLOCK || (extended && vk == VK_RETURN) || 
+                       vk == VK_ADD || vk == VK_SUBTRACT || vk == VK_MULTIPLY || vk == VK_DIVIDE;
+                       
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
     setKanaState(false);
 
@@ -243,7 +257,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // GetAsyncKeyState didn't seem to work for multiple simultaneous keys
     // KBDNEO uses VK_OEM_102 for M3 und VK_OEM_8 for M4
     // ReNEO uses 0x8A for M3L, 0x8B for M3R, 0x8C for M4L and 0x8D for M4R
-    if (vk == VK_LSHIFT) {
+
+    // Do not recognize fake shift events.
+    // For more information see https://github.com/Lexikos/AutoHotkey_L/blob/master/source/keyboard_mouse.h#L139
+    if (vk == VK_LSHIFT && scan != SC_FAKE_LSHIFT) {
         // CAPSLOCK by pressing both Shift keys
         // leftShiftDown contains previous state
         if (!leftShiftDown && down && rightShiftDown) {
@@ -252,7 +269,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
 
         leftShiftDown = down;
-    } else if (vk == VK_RSHIFT) {
+    } else if (vk == VK_RSHIFT && scan != SC_FAKE_RSHIFT) {
         if (!rightShiftDown && down && leftShiftDown) {
             sendVK(VK_CAPITAL, true);
             sendVK(VK_CAPITAL, false);
@@ -331,6 +348,24 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     if (isNeoModifier) {
         return true;
     }
+
+    // Undo keyboard driver feature which changes Numpad virtual keys to cursor control keys if shift is pressed (Numlock active).
+    if (isDualStateNumpadKey && shiftDown && numlock) {
+        // Translate only known virtual keys
+        if (vk in NumpadVKMap) {
+            vk = NumpadVKMap[vk];
+        }
+    }
+
+    // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
+    // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
+    if (vk == VK_NUMLOCK && down) {
+        sendVK(VK_NUMLOCK, false);
+        sendVK(VK_NUMLOCK, true);
+        sendVK(VK_NUMLOCK, false);
+        sendVK(VK_NUMLOCK, true);
+    }
+
     // early exit if key is not in map
     if (!(vk in MAPS[activeLayout])) {
         return false;
@@ -348,7 +383,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         if (composeResult.type == ComposeResultType.PASS) {
             heldKeys[vk] = nk;
 
-            if (layer >= 3) {
+            // Translate all layers for Numpad keys
+            if (layer >= 3 || isNumpadKey) {
                 eat = true;
                 sendNeoKey(nk, true);
             }
@@ -360,7 +396,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             }
         }
     } else {
-        if (layer >= 3) {
+        if (layer >= 3 || isNumpadKey) {
             eat = true;
 
             // release the key that is held for this vk
