@@ -173,6 +173,14 @@ void sendNeoKey(NeoKey nk, bool down) nothrow {
         // Special cases for weird mappings
         if (nk.vk_code == VK_KEYBOARD_MOUSE_LEFT) {
             sendMouseClick(down);
+        } else if (nk.vk_code == VK_UNDO) {
+            if (down) {
+                sendVK(VK_CONTROL, true);
+                sendVK('Z', true);
+            } else {
+                sendVK('Z', false);
+                sendVK(VK_CONTROL, false);
+            }
         } else {
             return;
         }

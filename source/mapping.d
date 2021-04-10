@@ -22,6 +22,8 @@ NeoKey VOID_KEY;
 
 // Fake VK to map keyboard left mouse click
 const VK VK_KEYBOARD_MOUSE_LEFT = 0x88;
+// Fake VK for Ctrl+Z combo
+const VK VK_UNDO = 0x89;
 
 VK[VK] NumpadVKMap;
 
@@ -118,7 +120,7 @@ M[VK_OEM_5]         = [mVK("udiaeresis", VK_OEM_5),     mVK("Udiaeresis", VK_OEM
 M[VK_OEM_6]         = [mVK("odiaeresis", VK_OEM_6),     mVK("Odiaeresis", VK_OEM_6),    mCH("dollar", '$'),                 mVK("Tab", VK_TAB),                 mCH("U03F5", 'ϵ'),                 mCH("intersection", '∩')];
 M[VK_OEM_7]         = [mVK("adiaeresis", VK_OEM_7),     mVK("Adiaeresis", VK_OEM_7),    mCH("bar", '|'),                    mVK("Insert", VK_INSERT),           mCH("Greek_eta", 'η'),             mCH("U2135", 'ℵ')];
 M['P']              = [mVK("p", 'P'),                   mVK("P", 'P'),                  mCH("asciitilde", '~'),             mVK("Return", VK_RETURN),           mCH("Greek_pi", 'π'),              mCH("Greek_PI", 'Π')];
-M['Z']              = [mVK("z", 'Z'),                   mVK("Z", 'Z'),                  mCH("grave", '`'),                  VOID_KEY,                           mCH("Greek_zeta", 'ζ'),            mCH("U2124", 'ℤ')];
+M['Z']              = [mVK("z", 'Z'),                   mVK("Z", 'Z'),                  mCH("grave", '`'),                  mVK("VoidSymbol", VK_UNDO),         mCH("Greek_zeta", 'ζ'),            mCH("U2124", 'ℤ')];
 M['B']              = [mVK("b", 'B'),                   mVK("B", 'B'),                  mCH("plus", '+'),                   mCH("colon", ':'),                  mCH("Greek_beta", 'β'),            mCH("U21D0", '⇐')];
 M['M']              = [mVK("m", 'M'),                   mVK("M", 'M'),                  mCH("percent", '%'),                mVK("KP_1", VK_NUMPAD1),            mCH("Greek_mu", 'μ'),              mCH("ifonlyif", '⇔')];
 M[VK_OEM_COMMA]     = [mVK("comma", VK_OEM_COMMA),      mVK("endash", '–'),             mCH("quotedbl", '"'),               mVK("KP_2", VK_NUMPAD2),            mCH("U03F1", 'ϱ'),                 mCH("implies", '⇒')];
@@ -157,7 +159,7 @@ M['F']              = [mVK("f", 'F'),                   mVK("F", 'F'),          
 M['V']              = [mVK("v", 'V'),                   mVK("V", 'V'),                  mCH("dollar", '$'),                 mVK("Tab", VK_TAB),                 VOID_KEY,                          mCH("radical", '√')];
 M[VK_OEM_5]         = [mVK("udiaeresis", VK_OEM_5),     mVK("Udiaeresis", VK_OEM_5),    mCH("bar", '|'),                    mVK("Insert", VK_INSERT),           VOID_KEY,                          mCH("downshoe", '∪')];
 M[VK_OEM_7]         = [mVK("adiaeresis", VK_OEM_7),     mVK("Adiaeresis", VK_OEM_7),    mCH("asciitilde", '~'),             mVK("Return", VK_RETURN),           mCH("Greek_eta", 'η'),             mCH("U2135", 'ℵ')];
-M[VK_OEM_6]         = [mVK("odiaeresis", VK_OEM_6),     mVK("Odiaeresis", VK_OEM_6),    mCH("grave", '`'),                  VOID_KEY,                           mCH("U03F5", 'ϵ'),                 mCH("intersection", '∩')];
+M[VK_OEM_6]         = [mVK("odiaeresis", VK_OEM_6),     mVK("Odiaeresis", VK_OEM_6),    mCH("grave", '`'),                  mVK("VoidSymbol", VK_UNDO),         mCH("U03F5", 'ϵ'),                 mCH("intersection", '∩')];
 M['Y']              = [mVK("y", 'Y'),                   mVK("Y", 'Y'),                  mCH("plus", '+'),                   mCH("colon", ':'),                  mCH("Greek_upsilon", 'υ'),         mCH("nabla", '∇')];
 M['Z']              = [mVK("z", 'Z'),                   mVK("Z", 'Z'),                  mCH("percent", '%'),                mVK("KP_1", VK_NUMPAD1),            mCH("Greek_zeta", 'ζ'),            mCH("U2124", 'ℤ')];
 M[VK_OEM_COMMA]     = [mVK("comma", VK_OEM_COMMA),      mVK("endash", '–'),             mCH("quotedbl", '"'),               mVK("KP_2", VK_NUMPAD2),            mCH("U03F1", 'ϱ'),                 mCH("implies", '⇒')];
@@ -196,7 +198,7 @@ M['Y']              = [mVK("y", 'Y'),                   mVK("Y", 'Y'),          
 M['X']              = [mVK("x", 'X'),                   mVK("X", 'X'),                  mCH("dollar", '$'),                 mVK("Tab", VK_TAB),                 mCH("Greek_xi", 'ξ'),              mCH("Greek_XI", 'Ξ')];
 M['C']              = [mVK("c", 'C'),                   mVK("C", 'C'),                  mCH("bar", '|'),                    mVK("Insert", VK_INSERT),           mCH("Greek_chi", 'χ'),             mCH("U2102", 'ℂ')];
 M['V']              = [mVK("v", 'V'),                   mVK("V", 'V'),                  mCH("asciitilde", '~'),             mVK("Return", VK_RETURN),           VOID_KEY,                          mCH("radical", '√')];
-M['B']              = [mVK("b", 'B'),                   mVK("B", 'B'),                  mCH("grave", '`'),                  VOID_KEY,                           mCH("Greek_beta", 'β'),            mCH("U21D0", '⇐')];
+M['B']              = [mVK("b", 'B'),                   mVK("B", 'B'),                  mCH("grave", '`'),                  mVK("VoidSymbol", VK_UNDO),         mCH("Greek_beta", 'β'),            mCH("U21D0", '⇐')];
 M['N']              = [mVK("n", 'N'),                   mVK("N", 'N'),                  mCH("plus", '+'),                   mCH("colon", ':'),                  mCH("Greek_nu", 'ν'),              mCH("U2115", 'ℕ')];
 M['M']              = [mVK("m", 'M'),                   mVK("M", 'M'),                  mCH("percent", '%'),                mVK("KP_1", VK_NUMPAD1),            mCH("Greek_mu", 'μ'),              mCH("ifonlyif", '⇔')];
 M[VK_OEM_COMMA]     = [mVK("comma", VK_OEM_COMMA),      mVK("endash", '–'),             mCH("quotedbl", '"'),               mVK("KP_2", VK_NUMPAD2),            mCH("U03F1", 'ϱ'),                 mCH("implies", '⇒')];
