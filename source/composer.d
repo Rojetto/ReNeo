@@ -53,6 +53,10 @@ void initCompose(string exeDir) {
     composeRoot = ComposeNode();
     string composeDir = buildPath(exeDir, "compose");
 
+    if (!exists(composeDir)) {
+        return;
+    }
+
     ComposeFileLine[] combinedComposeEntries;
 
     // Gather compose entries from all .module files
