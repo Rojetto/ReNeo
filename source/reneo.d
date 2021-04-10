@@ -418,7 +418,6 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             if (vk in heldKeys) {
                 auto heldKey = heldKeys[vk];
                 sendNeoKey(heldKey, false);
-                heldKeys.remove(vk);
             }
         } else {
             // layer 1 and 2 keys that are not stored as held
@@ -427,6 +426,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
                 eat = true;
             }
         }
+
+        heldKeys.remove(vk);
     }
 
     return eat;
