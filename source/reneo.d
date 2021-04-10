@@ -200,6 +200,18 @@ void setKanaState(bool state) nothrow {
     }
 }
 
+bool getNumlockState() nothrow {
+    bool state = GetKeyState(VK_NUMLOCK) & 0x0001;
+    return state;
+}
+
+void setNumlockState(bool state) nothrow {
+    if (getNumlockState() != state) {
+        sendVK(VK_NUMLOCK, true);
+        sendVK(VK_NUMLOCK, false);
+    }
+}
+
 
 bool leftShiftDown;
 bool rightShiftDown;
@@ -249,6 +261,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
                        
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
     setKanaState(false);
+    // We want Numlock to be always on so that we get actual number VKs when in layer 1
+    setNumlockState(true);
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
     bool isNeoModifier;

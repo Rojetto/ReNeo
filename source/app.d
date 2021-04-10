@@ -115,45 +115,23 @@ int inputLocaleToLayoutName(HKL inputLocale) nothrow @nogc {
     return -1;
 }
 
-void setNumlockState(bool newState) nothrow {
-    // Get current state, because we cannot set the numlock state directly, only toggle.
-    bool currentNumlock = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
-    if (newState == currentNumlock) return;
-
-    INPUT input_struct;
-    input_struct.type = INPUT_KEYBOARD;
-    input_struct.ki.wVk = VK_NUMLOCK;
-    input_struct.ki.wScan = 0;
-    input_struct.ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
-    SendInput(1, &input_struct, INPUT.sizeof);
-
-    input_struct.ki.dwFlags |= KEYEVENTF_KEYUP;
-    SendInput(1, &input_struct, INPUT.sizeof);
-}
-
 void checkKeyboardLayout() nothrow {
     int layoutName = getNeoLayoutName();
-    bool preBypassMode = bypassMode;
 
     if (layoutName >= 0) {
-        // Need to change the mode now, because changing the Numlock state triggers another keyboard hook call.
-        bypassMode = false;
-
-        if (preBypassMode) {
+        if (bypassMode) {
             debug_writeln("No bypassing keyboard input");
-            previousNumlockState = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
-            setNumlockState(true);
+            bypassMode = false;
+            previousNumlockState = getNumlockState();
         }
 
         if (setActiveLayout(cast(LayoutName) layoutName)) {
             debug_writeln("Changing keyboard layout to ", cast(LayoutName) layoutName);
         }
     } else {
-        // Need to change the mode now, because changing the Numlock state triggers another keyboard hook call.
-        bypassMode = true;
-
-        if (!preBypassMode) {
+        if (!bypassMode) {
             debug_writeln("Starting bypass mode");
+            bypassMode = true;
             setNumlockState(previousNumlockState);
         }
     }
@@ -247,8 +225,7 @@ void updateContextMenu() {
 
 void switchKeyboardHook() {
     if (!keyboardHookActive) {
-        previousNumlockState = (GetKeyState(VK_NUMLOCK) & 0xFFFF) != 0;
-        setNumlockState(true);
+        previousNumlockState = getNumlockState();
 
         HINSTANCE hInstance = GetModuleHandle(NULL);
         hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
