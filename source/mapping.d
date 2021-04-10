@@ -20,6 +20,9 @@ NeoMap[LayoutName] MAPS;
 const uint KEYSYM_VOID = 0xFFFFFF;
 NeoKey VOID_KEY;
 
+// Fake VK to map keyboard left mouse click
+const VK VK_KEYBOARD_MOUSE_LEFT = 0x88;
+
 VK[VK] NumpadVKMap;
 
 void initMapping() {
@@ -69,7 +72,7 @@ M[VK_NUMPAD9]       = [mVK("KP_9", VK_NUMPAD9),         mCH("dagger", '†'),   
 
 M[VK_NUMPAD4]       = [mVK("KP_4", VK_NUMPAD4),         mCH("club", '♣'),               mCH("leftarrow", '←'),              mVK("KP_Left", VK_LEFT),            mCH("leftshoe", '⊂'),          mCH("U2286", '⊆')];
 // TODO: KP 5 layer 4 should be a keyboard simulated left mouse click ‽
-M[VK_NUMPAD5]       = [mVK("KP_5", VK_NUMPAD5),         mCH("EuroSign", '€'),           mCH("colon", ':'),                  VOID_KEY,                           mCH("U22B6", '⊶'),             mCH("U22B7", '⊷')];
+M[VK_NUMPAD5]       = [mVK("KP_5", VK_NUMPAD5),         mCH("EuroSign", '€'),           mCH("colon", ':'),                  mVK("VoidSymbol", VK_KEYBOARD_MOUSE_LEFT), mCH("U22B6", '⊶'),      mCH("U22B7", '⊷')];
 M[VK_NUMPAD6]       = [mVK("KP_6", VK_NUMPAD6),         mCH("U2023", '\u2023'),         mCH("rightarrow", '→'),             mVK("KP_Right", VK_RIGHT),          mCH("rightshoe", '⊃'),         mCH("U2287", '⊇')];
 
 M[VK_NUMPAD1]       = [mVK("KP_1", VK_NUMPAD1),         mCH("diamond", '♦'),            mCH("U2194", '↔'),                  mVK("KP_End", VK_END),              mCH("lessthanequal", '≤'),      mCH("downstile", '⌊')];

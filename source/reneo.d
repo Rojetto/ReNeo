@@ -170,7 +170,12 @@ void sendString(wstring content) nothrow {
 
 void sendNeoKey(NeoKey nk, bool down) nothrow {
     if (nk.keysym == KEYSYM_VOID) {
-        return;
+        // Special cases for weird mappings
+        if (nk.vk_code == VK_KEYBOARD_MOUSE_LEFT) {
+            sendMouseClick(down);
+        } else {
+            return;
+        }
     }
 
     if (nk.keytype == NeoKeyType.VKEY) {
@@ -446,12 +451,6 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
 
         heldKeys.remove(vk);
-    }
-
-    // Handling of special keys or functions that cannot be mapped
-    // Num5(4) = left click
-    if (layer == 4 && vk == VK_NUMPAD5) {
-        sendMouseClick(down);
     }
 
     return eat;
