@@ -14,6 +14,10 @@
         "plain": {
             "buildOptions": ["debugMode", "debugInfo"]
         },
+        "debug": {
+            "buildOptions": ["debugMode", "debugInfo"],
+            "buildRequirements": ["allowWarnings"]
+        },
         "release": {
             "lflags": ["/SUBSYSTEM:windows", "/ENTRY:mainCRTStartup"]
         }
