@@ -6,7 +6,8 @@ import reneo;
 import mapping;
 import composer;
 import trayicon;
-import std.path;
+import std.path : dirName;
+import std.file : thisExePath;
 import std.utf;
 import std.string;
 import std.conv;
@@ -260,7 +261,7 @@ void initialize() {
 
 void main(string[] args) {
     debug_writeln("Starting ReNeo squire...");
-    executableDir = dirName(buildNormalizedPath(absolutePath(args[0])));
+    executableDir = dirName(thisExePath());
     initialize();
 
     keyboardHookActive = false;
