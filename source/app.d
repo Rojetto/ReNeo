@@ -1,5 +1,6 @@
 import core.sys.windows.windows;
 import core.stdc.stdio;
+import core.stdc.string;
 import core.stdc.wchar_;
 
 import reneo;
@@ -11,6 +12,10 @@ import std.file : thisExePath;
 import std.utf;
 import std.string;
 import std.conv;
+import std.file;
+import std.path;
+import std.stdio;
+import std.json;
 
 HHOOK hHook;
 HWINEVENTHOOK foregroundHook;
@@ -76,14 +81,21 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 
-int getNeoLayoutName() nothrow @nogc {
+NeoLayout * getAppropriateNeoLayout() nothrow {
     HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
     
-    return inputLocaleToLayoutName(inputLocale);
+    wstring dllName = inputLocaleToDllName(inputLocale);
+
+    for (int i = 0; i < layouts.length; i++) {
+        if (layouts[i].dllName == dllName) {
+            return &layouts[i];
+        }
+    }
+
+    return null;
 }
 
-int inputLocaleToLayoutName(HKL inputLocale) nothrow @nogc {
-    // because of @nogc we can't use most of the nice phobos string functions here :(
+wstring inputLocaleToDllName(HKL inputLocale) nothrow {
     // Getting the layout name (which we can then look up in the registry) is a little tricky
     // https://stackoverflow.com/a/19321020/1610421
     ActivateKeyboardLayout(inputLocale, KLF_SETFORPROCESS);
@@ -94,40 +106,27 @@ int inputLocaleToLayoutName(HKL inputLocale) nothrow @nogc {
     wcscpy(regKey.ptr, r"SYSTEM\ControlSet001\Control\Keyboard Layouts\"w.ptr);
     wcscat(regKey.ptr, layoutName.ptr);
 
-    wstring valueName = "Layout File\0"w;
+    wstring valueName = "Layout File"w;
 
     wchar[256] layoutFile;
     uint bufferSize = layoutFile.length;
-    auto readResult = RegGetValueW(HKEY_LOCAL_MACHINE, regKey.ptr, valueName.ptr, RRF_RT_REG_SZ, NULL, layoutFile.ptr, &bufferSize);
-    if (readResult != ERROR_SUCCESS) {
-        debug_writeln("Could not read active keyboard layout DLL from registry");
-        // If the user is running this script they probably also mainly use Neo so we'd rather have the app running.
-        return true;
-    }
-
-    if (wcscmp(layoutFile.ptr, "kbdneo2.dll"w.ptr) == 0) {
-        return LayoutName.NEO;
-    } else if (wcscmp(layoutFile.ptr, "kbdbone.dll"w.ptr) == 0) {
-        return LayoutName.BONE;
-    } else if (wcscmp(layoutFile.ptr, "kbdgr2.dll"w.ptr) == 0) {
-        return LayoutName.NEOQWERTZ;
-    }
-
-    return -1;
+    RegGetValueW(HKEY_LOCAL_MACHINE, regKey.ptr, valueName.ptr, RRF_RT_REG_SZ, NULL, layoutFile.ptr, &bufferSize);
+    wchar[] dllName = layoutFile[0 .. wcslen(layoutFile.ptr)];
+    return dllName.to!wstring;
 }
 
 void checkKeyboardLayout() nothrow {
-    int layoutName = getNeoLayoutName();
+    auto layout = getAppropriateNeoLayout();
 
-    if (layoutName >= 0) {
+    if (layout != null) {
         if (bypassMode) {
             debug_writeln("No bypassing keyboard input");
             bypassMode = false;
             previousNumlockState = getNumlockState();
         }
 
-        if (setActiveLayout(cast(LayoutName) layoutName)) {
-            debug_writeln("Changing keyboard layout to ", cast(LayoutName) layoutName);
+        if (setActiveLayout(layout)) {
+            debug_writeln("Changing keyboard layout to ", layout.name);
         }
     } else {
         if (!bypassMode) {
@@ -254,14 +253,20 @@ void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idOb
 
 void initialize() {
     initKeysyms(executableDir);
-    initMapping();
     initCompose(executableDir);
+
+    string configPath = buildPath(executableDir, "config.json");
+    string configString = readText(configPath);
+    auto configJson = parseJSON(configString);
+    initLayouts(configJson["layouts"]);
+
     debug_writeln("Initialization complete!");
 }
 
 void main(string[] args) {
-    debug_writeln("Starting ReNeo squire...");
+    debug_writeln("Starting ReNeo...");
     executableDir = dirName(thisExePath());
+
     initialize();
 
     keyboardHookActive = false;
@@ -306,7 +311,6 @@ void main(string[] args) {
     while(GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        debug_writeln("Message loop");
     }
 
     if (keyboardHookActive) { switchKeyboardHook(); }

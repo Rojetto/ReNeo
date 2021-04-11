@@ -11,10 +11,6 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import utils;
-
-
-alias VK = DWORD;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -35,20 +31,11 @@ struct NeoKey {
     uint keysym;
     NeoKeyType keytype;
     union {
-        VK vk_code;
+        VKEY vk_code;
         wchar char_code;
     }
 }
 
-NeoKey mVK(string keysym_str, VK vk) {
-    NeoKey nk = { keysym: parseKeysym(keysym_str), keytype: NeoKeyType.VKEY, vk_code: vk };
-    return nk;
-}
-
-NeoKey mCH(string keysym_str, wchar char_code) {
-    NeoKey nk = { keysym: parseKeysym(keysym_str), keytype: NeoKeyType.CHAR, char_code: char_code };
-    return nk;
-}
 
 struct KeySymEntry {
     uint key_code;
@@ -173,9 +160,9 @@ void sendString(wstring content) nothrow {
 void sendNeoKey(NeoKey nk, bool down) nothrow {
     if (nk.keysym == KEYSYM_VOID) {
         // Special cases for weird mappings
-        if (nk.vk_code == VK_KEYBOARD_MOUSE_LEFT) {
+        if (nk.vk_code == VKEY.VK_KEYBOARD_MOUSE_LEFT) {
             sendMouseClick(down);
-        } else if (nk.vk_code == VK_UNDO) {
+        } else if (nk.vk_code == VKEY.VK_UNDO) {
             if (down) {
                 sendVK(VK_CONTROL, true);
                 sendVK('Z', true);
@@ -195,9 +182,9 @@ void sendNeoKey(NeoKey nk, bool down) nothrow {
     }
 }
 
-NeoKey mapToNeo(VK vk, uint layer) nothrow {
-    if (vk in MAPS[activeLayout]) {
-        return MAPS[activeLayout][vk][layer - 1];
+NeoKey mapToNeo(Scancode scan, uint layer) nothrow {
+    if (scan in activeLayout.map) {
+        return activeLayout.map[scan][layer - 1];
     }
 
     return VOID_KEY;
@@ -258,12 +245,12 @@ bool mod4Lock;
 uint previousLayer = 1;
 
 // when we press a VK, store what NeoKey we send so that we can release it correctly later
-NeoKey[VK] heldKeys;
+NeoKey[Scancode] heldKeys;
 
-LayoutName activeLayout = LayoutName.NEO;
+NeoLayout *activeLayout;
 
 
-bool setActiveLayout(LayoutName newLayout) nothrow @nogc {
+bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
     bool changed = newLayout != activeLayout;
     activeLayout = newLayout;
     return changed;
@@ -271,12 +258,13 @@ bool setActiveLayout(LayoutName newLayout) nothrow @nogc {
 
 
 bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
-    auto vk = msg_struct.vkCode;
-    auto scan = msg_struct.scanCode;
+    auto vk = cast(VKEY) msg_struct.vkCode;
+    auto scanCode = msg_struct.scanCode;
     bool down = msg_type == WM_KEYDOWN || msg_type == WM_SYSKEYDOWN;
     // TODO: do we need to use this somewhere?
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
     bool extended = (msg_struct.flags & LLKHF_EXTENDED) > 0;
+    auto scan = Scancode(cast(byte) scanCode, extended);
     bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
     bool numlock = getNumlockState();
     bool injected = (msg_struct.flags & LLKHF_INJECTED) > 0;
@@ -288,21 +276,21 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         auto extended_text = extended ? "(Ext) " : "      ";
 
         try {
-            writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scan, to!string(cast(VKEY) vk), vk));
+            writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scanCode, to!string(vk), vk));
         } catch(Exception e) {}
     }
 
     // ignore all simulated keypresses
-    if (vk == VK_PACKET || injected) {
+    if (vk == VKEY.VK_PACKET || injected) {
         return false;
     }
 
     // Numpad 0-9 and separator are dual-state Numpad keys:
     // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
-    bool isDualStateNumpadKey = (!extended && scan >= 0x47 && scan <= 0x53 && scan != 0x4A && scan != 0x4E);
+    bool isDualStateNumpadKey = (!extended && scanCode >= 0x47 && scanCode <= 0x53 && scanCode != 0x4A && scanCode != 0x4E);
     // All Numpad keys including KP_Enter
-    bool isNumpadKey = isDualStateNumpadKey || vk == VK_NUMLOCK || (extended && vk == VK_RETURN) || 
-                       vk == VK_ADD || vk == VK_SUBTRACT || vk == VK_MULTIPLY || vk == VK_DIVIDE;
+    bool isNumpadKey = isDualStateNumpadKey || vk == VKEY.VK_NUMLOCK || (extended && vk == VKEY.VK_RETURN) || 
+                       vk == VKEY.VK_ADD || vk == VKEY.VK_SUBTRACT || vk == VKEY.VK_MULTIPLY || vk == VKEY.VK_DIVIDE;
                        
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
     setKanaState(false);
@@ -319,7 +307,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
 
     // Do not recognize fake shift events.
     // For more information see https://github.com/Lexikos/AutoHotkey_L/blob/master/source/keyboard_mouse.h#L139
-    if (vk == VK_LSHIFT && scan != SC_FAKE_LSHIFT) {
+    if (scan == activeLayout.modifiers.shiftLeft && scanCode != SC_FAKE_LSHIFT) {
         // CAPSLOCK by pressing both Shift keys
         // leftShiftDown contains previous state
         if (!leftShiftDown && down && rightShiftDown) {
@@ -328,27 +316,27 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
 
         leftShiftDown = down;
-    } else if (vk == VK_RSHIFT && scan != SC_FAKE_RSHIFT) {
+    } else if (scan == activeLayout.modifiers.shiftRight && scanCode != SC_FAKE_RSHIFT) {
         if (!rightShiftDown && down && leftShiftDown) {
             sendVK(VK_CAPITAL, true);
             sendVK(VK_CAPITAL, false);
         }
 
         rightShiftDown = down;
-    } else if (vk == 0x8A || (vk == VK_OEM_102 && scan == 0x3A)) {
+    } else if (scan == activeLayout.modifiers.mod3Left) {
         leftMod3Down = down;
         isNeoModifier = true;
-    } else if (vk == 0x8B || (vk == VK_OEM_102 && scan == 0x2B)) {
+    } else if (scan == activeLayout.modifiers.mod3Right) {
         rightMod3Down = down;
         isNeoModifier = true;
-    } else if (vk == 0x8C || (vk == VK_OEM_8 && scan == 0x56)) {
+    } else if (scan == activeLayout.modifiers.mod4Left) {
         leftMod4Down = down;
         isNeoModifier = true;
 
         if (down && rightMod4Down) {
             mod4Lock = !mod4Lock;
         }
-    } else if (vk == 0x8D || (vk == VK_OEM_8 && scan == 0x38)) {
+    } else if (scan == activeLayout.modifiers.mod4Right) {
         rightMod4Down = down;
         isNeoModifier = true;
 
@@ -408,22 +396,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         return true;
     }
 
-    // Undo keyboard driver feature which changes Numpad virtual keys to cursor control keys if shift is pressed (Numlock active).
-    if (isDualStateNumpadKey && shiftDown && numlock) {
-        // Translate only known virtual keys
-        if (vk in NumpadVKMap) {
-            vk = NumpadVKMap[vk];
-            debug {
-                try {
-                writeln("                                ------------> " ~ to!string(cast(VKEY) vk));
-                } catch (Exception e) {}
-            }
-        }
-    }
-
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
     // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
-    if (vk == VK_NUMLOCK && down) {
+    if (vk == VKEY.VK_NUMLOCK && down) {
         sendVK(VK_NUMLOCK, false);
         sendVK(VK_NUMLOCK, true);
         sendVK(VK_NUMLOCK, false);
@@ -431,7 +406,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
 
     // early exit if key is not in map
-    if (!(vk in MAPS[activeLayout])) {
+    if (!(scan in activeLayout.map)) {
         return false;
     }
 
@@ -439,13 +414,13 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool eat = false;
 
     // translate keypress to NEO layout factoring in the current layer
-    NeoKey nk = mapToNeo(vk, layer);
+    NeoKey nk = mapToNeo(scan, layer);
 
     if (down) {
         auto composeResult = compose(nk);
 
         if (composeResult.type == ComposeResultType.PASS) {
-            heldKeys[vk] = nk;
+            heldKeys[scan] = nk;
 
             // Translate all layers for Numpad keys
             if (layer >= 3 || isNumpadKey) {
@@ -465,19 +440,19 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
 
             // release the key that is held for this vk
             // don't send a keyup if no key is stored as held
-            if (vk in heldKeys) {
-                auto heldKey = heldKeys[vk];
+            if (scan in heldKeys) {
+                auto heldKey = heldKeys[scan];
                 sendNeoKey(heldKey, false);
             }
         } else {
             // layer 1 and 2 keys that are not stored as held
             // (probably because we ate them when composing or we switched down to this layer and already released the keys)
-            if (!(vk in heldKeys)) {
+            if (!(scan in heldKeys)) {
                 eat = true;
             }
         }
 
-        heldKeys.remove(vk);
+        heldKeys.remove(scan);
     }
 
     return eat;
