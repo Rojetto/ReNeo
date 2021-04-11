@@ -278,7 +278,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
     bool extended = (msg_struct.flags & LLKHF_EXTENDED) > 0;
     bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
-    bool numlock = (GetKeyState(VK_NUMLOCK) & 0x1) > 0;
+    bool numlock = getNumlockState();
     bool injected = (msg_struct.flags & LLKHF_INJECTED) > 0;
 
     debug {
