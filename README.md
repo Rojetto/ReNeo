@@ -41,16 +41,14 @@ Es gibt zwei wichtige Kompilationsvarianten:
 1. Debug mit `dub build`: Neben Debuggingsymbolen öffnet die generierte EXE eine Konsole um Informationen ausgeben zu können.
 2. Release mit `dub build --build=release`: Optimierungen sind aktiviert und es wird keine Konsole geöffnet.
 
+Die Ressourcendatei `res/icons.res` wird mit `rc.exe` aus dem Windows SDK erstellt. Dazu reicht der Befehl `rc.exe icons.rc`.
+
 ## Offene Aufgaben
-- [x] Automatisch deaktivieren, wenn anderes Tastaturlayout aktiv
 - [ ] Prüfung ob Anwendung bereits läuft
-- [ ] Icon für EXE
-- [x] Tray Icon
-- [ ] „Einfg“ auf Ebene 4 untersuchen (scheint in NeoVars aber auch nicht zu gehen)
 - [ ] Latenz messen
 
 ## Fernziele
+- [x] Kompatibilität mit anderen Neo-verwandten Layouts (NeoQwertz und Bone)
 - [ ] Integration in Hauptrepository
 - [ ] Flexibleres Mappingformat
-- [x] Kompatibilität mit anderen Neo-verwandten Layouts (NeoQwertz und Bone)
 - [ ] UI für Compose
