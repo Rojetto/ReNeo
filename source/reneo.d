@@ -291,16 +291,14 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
                        
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
     setKanaState(false);
-    // We want Numlock to be always on so that we get actual number VKs when in layer 1
-    setNumlockState(true);
+    // We want Numlock to be always off so that we don't get fake shift events on layer 2
+    setNumlockState(false);
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
     bool isNeoModifier;
 
     // update stored modifier key states
     // GetAsyncKeyState didn't seem to work for multiple simultaneous keys
-    // KBDNEO uses VK_OEM_102 for M3 und VK_OEM_8 for M4
-    // ReNEO uses 0x8A for M3L, 0x8B for M3R, 0x8C for M4L and 0x8D for M4R
 
     // Do not recognize fake shift events.
     // For more information see https://github.com/Lexikos/AutoHotkey_L/blob/master/source/keyboard_mouse.h#L139
