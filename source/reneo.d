@@ -160,7 +160,7 @@ void sendString(wstring content) nothrow {
 void sendNeoKey(NeoKey nk, bool down) nothrow {
     if (nk.keysym == KEYSYM_VOID) {
         // Special cases for weird mappings
-        if (nk.vk_code == VKEY.VK_KEYBOARD_MOUSE_LEFT) {
+        if (nk.vk_code == VKEY.VK_LBUTTON) {
             sendMouseClick(down);
         } else if (nk.vk_code == VKEY.VK_UNDO) {
             if (down) {
@@ -259,24 +259,21 @@ bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
 
 bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     auto vk = cast(VKEY) msg_struct.vkCode;
-    auto scanCode = msg_struct.scanCode;
     bool down = msg_type == WM_KEYDOWN || msg_type == WM_SYSKEYDOWN;
     // TODO: do we need to use this somewhere?
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
-    bool extended = (msg_struct.flags & LLKHF_EXTENDED) > 0;
-    auto scan = Scancode(cast(byte) scanCode, extended);
+    auto scan = Scancode(cast(byte) msg_struct.scanCode, (msg_struct.flags & LLKHF_EXTENDED) > 0);
     bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
-    bool numlock = getNumlockState();
     bool injected = (msg_struct.flags & LLKHF_INJECTED) > 0;
 
     debug {
-        auto injected_text = injected ? "(injected) " : "           ";
-        auto down_text     = down     ? "(down) " : " (up)  ";
-        auto alt_text      = altdown  ? "(Alt) " : "      ";
-        auto extended_text = extended ? "(Ext) " : "      ";
+        auto injected_text = injected      ? "(injected) " : "           ";
+        auto down_text     = down          ? "(down) " : " (up)  ";
+        auto alt_text      = altdown       ? "(Alt) " : "      ";
+        auto extended_text = scan.extended ? "(Ext) " : "      ";
 
         try {
-            writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scanCode, to!string(vk), vk));
+            writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scan.scan, to!string(vk), vk));
         } catch(Exception e) {}
     }
 
@@ -287,9 +284,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
 
     // Numpad 0-9 and separator are dual-state Numpad keys:
     // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
-    bool isDualStateNumpadKey = (!extended && scanCode >= 0x47 && scanCode <= 0x53 && scanCode != 0x4A && scanCode != 0x4E);
+    bool isDualStateNumpadKey = (!scan.extended && scan.scan >= 0x47 && scan.scan <= 0x53 && scan.scan != 0x4A && scan.scan != 0x4E);
     // All Numpad keys including KP_Enter
-    bool isNumpadKey = isDualStateNumpadKey || vk == VKEY.VK_NUMLOCK || (extended && vk == VKEY.VK_RETURN) || 
+    bool isNumpadKey = isDualStateNumpadKey || vk == VKEY.VK_NUMLOCK || (scan.extended && vk == VKEY.VK_RETURN) || 
                        vk == VKEY.VK_ADD || vk == VKEY.VK_SUBTRACT || vk == VKEY.VK_MULTIPLY || vk == VKEY.VK_DIVIDE;
                        
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
@@ -307,7 +304,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
 
     // Do not recognize fake shift events.
     // For more information see https://github.com/Lexikos/AutoHotkey_L/blob/master/source/keyboard_mouse.h#L139
-    if (scan == activeLayout.modifiers.shiftLeft && scanCode != SC_FAKE_LSHIFT) {
+    if (scan == activeLayout.modifiers.shiftLeft && scan.scan != SC_FAKE_LSHIFT) {
         // CAPSLOCK by pressing both Shift keys
         // leftShiftDown contains previous state
         if (!leftShiftDown && down && rightShiftDown) {
@@ -316,7 +313,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
 
         leftShiftDown = down;
-    } else if (scan == activeLayout.modifiers.shiftRight && scanCode != SC_FAKE_RSHIFT) {
+    } else if (scan == activeLayout.modifiers.shiftRight && scan.scan != SC_FAKE_RSHIFT) {
         if (!rightShiftDown && down && leftShiftDown) {
             sendVK(VK_CAPITAL, true);
             sendVK(VK_CAPITAL, false);

@@ -111,6 +111,7 @@ wstring inputLocaleToDllName(HKL inputLocale) nothrow {
     wchar[256] layoutFile;
     uint bufferSize = layoutFile.length;
     RegGetValueW(HKEY_LOCAL_MACHINE, regKey.ptr, valueName.ptr, RRF_RT_REG_SZ, NULL, layoutFile.ptr, &bufferSize);
+    // get characters until null terminator
     wchar[] dllName = layoutFile[0 .. wcslen(layoutFile.ptr)];
     return dllName.to!wstring;
 }
@@ -197,7 +198,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         default: break;
     }
 
-    } catch (Throwable e) {
+    } catch (Exception e) {
         // Doing nothing here. Might better be done in some methods in TrayIcon
     }
 

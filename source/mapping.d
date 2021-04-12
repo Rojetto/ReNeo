@@ -144,8 +144,6 @@ enum VKEY {
     VK_F23 = 0x86,
     VK_F24 = 0x87,
     // unassigned 0x88-0x8F
-    // Fake VK to map keyboard left mouse click
-    VK_KEYBOARD_MOUSE_LEFT = 0x88,
     // Fake VK for Ctrl+Z combo
     VK_UNDO = 0x89,
     VK_NUMLOCK = 0x90,
@@ -214,7 +212,7 @@ enum VKEY {
 
 struct Scancode {
     byte scan;
-    bool extended;
+    bool extended;  // whether the extended bit is set for this physical key
 }
 
 struct NeoLayout {
@@ -229,7 +227,7 @@ struct NeoLayout {
         Scancode mod4Right;
     }
     Modifiers modifiers;
-    NeoKey[6][Scancode] map;
+    NeoKey[6][Scancode] map;  // map scancodes to a 6-array of keys for each layer
 }
 
 void initLayouts(JSONValue jsonLayoutArray) {
@@ -247,7 +245,11 @@ void initLayouts(JSONValue jsonLayoutArray) {
         layout.modifiers.mod4Right = parseScancode(jsonLayout["modifiers"]["mod4Right"].str);
 
         foreach (string scancodeString, JSONValue jsonLayersArray; jsonLayout["map"]) {
-            layout.map[parseScancode(scancodeString)] = [parseNeoKey(jsonLayersArray.array[0]), parseNeoKey(jsonLayersArray.array[1]), parseNeoKey(jsonLayersArray.array[2]), parseNeoKey(jsonLayersArray.array[3]), parseNeoKey(jsonLayersArray.array[4]), parseNeoKey(jsonLayersArray.array[5])];
+            NeoKey[6] layers;
+            for (int i = 0; i < 6; i++) {
+                layers[i] = parseNeoKey(jsonLayersArray.array[i]);
+            }
+            layout.map[parseScancode(scancodeString)] = layers;
         }
 
         layouts ~= layout;
@@ -276,6 +278,7 @@ NeoKey parseNeoKey(JSONValue jsonKey) {
 }
 
 Scancode parseScancode(string scancodeString) {
+    // scancode is a byte in hex, a + after the code means the extended bit is set
     bool extended = scancodeString.length == 3 && scancodeString[2] == '+';
     byte scan = scancodeString[0..2].to!byte(16);
     return Scancode(scan, extended);
