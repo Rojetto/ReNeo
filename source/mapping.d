@@ -211,7 +211,7 @@ enum VKEY {
 }
 
 struct Scancode {
-    byte scan;
+    uint scan;
     bool extended;  // whether the extended bit is set for this physical key
 }
 
@@ -280,6 +280,6 @@ NeoKey parseNeoKey(JSONValue jsonKey) {
 Scancode parseScancode(string scancodeString) {
     // scancode is a byte in hex, a + after the code means the extended bit is set
     bool extended = scancodeString.length == 3 && scancodeString[2] == '+';
-    byte scan = scancodeString[0..2].to!byte(16);
+    uint scan = scancodeString[0..2].to!uint(16);
     return Scancode(scan, extended);
 }

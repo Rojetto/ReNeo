@@ -262,7 +262,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool down = msg_type == WM_KEYDOWN || msg_type == WM_SYSKEYDOWN;
     // TODO: do we need to use this somewhere?
     bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
-    auto scan = Scancode(cast(byte) msg_struct.scanCode, (msg_struct.flags & LLKHF_EXTENDED) > 0);
+    auto scan = Scancode(cast(uint) msg_struct.scanCode, (msg_struct.flags & LLKHF_EXTENDED) > 0);
     bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
     bool injected = (msg_struct.flags & LLKHF_INJECTED) > 0;
 
