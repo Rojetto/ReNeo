@@ -249,6 +249,9 @@ NeoKey[Scancode] heldKeys;
 
 NeoLayout *activeLayout;
 
+// should we take over all layers? activated when replaceQwertz is true in the config file and qwertz is active
+bool standaloneMode;
+
 
 bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
     bool changed = newLayout != activeLayout;
@@ -293,6 +296,11 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     setKanaState(false);
     // We want Numlock to be always off so that we don't get fake shift events on layer 2
     setNumlockState(false);
+
+    // Disable fake LCTRL on AltGr as we use that for Mod4
+    if (scan.scan == SC_FAKE_LCTRL) {
+        return true;
+    }
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
     bool isNeoModifier;
@@ -418,7 +426,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             heldKeys[scan] = nk;
 
             // Translate all layers for Numpad keys
-            if (layer >= 3 || isNumpadKey) {
+            if (layer >= 3 || isNumpadKey || standaloneMode) {
                 eat = true;
                 sendNeoKey(nk, true);
             }
@@ -430,7 +438,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             }
         }
     } else {
-        if (layer >= 3 || isNumpadKey) {
+        if (layer >= 3 || isNumpadKey || standaloneMode) {
             eat = true;
 
             // release the key that is held for this vk

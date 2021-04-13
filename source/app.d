@@ -25,6 +25,9 @@ bool foregroundWindowChanged;
 bool keyboardHookActive;
 bool previousNumlockState;
 
+bool configReplaceQwertz;
+NeoLayout *configStandaloneLayout;
+
 HMENU contextMenu;
 HICON iconEnabled;
 HICON iconDisabled;
@@ -119,7 +122,23 @@ wstring inputLocaleToDllName(HKL inputLocale) nothrow {
 }
 
 void checkKeyboardLayout() nothrow {
-    auto layout = getAppropriateNeoLayout();
+    HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
+    wstring dllName = inputLocaleToDllName(inputLocale);
+
+    NeoLayout *layout;
+
+    if (configReplaceQwertz && dllName == "KBDGR.DLL") {
+        standaloneMode = true;
+        layout = configStandaloneLayout;
+        
+    } else {
+        standaloneMode = false;
+        for (int i = 0; i < layouts.length; i++) {
+            if (layouts[i].dllName == dllName) {
+                layout = &layouts[i];
+            }
+        }
+    }
 
     if (layout != null) {
         if (bypassMode) {
@@ -268,6 +287,21 @@ void initialize() {
     string configString = readText(configPath);
     auto configJson = parseJSON(configString);
     initLayouts(configJson["layouts"]);
+
+    configReplaceQwertz = configJson["replaceQwertz"].boolean;
+    if (configReplaceQwertz) {
+        wstring standaloneLayoutName = configJson["standaloneLayout"].str.to!wstring;
+        for (int i = 0; i < layouts.length; i++) {
+            if (layouts[i].name == standaloneLayoutName) {
+                configStandaloneLayout = &layouts[i];
+                break;
+            }
+        }
+
+        if (configStandaloneLayout == null) {
+            debug_writeln("Standalone layout '", standaloneLayoutName, "' not found!");
+        }
+    }
 
     debug_writeln("Initialization complete!");
 }
