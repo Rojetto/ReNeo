@@ -236,7 +236,10 @@ void initLayouts(JSONValue jsonLayoutArray) {
     foreach (JSONValue jsonLayout; jsonLayoutArray.array) {
         NeoLayout layout;
         layout.name = jsonLayout["name"].str.to!wstring;
-        layout.dllName = jsonLayout["dllName"].str.to!wstring;
+        if ("dllName" in jsonLayout) {
+            // if there is no dllName this is a pure standalone layout
+            layout.dllName = jsonLayout["dllName"].str.to!wstring;
+        }
         layout.modifiers.shiftLeft = parseScancode(jsonLayout["modifiers"]["shiftLeft"].str);
         layout.modifiers.shiftRight = parseScancode(jsonLayout["modifiers"]["shiftRight"].str);
         layout.modifiers.mod3Left = parseScancode(jsonLayout["modifiers"]["mod3Left"].str);
