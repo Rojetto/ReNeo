@@ -184,10 +184,18 @@ void sendNeoKey(NeoKey nk, bool down) nothrow {
 
 NeoKey mapToNeo(Scancode scan, uint layer) nothrow {
     if (scan in activeLayout.map) {
-        return activeLayout.map[scan][layer - 1];
+        return activeLayout.map[scan].layers[layer - 1];
     }
 
     return VOID_KEY;
+}
+
+bool isCapslockable(Scancode scan) nothrow {
+    if (scan in activeLayout.map) {
+        return activeLayout.map[scan].capslockable;
+    }
+
+    return false;
 }
 
 void sendMouseClick(bool down) nothrow {
@@ -352,6 +360,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool mod3Down = leftMod3Down || rightMod3Down;
     bool mod4Down = leftMod4Down || rightMod4Down;
 
+    // is capslock active?
+    bool capslock = GetKeyState(VKEY.VK_CAPITAL) & 0x0001;
+
     // determine the layer we are currently on
     uint layer = 1;
 
@@ -363,7 +374,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         layer = 4;
     }  else if (mod3Down) {
         layer = 3;
-    }  else if (shiftDown) {
+    }  else if (shiftDown || (capslock && isCapslockable(scan))) {
         layer = 2;
     }
 

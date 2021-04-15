@@ -215,6 +215,11 @@ struct Scancode {
     bool extended;  // whether the extended bit is set for this physical key
 }
 
+struct MapEntry {
+    NeoKey[6] layers;
+    bool capslockable; // is this key affected by capslock
+}
+
 struct NeoLayout {
     wstring name;
     wstring dllName;
@@ -227,7 +232,7 @@ struct NeoLayout {
         Scancode mod4Right;
     }
     Modifiers modifiers;
-    NeoKey[6][Scancode] map;  // map scancodes to a 6-array of keys for each layer
+    MapEntry[Scancode] map;  // map scancodes to a 6-array of keys for each layer and misc other info
 }
 
 void initLayouts(JSONValue jsonLayoutArray) {
@@ -248,11 +253,16 @@ void initLayouts(JSONValue jsonLayoutArray) {
         layout.modifiers.mod4Right = parseScancode(jsonLayout["modifiers"]["mod4Right"].str);
 
         foreach (string scancodeString, JSONValue jsonLayersArray; jsonLayout["map"]) {
-            NeoKey[6] layers;
+            MapEntry entry;
             for (int i = 0; i < 6; i++) {
-                layers[i] = parseNeoKey(jsonLayersArray.array[i]);
+                entry.layers[i] = parseNeoKey(jsonLayersArray.array[i]);
             }
-            layout.map[parseScancode(scancodeString)] = layers;
+            layout.map[parseScancode(scancodeString)] = entry;
+        }
+
+        foreach (JSONValue scancodeJson; jsonLayout["capslockableKeys"].array) {
+            auto scan = parseScancode(scancodeJson.str);
+            layout.map[scan].capslockable = true;
         }
 
         layouts ~= layout;
