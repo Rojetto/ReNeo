@@ -1,5 +1,5 @@
 {
-    "replaceQwertz": true,
+    "standaloneMode": false,
     "standaloneLayout": "Neo",
     "layouts": [
         {

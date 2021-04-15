@@ -25,7 +25,7 @@ bool foregroundWindowChanged;
 bool keyboardHookActive;
 bool previousNumlockState;
 
-bool configReplaceQwertz;
+bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
 
 HMENU contextMenu;
@@ -127,17 +127,25 @@ void checkKeyboardLayout() nothrow {
 
     NeoLayout *layout;
 
-    if (configReplaceQwertz && dllName == "KBDGR.DLL") {
-        standaloneMode = true;
-        layout = configStandaloneLayout;
-        
-    } else {
-        standaloneMode = false;
-        for (int i = 0; i < layouts.length; i++) {
-            if (layouts[i].dllName == dllName) {
-                layout = &layouts[i];
-            }
+    // try to find a layout in the config that matches the currently active keyboard layout DLL
+    for (int i = 0; i < layouts.length; i++) {
+        if (layouts[i].dllName == dllName) {
+            layout = &layouts[i];
         }
+    }
+
+    if (layout == null) {
+        if (configStandaloneMode) {
+            // user enabled standalone mode in config, so we want to overtake and replace it with the selected Neo related layout
+            standaloneModeActive = true;
+            layout = configStandaloneLayout;
+        } else {
+            // user just wants to use whatever native layout they selected
+            standaloneModeActive = false;
+        }
+    } else {
+        // there is a native Neo related layout active, just operate in extension mode
+        standaloneModeActive = false;
     }
 
     if (layout != null) {
@@ -288,8 +296,8 @@ void initialize() {
     auto configJson = parseJSON(configString);
     initLayouts(configJson["layouts"]);
 
-    configReplaceQwertz = configJson["replaceQwertz"].boolean;
-    if (configReplaceQwertz) {
+    configStandaloneMode = configJson["standaloneMode"].boolean;
+    if (configStandaloneMode) {
         wstring standaloneLayoutName = configJson["standaloneLayout"].str.to!wstring;
         for (int i = 0; i < layouts.length; i++) {
             if (layouts[i].name == standaloneLayoutName) {

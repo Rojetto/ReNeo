@@ -257,8 +257,8 @@ NeoKey[Scancode] heldKeys;
 
 NeoLayout *activeLayout;
 
-// should we take over all layers? activated when replaceQwertz is true in the config file and qwertz is active
-bool standaloneMode;
+// should we take over all layers? activated when standaloneMode is true in the config file and the currently selected native layout is not Neo related
+bool standaloneModeActive;
 
 
 bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
@@ -437,7 +437,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             heldKeys[scan] = nk;
 
             // Translate all layers for Numpad keys
-            if (layer >= 3 || isNumpadKey || standaloneMode) {
+            if (layer >= 3 || isNumpadKey || standaloneModeActive) {
                 eat = true;
                 sendNeoKey(nk, true);
             }
@@ -449,7 +449,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             }
         }
     } else {
-        if (layer >= 3 || isNumpadKey || standaloneMode) {
+        if (layer >= 3 || isNumpadKey || standaloneModeActive) {
             eat = true;
 
             // release the key that is held for this vk
