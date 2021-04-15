@@ -29,6 +29,8 @@ HMENU contextMenu;
 HICON iconEnabled;
 HICON iconDisabled;
 
+const MOD_NOREPEAT = 0x4000;
+
 const UINT ID_MYTRAYICON = 0x1000;
 const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
 const UINT ID_TRAY_RELOAD_CONTEXTMENU = 0x1101;
@@ -195,6 +197,12 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         }
         break;
 
+        case WM_HOTKEY:
+        // De(activation) hotkey
+        switchKeyboardHook();
+        updateContextMenu();
+        break;
+
         default: break;
     }
 
@@ -308,11 +316,16 @@ void main(string[] args) {
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
     SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
 
+    // Register global (de)activation hotkey (Shift+Pause)
+    RegisterHotKey(hwnd, 0, core.sys.windows.winuser.MOD_SHIFT | MOD_NOREPEAT, VK_PAUSE);
+
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
+    UnregisterHotKey(hwnd, 0);
 
     if (keyboardHookActive) { switchKeyboardHook(); }
 }
