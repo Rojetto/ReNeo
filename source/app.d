@@ -153,10 +153,12 @@ void checkKeyboardLayout() nothrow {
     }
 
     // Update tray menu: enable layout selection only if standalone mode is currently active
-    if (standaloneModeActive) {
-        EnableMenuItem(contextMenu, LAYOUTMENU_POSITION, MF_BYPOSITION | MF_ENABLED);
-    } else {
-        EnableMenuItem(contextMenu, LAYOUTMENU_POSITION, MF_BYPOSITION | MF_GRAYED);
+    if (configStandaloneMode) {
+        if (standaloneModeActive) {
+            EnableMenuItem(contextMenu, LAYOUTMENU_POSITION, MF_BYPOSITION | MF_ENABLED);
+        } else {
+            EnableMenuItem(contextMenu, LAYOUTMENU_POSITION, MF_BYPOSITION | MF_GRAYED);
+        }
     }
 
     if (layout != null) {
@@ -385,8 +387,10 @@ void main(string[] args) {
 
     // Define context menu
     contextMenu = CreatePopupMenu();
-    AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, layoutMenuMsg.toUTF16z);
-    AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
+    if (configStandaloneMode) {
+        AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, layoutMenuMsg.toUTF16z);
+        AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
+    }
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
