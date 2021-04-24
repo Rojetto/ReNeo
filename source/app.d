@@ -238,6 +238,10 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
                 configStandaloneLayout = &layouts[newLayoutIdx];
                 checkKeyboardLayout();
                 CheckMenuRadioItem(layoutMenu, 0, GetMenuItemCount(layoutMenu) - 1, newLayoutIdx, MF_BYPOSITION);
+                // Persist new selected layout
+                auto configJson = parseJSONFile("config.json");
+                configJson["standaloneLayout"] = layouts[newLayoutIdx].name;
+                std.file.write(buildPath(executableDir, "config.json"), toJSON(configJson, true));
             }
             break;
         }
@@ -310,10 +314,9 @@ void initialize() {
     initKeysyms(executableDir);
     initCompose(executableDir);
 
-    string configPath = buildPath(executableDir, "config.json");
-    string configString = readText(configPath);
-    auto configJson = parseJSON(configString);
-    initLayouts(configJson["layouts"]);
+    auto configJson = parseJSONFile("config.json");
+    auto layoutsJson = parseJSONFile("layouts.json");
+    initLayouts(layoutsJson["layouts"]);
 
     // Initialize layout menu
     layoutMenu = CreatePopupMenu();
@@ -339,6 +342,12 @@ void initialize() {
     }
 
     debug_writeln("Initialization complete!");
+}
+
+JSONValue parseJSONFile(string jsonFilename) {
+    string jsonFilePath = buildPath(executableDir, jsonFilename);
+    string jsonString = readText(jsonFilePath);
+    return parseJSON(jsonString);
 }
 
 void main(string[] args) {
