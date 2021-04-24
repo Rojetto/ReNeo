@@ -29,6 +29,7 @@ bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
 
 HMENU contextMenu;
+HMENU layoutMenu;
 HICON iconEnabled;
 HICON iconDisabled;
 
@@ -38,9 +39,12 @@ const UINT ID_MYTRAYICON = 0x1000;
 const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
 const UINT ID_TRAY_RELOAD_CONTEXTMENU = 0x1101;
 const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x110F;
+const UINT ID_LAYOUTMENU = 0x1200;
+const UINT LAYOUTMENU_POSITION = 0;
 string disableAppMenuMsg = "ReNeo deaktivieren";
 string enableAppMenuMsg  = "ReNeo aktivieren";
 string reloadMenuMsg     = "Neu laden";
+string layoutMenuMsg     = "Tastaturlayout auswählen";
 string quitMenuMsg       = "ReNeo beenden";
 
 const APPNAME            = "ReNeo";
@@ -148,6 +152,13 @@ void checkKeyboardLayout() nothrow {
         standaloneModeActive = false;
     }
 
+    // Update tray menu: enable layout selection only if standalone mode is currently active
+    if (standaloneModeActive) {
+        EnableMenuItem(contextMenu, LAYOUTMENU_POSITION, MF_BYPOSITION | MF_ENABLED);
+    } else {
+        EnableMenuItem(contextMenu, LAYOUTMENU_POSITION, MF_BYPOSITION | MF_GRAYED);
+    }
+
     if (layout != null) {
         if (bypassMode) {
             debug_writeln("No bypassing keyboard input");
@@ -220,7 +231,15 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             SendMessage(hwnd, WM_CLOSE, 0, 0);
             break;
 
-            default: break;
+            default:
+            uint newLayoutIdx = cast(uint)wParam - ID_LAYOUTMENU;
+            // Did the user select a valid layout index?
+            if (newLayoutIdx >= 0 && newLayoutIdx < layouts.length) {
+                configStandaloneLayout = &layouts[newLayoutIdx];
+                checkKeyboardLayout();
+                CheckMenuRadioItem(layoutMenu, 0, GetMenuItemCount(layoutMenu) - 1, newLayoutIdx, MF_BYPOSITION);
+            }
+            break;
         }
         break;
 
@@ -296,12 +315,20 @@ void initialize() {
     auto configJson = parseJSON(configString);
     initLayouts(configJson["layouts"]);
 
+    // Initialize layout menu
+    layoutMenu = CreatePopupMenu();
+    for (int i = 0; i < layouts.length; i++) {
+        AppendMenu(layoutMenu, MF_STRING, ID_LAYOUTMENU + i, layouts[i].name.toUTF16z);
+    }
+
     configStandaloneMode = configJson["standaloneMode"].boolean;
     if (configStandaloneMode) {
         wstring standaloneLayoutName = configJson["standaloneLayout"].str.to!wstring;
         for (int i = 0; i < layouts.length; i++) {
             if (layouts[i].name == standaloneLayoutName) {
                 configStandaloneLayout = &layouts[i];
+                // Select the current layout (only visible if standalone mode is active)
+                CheckMenuRadioItem(layoutMenu, 0, GetMenuItemCount(layoutMenu) - 1, i, MF_BYPOSITION);
                 break;
             }
         }
@@ -352,8 +379,10 @@ void main(string[] args) {
 
     // Define context menu
     contextMenu = CreatePopupMenu();
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, layoutMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
     SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
