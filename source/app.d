@@ -347,9 +347,6 @@ void main(string[] args) {
 
     initialize();
 
-    keyboardHookActive = false;
-    switchKeyboardHook();
-
     // We want to detect when the selected keyboard layout changes so that we can activate or deactivate ReNeo as necessary.
     // Listening to input locale events directly is difficult and not very robust. So we listen to the foreground window changes
     // (which also fire when the language bar is activated) and then recheck the keyboard layout on the next keypress.
@@ -386,6 +383,9 @@ void main(string[] args) {
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
     SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
+
+    keyboardHookActive = false;
+    switchKeyboardHook();
 
     // Register global (de)activation hotkey (Shift+Pause)
     RegisterHotKey(hwnd, 0, core.sys.windows.winuser.MOD_SHIFT | MOD_NOREPEAT, VK_PAUSE);
