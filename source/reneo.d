@@ -11,6 +11,7 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
+import app : configSendKeyMode;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -20,6 +21,11 @@ void debug_writeln(T...)(T args) {
     debug {
         writeln(args);
     }
+}
+
+enum SendKeyMode {
+    HONEST,      // send scancode of physically pressed keys and "char" entries as unicode
+    FAKE_NATIVE  // send scancode of equivalent key in native layout and replace "char" entries with native key combos if possible
 }
 
 enum NeoKeyType {
@@ -102,16 +108,17 @@ uint parseKeysym(string keysym) {
     return KEYSYM_VOID;
 }
 
-void sendVK(int vk, bool down) nothrow {
+void sendVK(int vk, Scancode scan, bool down) nothrow {
     INPUT[] inputs;
 
+    bool extended = scan.extended;
     // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
-    bool extended = vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
+    extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
 
     INPUT input_struct;
     input_struct.type = INPUT_KEYBOARD;
-    input_struct.ki.wVk = cast(ushort)vk;
-    input_struct.ki.wScan = 0; // todo: maybe use a plausible value here
+    input_struct.ki.wVk = cast(ushort) vk;
+    input_struct.ki.wScan = cast(ushort) scan.scan;
     input_struct.ki.dwFlags = 0;
     if (!down) {
         input_struct.ki.dwFlags |= KEYEVENTF_KEYUP;
@@ -138,6 +145,60 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
     SendInput(1, &input_struct, INPUT.sizeof);
 }
 
+void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
+    /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
+    debug_writeln("Trying to send ", unicode_char);
+    short result = VkKeyScan(unicode_char);
+    byte low = cast(byte) result;
+    byte high = cast(byte) (result >> 8);
+
+    short vk = low;
+    bool shift = (high & 1) != 0;
+    bool ctrl = (high & 2) != 0;
+    bool alt = (high & 4) != 0;
+    bool kana = (high & 8) != 0;
+    bool mod5 = (high & 16) != 0;
+    bool mod6 = (high & 32) != 0;
+
+    if (low == -1 || kana || mod5 || mod6) {
+        // char does not exist in native layout or requires exotic modifiers
+        sendUTF16(unicode_char, down);
+        return;
+    }
+
+    INPUT[] inputs;
+    INPUT input_struct;  // reuse struct for the following keys
+    input_struct.type = INPUT_KEYBOARD;
+    if (!down) {
+        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
+    }
+
+    // modifiers
+    // pay attention to current capslock state
+    if ((shift && !capslock) || (!shift && capslock)) {
+        input_struct.ki.wVk = VK_SHIFT;
+        input_struct.ki.wScan = 0x2A;
+        inputs ~= input_struct;
+    }
+    if (ctrl) {
+        input_struct.ki.wVk = VK_CONTROL;
+        input_struct.ki.wScan = 0x1D;
+        inputs ~= input_struct;
+    }
+    if (alt) {
+        input_struct.ki.wVk = VK_MENU;
+        input_struct.ki.wScan = 0x38;
+        inputs ~= input_struct;
+    }
+
+    // main key
+    input_struct.ki.wVk = vk;
+    input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+    inputs ~= input_struct;
+
+    SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
+}
+
 void sendString(wstring content) nothrow {
     INPUT[] inputs;
     inputs.length = content.length * 2;
@@ -157,18 +218,19 @@ void sendString(wstring content) nothrow {
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
 
-void sendNeoKey(NeoKey nk, bool down) nothrow {
+void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
     if (nk.keysym == KEYSYM_VOID) {
         // Special cases for weird mappings
         if (nk.vk_code == VKEY.VK_LBUTTON) {
             sendMouseClick(down);
         } else if (nk.vk_code == VKEY.VK_UNDO) {
             if (down) {
-                sendVK(VK_CONTROL, true);
-                sendVK('Z', true);
+                // TODO: fix scancodes
+                sendVK(VK_CONTROL, Scancode(0, false), true);
+                sendVK('Z', Scancode(0, false), true);
             } else {
-                sendVK('Z', false);
-                sendVK(VK_CONTROL, false);
+                sendVK('Z', Scancode(0, false), false);
+                sendVK(VK_CONTROL, Scancode(0, false), false);
             }
         } else {
             return;
@@ -176,9 +238,30 @@ void sendNeoKey(NeoKey nk, bool down) nothrow {
     }
 
     if (nk.keytype == NeoKeyType.VKEY) {
-        sendVK(nk.vk_code, down);
+        Scancode scan = realScan;
+        switch (configSendKeyMode) {
+            case SendKeyMode.HONEST: break; // leave the real scan code
+            case SendKeyMode.FAKE_NATIVE:
+            auto map_result = MapVirtualKey(nk.vk_code, MAPVK_VK_TO_VSC);
+            if (map_result) {
+                // vk does exist in native layout, use the fake native scan code
+                scan.extended = false;
+                scan.scan = map_result;
+            }
+            break;
+            default: break;
+        }
+        sendVK(nk.vk_code, scan, down);
     } else {
-        sendUTF16(nk.char_code, down);
+        switch (configSendKeyMode) {
+            case SendKeyMode.HONEST:
+            sendUTF16(nk.char_code, down);
+            break;
+            case SendKeyMode.FAKE_NATIVE:
+            sendUTF16OrKeyCombo(nk.char_code, down);
+            break;
+            default: break;
+        }
     }
 }
 
@@ -223,8 +306,8 @@ bool getKanaState() nothrow {
 
 void setKanaState(bool state) nothrow {
     if (getKanaState() != state) {
-        sendVK(VK_KANA, true);
-        sendVK(VK_KANA, false);
+        sendVK(VK_KANA, Scancode(0, false), true);
+        sendVK(VK_KANA, Scancode(0, false), false);
     }
 }
 
@@ -235,8 +318,8 @@ bool getNumlockState() nothrow {
 
 void setNumlockState(bool state) nothrow {
     if (getNumlockState() != state) {
-        sendVK(VK_NUMLOCK, true);
-        sendVK(VK_NUMLOCK, false);
+        sendVK(VK_NUMLOCK, Scancode(0, false), true);
+        sendVK(VK_NUMLOCK, Scancode(0, false), false);
     }
 }
 
@@ -248,6 +331,7 @@ bool rightMod3Down;
 bool leftMod4Down;
 bool rightMod4Down;
 
+bool capslock;
 bool mod4Lock;
 
 uint previousLayer = 1;
@@ -322,15 +406,15 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         // CAPSLOCK by pressing both Shift keys
         // leftShiftDown contains previous state
         if (!leftShiftDown && down && rightShiftDown) {
-            sendVK(VK_CAPITAL, true);
-            sendVK(VK_CAPITAL, false);
+            sendVK(VK_CAPITAL, Scancode(0, false), true);
+            sendVK(VK_CAPITAL, Scancode(0, false), false);
         }
 
         leftShiftDown = down;
     } else if (scan == activeLayout.modifiers.shiftRight && scan.scan != SC_FAKE_RSHIFT) {
         if (!rightShiftDown && down && leftShiftDown) {
-            sendVK(VK_CAPITAL, true);
-            sendVK(VK_CAPITAL, false);
+            sendVK(VK_CAPITAL, Scancode(0, false), true);
+            sendVK(VK_CAPITAL, Scancode(0, false), false);
         }
 
         rightShiftDown = down;
@@ -361,7 +445,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool mod4Down = leftMod4Down || rightMod4Down;
 
     // is capslock active?
-    bool capslock = GetKeyState(VKEY.VK_CAPITAL) & 0x0001;
+    capslock = GetKeyState(VKEY.VK_CAPITAL) & 0x0001;
 
     // determine the layer we are currently on
     uint layer = 1;
@@ -400,7 +484,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // if we switched layers release all currently held keys
     if (changedLayer) {
         foreach (entry; heldKeys.byKeyValue()) {
-            sendNeoKey(entry.value, false);
+            sendNeoKey(entry.value, entry.key, false);
         }
         heldKeys.clear();
     }
@@ -413,10 +497,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
     // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
     if (vk == VKEY.VK_NUMLOCK && down) {
-        sendVK(VK_NUMLOCK, false);
-        sendVK(VK_NUMLOCK, true);
-        sendVK(VK_NUMLOCK, false);
-        sendVK(VK_NUMLOCK, true);
+        sendVK(VK_NUMLOCK, Scancode(0, false), false);
+        sendVK(VK_NUMLOCK, Scancode(0, false), true);
+        sendVK(VK_NUMLOCK, Scancode(0, false), false);
+        sendVK(VK_NUMLOCK, Scancode(0, false), true);
     }
 
     // early exit if key is not in map
@@ -439,7 +523,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             // Translate all layers for Numpad keys
             if (layer >= 3 || isNumpadKey || standaloneModeActive) {
                 eat = true;
-                sendNeoKey(nk, true);
+                sendNeoKey(nk, scan, true);
             }
         } else {
             eat = true;
@@ -456,7 +540,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             // don't send a keyup if no key is stored as held
             if (scan in heldKeys) {
                 auto heldKey = heldKeys[scan];
-                sendNeoKey(heldKey, false);
+                sendNeoKey(heldKey, scan, false);
             }
         } else {
             // layer 1 and 2 keys that are not stored as held

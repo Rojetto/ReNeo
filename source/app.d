@@ -27,6 +27,7 @@ bool previousNumlockState;
 
 bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
+SendKeyMode configSendKeyMode;
 
 HMENU contextMenu;
 HMENU layoutMenu;
@@ -352,6 +353,16 @@ void initialize() {
         if (configStandaloneLayout == null) {
             debug_writeln("Standalone layout '", standaloneLayoutName, "' not found!");
         }
+    }
+
+    switch (configJson["sendKeyMode"].str) {
+        case "honest":
+        configSendKeyMode = SendKeyMode.HONEST;
+        break;
+        case "fakeNative":
+        configSendKeyMode = SendKeyMode.FAKE_NATIVE;
+        break;
+        default: break;
     }
 
     debug_writeln("Initialization complete!");
