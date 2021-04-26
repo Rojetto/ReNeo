@@ -175,6 +175,8 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     // modifiers
     // pay attention to current capslock state
+    // warning: this is only an approximation. whether capslock affects this key is dependent on the native layout
+    // this means sometimes we need to invert capslock with shift, sometimes not... as of yet this is an open issue
     if ((shift && !capslock) || (!shift && capslock)) {
         input_struct.ki.wVk = VK_SHIFT;
         input_struct.ki.wScan = 0x2A;
