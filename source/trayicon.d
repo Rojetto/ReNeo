@@ -58,7 +58,7 @@ class TrayIcon {
         return nid.szTip[0 .. tipLen];
     }
 
-    void setTip(wchar[] newTip) {
+    void setTip(wchar[] newTip) nothrow {
         tipLen = (newTip.length > MAX_TIPLEN) ? MAX_TIPLEN : newTip.length;
         nid.szTip[0 .. tipLen] = newTip[0 .. tipLen];
         nid.szTip[tipLen] = 0;
