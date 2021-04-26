@@ -47,7 +47,7 @@ string reloadMenuMsg     = "Neu laden";
 string layoutMenuMsg     = "Tastaturlayout auswählen";
 string quitMenuMsg       = "ReNeo beenden";
 
-const APPNAME            = "ReNeo";
+const APPNAME            = "ReNeo"w;
 string executableDir;
 
 TrayIcon trayIcon;
@@ -56,6 +56,7 @@ extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     if (foregroundWindowChanged) {
         checkKeyboardLayout();
+        updateTrayTooltip();
         foregroundWindowChanged = false;
     }
 
@@ -222,6 +223,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             case ID_TRAY_ACTIVATE_CONTEXTMENU:
             switchKeyboardHook();
             updateContextMenu();
+            updateTrayTooltip();
             break;
 
             case ID_TRAY_RELOAD_CONTEXTMENU:
@@ -239,6 +241,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             if (newLayoutIdx >= 0 && newLayoutIdx < layouts.length) {
                 configStandaloneLayout = &layouts[newLayoutIdx];
                 checkKeyboardLayout();
+                updateTrayTooltip();
                 CheckMenuRadioItem(layoutMenu, 0, GetMenuItemCount(layoutMenu) - 1, newLayoutIdx, MF_BYPOSITION);
                 // Persist new selected layout
                 auto configJson = parseJSONFile("config.json");
@@ -282,6 +285,14 @@ void updateContextMenu() {
         trayIcon.setIcon(iconEnabled);
         modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg);
     }
+}
+
+void updateTrayTooltip() nothrow {
+    wstring layoutName = "inaktiv"w;
+    if (keyboardHookActive && !bypassMode) {
+        layoutName = (standaloneModeActive ? ""w : "+"w) ~ activeLayout.name;
+    }
+    trayIcon.setTip((APPNAME ~ " (" ~ layoutName ~ ")").to!(wchar[]));
 }
 
 void switchKeyboardHook() {
@@ -399,6 +410,7 @@ void main(string[] args) {
 
     keyboardHookActive = false;
     switchKeyboardHook();
+    updateTrayTooltip();
 
     // Register global (de)activation hotkey (Shift+Pause)
     RegisterHotKey(hwnd, 0, core.sys.windows.winuser.MOD_SHIFT | MOD_NOREPEAT, VK_PAUSE);
