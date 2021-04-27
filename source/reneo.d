@@ -149,8 +149,8 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
     debug_writeln("Trying to send ", unicode_char);
     short result = VkKeyScan(unicode_char);
-    byte low = cast(byte) result;
-    byte high = cast(byte) (result >> 8);
+    ubyte low = cast(ubyte) result;
+    ubyte high = cast(ubyte) (result >> 8);
 
     short vk = low;
     bool shift = (high & 1) != 0;
@@ -160,7 +160,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     bool mod5 = (high & 16) != 0;
     bool mod6 = (high & 32) != 0;
 
-    if (low == -1 || kana || mod5 || mod6) {
+    if (low == 0xFF || kana || mod5 || mod6) {
         // char does not exist in native layout or requires exotic modifiers
         sendUTF16(unicode_char, down);
         return;
