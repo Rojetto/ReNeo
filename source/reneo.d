@@ -152,7 +152,13 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
 
 void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
-    debug_writeln("Trying to send ", unicode_char);
+    debug {
+        try {
+            writeln(format("Trying to send %s (0x%04X) ...", unicode_char, to!int(unicode_char)));
+        }
+        catch (Exception e) {}
+    }
+
     short result = VkKeyScan(unicode_char);
     ubyte low = cast(ubyte) result;
     ubyte high = cast(ubyte) (result >> 8);
@@ -167,8 +173,22 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     if (low == 0xFF || kana || mod5 || mod6) {
         // char does not exist in native layout or requires exotic modifiers
+        debug_writeln("No standard key combination found, sending via VK packet");
         sendUTF16(unicode_char, down);
         return;
+    }
+
+    debug {
+        try {
+            auto shift_text = shift ? "(Shift) " : "        ";
+            auto ctrl_text  = ctrl  ? "(Ctrl)  " : "        ";
+            auto alt_text   = alt   ? "(Alt)   " : "        ";
+            auto kana_text  = kana  ? "(Kana)  " : "        ";
+            auto mod5_text  = mod5  ? "(Mod5)  " : "        ";
+            auto mod6_text  = mod6  ? "(Mod6)  " : "        ";
+            debug_writeln("Key combination is " ~ to!string(cast(VKEY) vk) ~ " "
+                ~ shift_text ~ ctrl_text ~ alt_text ~ kana_text ~ mod5_text ~ mod6_text);
+        } catch (Exception ex) {}
     }
 
     INPUT[] inputs;
