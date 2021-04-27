@@ -187,15 +187,24 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         input_struct.ki.wScan = 0x2A;
         inputs ~= input_struct;
     }
-    if (ctrl) {
-        input_struct.ki.wVk = VK_CONTROL;
-        input_struct.ki.wScan = 0x1D;
-        inputs ~= input_struct;
-    }
-    if (alt) {
+    if (ctrl && alt) {
+        // Send right alt key (extended), which will automatically generate fake left ctrl
         input_struct.ki.wVk = VK_MENU;
         input_struct.ki.wScan = 0x38;
+        input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
         inputs ~= input_struct;
+        input_struct.ki.dwFlags &= ~KEYEVENTF_EXTENDEDKEY;
+    } else {
+        if (ctrl) {
+            input_struct.ki.wVk = VK_CONTROL;
+            input_struct.ki.wScan = 0x1D;
+            inputs ~= input_struct;
+        }
+        if (alt) {
+            input_struct.ki.wVk = VK_MENU;
+            input_struct.ki.wScan = 0x38;
+            inputs ~= input_struct;
+        }
     }
 
     // main key
@@ -340,6 +349,7 @@ bool rightMod4Down;
 
 bool capslock;
 bool mod4Lock;
+bool unpressFakeLCtrl;
 
 uint previousLayer = 1;
 
@@ -379,6 +389,12 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         } catch(Exception e) {}
     }
 
+    // AltGr handling: eat injected AltGr-up event, if it was send for unpress fake LCtrl
+    if (scan == scanAltGr && !down && injected && unpressFakeLCtrl) {
+        unpressFakeLCtrl = false;
+        return true;
+    }
+    
     // ignore all simulated keypresses
     if (vk == VKEY.VK_PACKET || injected) {
         return false;
@@ -396,9 +412,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // We want Numlock to be always off so that we don't get fake shift events on layer 2
     setNumlockState(false);
 
-    // Disable fake LCTRL on AltGr as we use that for Mod4
+    // Do not change fake LCtrl but skip processing here. The key is necessary for LCtrl/RAlt combinations
+    // in standalone mode, for characters like @ or ~.
     if (scan.scan == SC_FAKE_LCTRL) {
-        return true;
+        return false;
     }
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
@@ -487,6 +504,16 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
     bool changedLayer = patchedLayer != previousLayer;
     previousLayer = patchedLayer;
+
+    // AltGr handling:
+    // Pressing physical AltGr on some layouts triggers a fake LCtrl-down, which we do not want here.
+    // So we send immediate AltGr-up to trigger the corresponding LCtrl-up. This way the ctrl key
+    // is not being (virtually) held for possible Mod4 key combinations.  We also need to catch
+    // this additional AltGr-up in the next hook call, which is indicated by unpressFakeLCtrl.
+    if (scan == scanAltGr && vk == VKEY.VK_RMENU && down) {
+        unpressFakeLCtrl = true;
+        sendVK(VK_RMENU, scan, false);
+    }
 
     // if we switched layers release all currently held keys
     if (changedLayer) {
