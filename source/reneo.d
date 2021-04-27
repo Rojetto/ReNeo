@@ -17,6 +17,11 @@ const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
 const SC_FAKE_LCTRL = 0x21D;
 
+Scancode scanCapslock = Scancode(0x3A, false);
+Scancode scanAltGr = Scancode(0x38, true);
+Scancode scanLCtrl = Scancode(0x1D, false);
+Scancode scanNumlock = Scancode(0x45, true);
+
 void debug_writeln(T...)(T args) {
     debug {
         writeln(args);
@@ -228,11 +233,11 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
         } else if (nk.vk_code == VKEY.VK_UNDO) {
             if (down) {
                 // TODO: fix scancodes
-                sendVK(VK_CONTROL, Scancode(0, false), true);
-                sendVK('Z', Scancode(0, false), true);
+                sendVK(VK_CONTROL, scanLCtrl, true);
+                sendVK('Z', Scancode(MapVirtualKey(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC), false), true);
             } else {
-                sendVK('Z', Scancode(0, false), false);
-                sendVK(VK_CONTROL, Scancode(0, false), false);
+                sendVK('Z', Scancode(MapVirtualKey(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC), false), false);
+                sendVK(VK_CONTROL, scanLCtrl, false);
             }
         } else {
             return;
@@ -320,8 +325,8 @@ bool getNumlockState() nothrow {
 
 void setNumlockState(bool state) nothrow {
     if (getNumlockState() != state) {
-        sendVK(VK_NUMLOCK, Scancode(0, false), true);
-        sendVK(VK_NUMLOCK, Scancode(0, false), false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
+        sendVK(VK_NUMLOCK, scanNumlock, false);
     }
 }
 
@@ -408,15 +413,15 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         // CAPSLOCK by pressing both Shift keys
         // leftShiftDown contains previous state
         if (!leftShiftDown && down && rightShiftDown) {
-            sendVK(VK_CAPITAL, Scancode(0, false), true);
-            sendVK(VK_CAPITAL, Scancode(0, false), false);
+            sendVK(VK_CAPITAL, scanCapslock, true);
+            sendVK(VK_CAPITAL, scanCapslock, false);
         }
 
         leftShiftDown = down;
     } else if (scan == activeLayout.modifiers.shiftRight && scan.scan != SC_FAKE_RSHIFT) {
         if (!rightShiftDown && down && leftShiftDown) {
-            sendVK(VK_CAPITAL, Scancode(0, false), true);
-            sendVK(VK_CAPITAL, Scancode(0, false), false);
+            sendVK(VK_CAPITAL, scanCapslock, true);
+            sendVK(VK_CAPITAL, scanCapslock, false);
         }
 
         rightShiftDown = down;
