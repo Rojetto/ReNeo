@@ -178,6 +178,26 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
     }
 
+    // If Shift modifier is not used: unpress Shift key(s) if already pressed (only for down event).
+    // For Qwertz necessary only for Euro key (AltGr+E) by pressing Shift+7 in Neo layout.
+    bool unpressShift = false;
+    if ((leftShiftDown || rightShiftDown) && !shift && down) {
+        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
+        if (leftShiftDown) {
+            input_struct.ki.wVk = VK_LSHIFT;
+            input_struct.ki.wScan = 0x2A;
+            inputs ~= input_struct;
+        }
+        if (rightShiftDown) {
+            input_struct.ki.wVk = VK_RSHIFT;
+            input_struct.ki.wScan = 0x36;
+            input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+            inputs ~= input_struct;
+        }
+        input_struct.ki.dwFlags = 0;
+        unpressShift = true;
+    }
+
     // For up events, release the main key before the modifiers
     if (!down) {
         input_struct.ki.wVk = vk;
@@ -188,8 +208,10 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // modifiers
     // pay attention to current capslock state
     // warning: this is only an approximation. whether capslock affects this key is dependent on the native layout
-    // this means sometimes we need to invert capslock with shift, sometimes not... as of yet this is an open issue
-    if ((shift && !capslock) || (!shift && capslock)) {
+    // this means sometimes we need to invert capslock with shift, sometimes not... as of yet this is an open issue.
+    //
+    // Only add Shift if the virtual key combination either needs Shift or does not need any modifiers (but capslock is on).
+    if ((shift && !capslock) || (high == 0 && capslock)) {
         input_struct.ki.wVk = VK_SHIFT;
         input_struct.ki.wScan = 0x2A;
         inputs ~= input_struct;
@@ -219,6 +241,23 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         input_struct.ki.wVk = vk;
         input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
         inputs ~= input_struct;
+    }
+
+    // Re-press Shift key(s)
+    if (unpressShift) {
+        input_struct.ki.dwFlags = 0;
+        if (leftShiftDown) {
+            input_struct.ki.wVk = VK_LSHIFT;
+            input_struct.ki.wScan = 0x2A;
+            inputs ~= input_struct;
+        }
+        if (rightShiftDown) {
+            input_struct.ki.wVk = VK_RSHIFT;
+            input_struct.ki.wScan = 0x36;
+            input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+            inputs ~= input_struct;
+        }
+        input_struct.ki.dwFlags = 0;
     }
 
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
