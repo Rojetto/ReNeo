@@ -178,6 +178,13 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
     }
 
+    // For up events, release the main key before the modifiers
+    if (!down) {
+        input_struct.ki.wVk = vk;
+        input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+        inputs ~= input_struct;
+    }
+
     // modifiers
     // pay attention to current capslock state
     // warning: this is only an approximation. whether capslock affects this key is dependent on the native layout
@@ -207,10 +214,12 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         }
     }
 
-    // main key
-    input_struct.ki.wVk = vk;
-    input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
-    inputs ~= input_struct;
+    // For down events, set the main key after the modifiers
+    if (down) {
+        input_struct.ki.wVk = vk;
+        input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+        inputs ~= input_struct;
+    }
 
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
