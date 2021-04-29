@@ -18,8 +18,12 @@ const SC_FAKE_RSHIFT = 0x236;
 const SC_FAKE_LCTRL = 0x21D;
 
 Scancode scanCapslock = Scancode(0x3A, false);
+Scancode scanLShift = Scancode(0x2A, false);
+Scancode scanRShift = Scancode(0x36, true);
+Scancode scanLAlt  = Scancode(0x38, false);
 Scancode scanAltGr = Scancode(0x38, true);
 Scancode scanLCtrl = Scancode(0x1D, false);
+Scancode scanRCtrl = Scancode(0x1D, true);
 Scancode scanNumlock = Scancode(0x45, true);
 
 void debug_writeln(T...)(T args) {
@@ -113,25 +117,12 @@ uint parseKeysym(string keysym) {
     return KEYSYM_VOID;
 }
 
-void sendVK(int vk, Scancode scan, bool down) nothrow {
+void sendVK(uint vk, Scancode scan, bool down) nothrow {
     INPUT[] inputs;
 
-    bool extended = scan.extended;
     // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
-    extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
-
-    INPUT input_struct;
-    input_struct.type = INPUT_KEYBOARD;
-    input_struct.ki.wVk = cast(ushort) vk;
-    input_struct.ki.wScan = cast(ushort) scan.scan;
-    input_struct.ki.dwFlags = 0;
-    if (!down) {
-        input_struct.ki.dwFlags |= KEYEVENTF_KEYUP;
-    }
-    if (extended) {
-        input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-    }
-    inputs ~= input_struct;
+    scan.extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
+    appendInput(inputs, vk, scan, down);
 
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
@@ -163,7 +154,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     ubyte low = cast(ubyte) result;
     ubyte high = cast(ubyte) (result >> 8);
 
-    short vk = low;
+    ushort vk = low;
     bool shift = (high & 1) != 0;
     bool ctrl = (high & 2) != 0;
     bool alt = (high & 4) != 0;
@@ -192,37 +183,19 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     }
 
     INPUT[] inputs;
-    INPUT input_struct;  // reuse struct for the following keys
-    input_struct.type = INPUT_KEYBOARD;
-    if (!down) {
-        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
-    }
 
     // If Shift modifier is not used: unpress Shift key(s) if already pressed (only for down event).
     // For Qwertz necessary only for Euro key (AltGr+E) by pressing Shift+7 in Neo layout.
     bool unpressShift = false;
     if ((leftShiftDown || rightShiftDown) && !shift && down) {
-        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
-        if (leftShiftDown) {
-            input_struct.ki.wVk = VK_LSHIFT;
-            input_struct.ki.wScan = 0x2A;
-            inputs ~= input_struct;
-        }
-        if (rightShiftDown) {
-            input_struct.ki.wVk = VK_RSHIFT;
-            input_struct.ki.wScan = 0x36;
-            input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-            inputs ~= input_struct;
-        }
-        input_struct.ki.dwFlags = 0;
+        if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, false); }
+        if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, false); }
         unpressShift = true;
     }
 
     // For up events, release the main key before the modifiers
     if (!down) {
-        input_struct.ki.wVk = vk;
-        input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
-        inputs ~= input_struct;
+        appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
     }
 
     // modifiers
@@ -238,43 +211,24 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // (2.2) If higher modifiers Ctrl or Alt are involved, the capslock state has no effect.
     // So for cases 2.1 and 2.2, no additional Shift is sent.
     if ((shift && !capslock) || (high == 0 && capslock)) {
-        input_struct.ki.wVk = VK_SHIFT;
-        input_struct.ki.wScan = 0x2A;
-        inputs ~= input_struct;
+        appendInput(inputs, VKEY.VK_SHIFT, scanLShift, down);
     }
     if (ctrl) {
-        input_struct.ki.wVk = VK_CONTROL;
-        input_struct.ki.wScan = 0x1D;
-        inputs ~= input_struct;
+        appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
     }
     if (alt) {
-        input_struct.ki.wVk = VK_MENU;
-        input_struct.ki.wScan = 0x38;
-        inputs ~= input_struct;
+        appendInput(inputs, VKEY.VK_MENU, scanLAlt, down);
     }
 
     // For down events, set the main key after the modifiers
     if (down) {
-        input_struct.ki.wVk = vk;
-        input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
-        inputs ~= input_struct;
+        appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
     }
 
     // Re-press Shift key(s)
     if (unpressShift) {
-        input_struct.ki.dwFlags = 0;
-        if (leftShiftDown) {
-            input_struct.ki.wVk = VK_LSHIFT;
-            input_struct.ki.wScan = 0x2A;
-            inputs ~= input_struct;
-        }
-        if (rightShiftDown) {
-            input_struct.ki.wVk = VK_RSHIFT;
-            input_struct.ki.wScan = 0x36;
-            input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-            inputs ~= input_struct;
-        }
-        input_struct.ki.dwFlags = 0;
+        if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, true); }
+        if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, true); }
     }
 
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
@@ -297,6 +251,20 @@ void sendString(wstring content) nothrow {
     }
 
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
+}
+
+void appendInput(ref INPUT[] inputs, uint vk, Scancode scan, bool down) nothrow {
+    INPUT input_struct;
+    input_struct.type = INPUT_KEYBOARD;
+    input_struct.ki.wVk = cast(ushort) vk;
+    input_struct.ki.wScan = cast(ushort) scan.scan;
+    if (!down) {
+        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
+    }
+    if (scan.extended) {
+        input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    }
+    inputs ~= input_struct;
 }
 
 void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
