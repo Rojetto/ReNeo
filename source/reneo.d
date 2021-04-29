@@ -230,7 +230,13 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // warning: this is only an approximation. whether capslock affects this key is dependent on the native layout
     // this means sometimes we need to invert capslock with shift, sometimes not... as of yet this is an open issue.
     //
-    // Only add Shift if the virtual key combination either needs Shift or does not need any modifiers (but capslock is on).
+    // Only add Shift in two cases:
+    // (1) Capslock is disabled. If the virtual key combination needs Shift, it will be injected.
+    // (2) Capslock is enabled. Only if the virtual key combination needs no modifiers (Shift/Alt/Ctrl),
+    //     it will be injected. The shift state and the capslock state will cancel each other out.
+    // (2.1) If the key combination requires only Shift, the capslock state works as active Shift key.
+    // (2.2) If higher modifiers Ctrl or Alt are involved, the capslock state has no effect.
+    // So for cases 2.1 and 2.2, no additional Shift is sent.
     if ((shift && !capslock) || (high == 0 && capslock)) {
         input_struct.ki.wVk = VK_SHIFT;
         input_struct.ki.wScan = 0x2A;
@@ -572,10 +578,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
     // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
     if (vk == VKEY.VK_NUMLOCK && down) {
-        sendVK(VK_NUMLOCK, Scancode(0, false), false);
-        sendVK(VK_NUMLOCK, Scancode(0, false), true);
-        sendVK(VK_NUMLOCK, Scancode(0, false), false);
-        sendVK(VK_NUMLOCK, Scancode(0, false), true);
+        sendVK(VK_NUMLOCK, scanNumlock, false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
+        sendVK(VK_NUMLOCK, scanNumlock, false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
     }
 
     // early exit if key is not in map
