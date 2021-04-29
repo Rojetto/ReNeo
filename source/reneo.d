@@ -17,6 +17,15 @@ const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
 const SC_FAKE_LCTRL = 0x21D;
 
+Scancode scanCapslock = Scancode(0x3A, false);
+Scancode scanLShift = Scancode(0x2A, false);
+Scancode scanRShift = Scancode(0x36, true);
+Scancode scanLAlt  = Scancode(0x38, false);
+Scancode scanAltGr = Scancode(0x38, true);
+Scancode scanLCtrl = Scancode(0x1D, false);
+Scancode scanRCtrl = Scancode(0x1D, true);
+Scancode scanNumlock = Scancode(0x45, true);
+
 void debug_writeln(T...)(T args) {
     debug {
         writeln(args);
@@ -108,25 +117,12 @@ uint parseKeysym(string keysym) {
     return KEYSYM_VOID;
 }
 
-void sendVK(int vk, Scancode scan, bool down) nothrow {
+void sendVK(uint vk, Scancode scan, bool down) nothrow {
     INPUT[] inputs;
 
-    bool extended = scan.extended;
     // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
-    extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
-
-    INPUT input_struct;
-    input_struct.type = INPUT_KEYBOARD;
-    input_struct.ki.wVk = cast(ushort) vk;
-    input_struct.ki.wScan = cast(ushort) scan.scan;
-    input_struct.ki.dwFlags = 0;
-    if (!down) {
-        input_struct.ki.dwFlags |= KEYEVENTF_KEYUP;
-    }
-    if (extended) {
-        input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
-    }
-    inputs ~= input_struct;
+    scan.extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
+    appendInput(inputs, vk, scan, down);
 
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
@@ -147,12 +143,18 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
 
 void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
-    debug_writeln("Trying to send ", unicode_char);
-    short result = VkKeyScan(unicode_char);
-    byte low = cast(byte) result;
-    byte high = cast(byte) (result >> 8);
+    debug {
+        try {
+            writeln(format("Trying to send %s (0x%04X) ...", unicode_char, to!int(unicode_char)));
+        }
+        catch (Exception e) {}
+    }
 
-    short vk = low;
+    short result = VkKeyScan(unicode_char);
+    ubyte low = cast(ubyte) result;
+    ubyte high = cast(ubyte) (result >> 8);
+
+    ushort vk = low;
     bool shift = (high & 1) != 0;
     bool ctrl = (high & 2) != 0;
     bool alt = (high & 4) != 0;
@@ -160,43 +162,74 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     bool mod5 = (high & 16) != 0;
     bool mod6 = (high & 32) != 0;
 
-    if (low == -1 || kana || mod5 || mod6) {
+    if (low == 0xFF || kana || mod5 || mod6) {
         // char does not exist in native layout or requires exotic modifiers
+        debug_writeln("No standard key combination found, sending via VK packet");
         sendUTF16(unicode_char, down);
         return;
     }
 
+    debug {
+        try {
+            auto shift_text = shift ? "(Shift) " : "        ";
+            auto ctrl_text  = ctrl  ? "(Ctrl)  " : "        ";
+            auto alt_text   = alt   ? "(Alt)   " : "        ";
+            auto kana_text  = kana  ? "(Kana)  " : "        ";
+            auto mod5_text  = mod5  ? "(Mod5)  " : "        ";
+            auto mod6_text  = mod6  ? "(Mod6)  " : "        ";
+            debug_writeln("Key combination is " ~ to!string(cast(VKEY) vk) ~ " "
+                ~ shift_text ~ ctrl_text ~ alt_text ~ kana_text ~ mod5_text ~ mod6_text);
+        } catch (Exception ex) {}
+    }
+
     INPUT[] inputs;
-    INPUT input_struct;  // reuse struct for the following keys
-    input_struct.type = INPUT_KEYBOARD;
+
+    // If Shift modifier is not used: unpress Shift key(s) if already pressed (only for down event).
+    // For Qwertz necessary only for Euro key (AltGr+E) by pressing Shift+7 in Neo layout.
+    bool unpressShift = false;
+    if ((leftShiftDown || rightShiftDown) && !shift && down) {
+        if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, false); }
+        if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, false); }
+        unpressShift = true;
+    }
+
+    // For up events, release the main key before the modifiers
     if (!down) {
-        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
+        appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
     }
 
     // modifiers
     // pay attention to current capslock state
     // warning: this is only an approximation. whether capslock affects this key is dependent on the native layout
-    // this means sometimes we need to invert capslock with shift, sometimes not... as of yet this is an open issue
-    if ((shift && !capslock) || (!shift && capslock)) {
-        input_struct.ki.wVk = VK_SHIFT;
-        input_struct.ki.wScan = 0x2A;
-        inputs ~= input_struct;
+    // this means sometimes we need to invert capslock with shift, sometimes not... as of yet this is an open issue.
+    //
+    // Only add Shift in two cases:
+    // (1) Capslock is disabled. If the virtual key combination needs Shift, it will be injected.
+    // (2) Capslock is enabled. Only if the virtual key combination needs no modifiers (Shift/Alt/Ctrl),
+    //     it will be injected. The shift state and the capslock state will cancel each other out.
+    // (2.1) If the key combination requires only Shift, the capslock state works as active Shift key.
+    // (2.2) If higher modifiers Ctrl or Alt are involved, the capslock state has no effect.
+    // So for cases 2.1 and 2.2, no additional Shift is sent.
+    if ((shift && !capslock) || (high == 0 && capslock)) {
+        appendInput(inputs, VKEY.VK_SHIFT, scanLShift, down);
     }
     if (ctrl) {
-        input_struct.ki.wVk = VK_CONTROL;
-        input_struct.ki.wScan = 0x1D;
-        inputs ~= input_struct;
+        appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
     }
     if (alt) {
-        input_struct.ki.wVk = VK_MENU;
-        input_struct.ki.wScan = 0x38;
-        inputs ~= input_struct;
+        appendInput(inputs, VKEY.VK_MENU, scanLAlt, down);
     }
 
-    // main key
-    input_struct.ki.wVk = vk;
-    input_struct.ki.wScan = cast(ushort) MapVirtualKey(vk, MAPVK_VK_TO_VSC);
-    inputs ~= input_struct;
+    // For down events, set the main key after the modifiers
+    if (down) {
+        appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
+    }
+
+    // Re-press Shift key(s)
+    if (unpressShift) {
+        if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, true); }
+        if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, true); }
+    }
 
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
@@ -220,6 +253,20 @@ void sendString(wstring content) nothrow {
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
 
+void appendInput(ref INPUT[] inputs, uint vk, Scancode scan, bool down) nothrow {
+    INPUT input_struct;
+    input_struct.type = INPUT_KEYBOARD;
+    input_struct.ki.wVk = cast(ushort) vk;
+    input_struct.ki.wScan = cast(ushort) scan.scan;
+    if (!down) {
+        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
+    }
+    if (scan.extended) {
+        input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    }
+    inputs ~= input_struct;
+}
+
 void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
     if (nk.keysym == KEYSYM_VOID) {
         // Special cases for weird mappings
@@ -228,11 +275,11 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
         } else if (nk.vk_code == VKEY.VK_UNDO) {
             if (down) {
                 // TODO: fix scancodes
-                sendVK(VK_CONTROL, Scancode(0, false), true);
-                sendVK('Z', Scancode(0, false), true);
+                sendVK(VK_CONTROL, scanLCtrl, true);
+                sendVK('Z', Scancode(MapVirtualKey(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC), false), true);
             } else {
-                sendVK('Z', Scancode(0, false), false);
-                sendVK(VK_CONTROL, Scancode(0, false), false);
+                sendVK('Z', Scancode(MapVirtualKey(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC), false), false);
+                sendVK(VK_CONTROL, scanLCtrl, false);
             }
         } else {
             return;
@@ -320,8 +367,8 @@ bool getNumlockState() nothrow {
 
 void setNumlockState(bool state) nothrow {
     if (getNumlockState() != state) {
-        sendVK(VK_NUMLOCK, Scancode(0, false), true);
-        sendVK(VK_NUMLOCK, Scancode(0, false), false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
+        sendVK(VK_NUMLOCK, scanNumlock, false);
     }
 }
 
@@ -408,15 +455,15 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         // CAPSLOCK by pressing both Shift keys
         // leftShiftDown contains previous state
         if (!leftShiftDown && down && rightShiftDown) {
-            sendVK(VK_CAPITAL, Scancode(0, false), true);
-            sendVK(VK_CAPITAL, Scancode(0, false), false);
+            sendVK(VK_CAPITAL, scanCapslock, true);
+            sendVK(VK_CAPITAL, scanCapslock, false);
         }
 
         leftShiftDown = down;
     } else if (scan == activeLayout.modifiers.shiftRight && scan.scan != SC_FAKE_RSHIFT) {
         if (!rightShiftDown && down && leftShiftDown) {
-            sendVK(VK_CAPITAL, Scancode(0, false), true);
-            sendVK(VK_CAPITAL, Scancode(0, false), false);
+            sendVK(VK_CAPITAL, scanCapslock, true);
+            sendVK(VK_CAPITAL, scanCapslock, false);
         }
 
         rightShiftDown = down;
@@ -499,10 +546,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
     // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
     if (vk == VKEY.VK_NUMLOCK && down) {
-        sendVK(VK_NUMLOCK, Scancode(0, false), false);
-        sendVK(VK_NUMLOCK, Scancode(0, false), true);
-        sendVK(VK_NUMLOCK, Scancode(0, false), false);
-        sendVK(VK_NUMLOCK, Scancode(0, false), true);
+        sendVK(VK_NUMLOCK, scanNumlock, false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
+        sendVK(VK_NUMLOCK, scanNumlock, false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
     }
 
     // early exit if key is not in map
