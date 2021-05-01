@@ -15,7 +15,6 @@ import std.datetime.stopwatch;
 import reneo;
 
 auto COMPOSE_REGEX = regex(`^(<[a-zA-Z0-9_]+>(?: *<[a-zA-Z0-9_]+>)+) *: *"(.*?)"`);
-auto SPACE_REGEX = regex(` +`);
 
 struct ComposeNode {
     uint keysym;
@@ -101,19 +100,38 @@ void initCompose(string exeDir) {
     }
 }
 
+uint[] parseKeysymSequence(string sequenceString) {
+    /// Parse string like "<Multi_key> <2> <exclam>" into array of keysyms
+    uint[] keysyms;
+
+    int keysymStartIndex = -1;
+    for (int i = 0; i < sequenceString.length; i++) {
+        if (keysymStartIndex < 0) {
+            // we are currently looking for the start of a new key
+            if (sequenceString[i] == '<') {
+                // found it!
+                keysymStartIndex = i + 1;
+            }
+        } else {
+            // we are inside a keysym and looking for the end
+            if (sequenceString[i] == '>') {
+                // found the end
+                uint keysym = parseKeysym(sequenceString[keysymStartIndex .. i]);
+                keysyms ~= keysym;
+                keysymStartIndex = -1;
+            }
+        }
+    }
+
+    return keysyms;
+}
+
 ComposeFileLine parseLine(string line) {
     /// Parse compose module line into an entry struct
     /// Throws if the line can't be parsed (e.g. it's empty or a comment)
     if (auto m = matchFirst(line, COMPOSE_REGEX)) {
         try {
-            auto keysyms_str = split(m[1], SPACE_REGEX);
-            uint[] keysyms;
-            keysyms.length = keysyms_str.length;
-            for (int i = 0; i < keysyms_str.length; i++) {
-                string s = keysyms_str[i];
-                keysyms[i] = parseKeysym(s[1 .. s.length-1]);
-            }
-
+            auto keysyms = parseKeysymSequence(m[1]);
             wstring result = m[2].to!(wstring);
 
             return ComposeFileLine(keysyms, result);
