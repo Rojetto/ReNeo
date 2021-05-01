@@ -10,9 +10,12 @@ import std.path;
 import std.array;
 import std.format;
 
+import std.datetime.stopwatch;
+
 import reneo;
 
-const auto COMPOSE_REGEX = regex(`^(<[a-zA-Z0-9_]+>(?: <[a-zA-Z0-9_]+>)+)\s*:\s*"(.*)"`);
+auto COMPOSE_REGEX = regex(`^(<[a-zA-Z0-9_]+>(?: *<[a-zA-Z0-9_]+>)+) *: *"(.*?)"`);
+auto SPACE_REGEX = regex(` +`);
 
 struct ComposeNode {
     uint keysym;
@@ -49,6 +52,11 @@ struct ComposeFileLine {
 
 void initCompose(string exeDir) {
     debug_writeln("Initializing compose");
+
+    debug {
+        auto sw = StopWatch();
+        sw.start();
+    }
     // reset existing compose tree
     composeRoot = ComposeNode();
     string composeDir = buildPath(exeDir, "compose");
@@ -78,9 +86,18 @@ void initCompose(string exeDir) {
         }
     }
 
+    debug {
+        debug_writeln("Time spent reading and parsing module files: ", sw.peek().total!"msecs", " ms");
+        sw.reset();
+    }
+
     // Build compose tree consisting of all entries
     foreach (entry; combinedComposeEntries) {
         addComposeEntry(entry);
+    }
+
+    debug {
+        debug_writeln("Time spent building compose tree: ", sw.peek().total!"msecs", " ms");
     }
 }
 
@@ -89,7 +106,14 @@ ComposeFileLine parseLine(string line) {
     /// Throws if the line can't be parsed (e.g. it's empty or a comment)
     if (auto m = matchFirst(line, COMPOSE_REGEX)) {
         try {
-            auto keysyms = split(m[1], regex(" ")).map!(s => parseKeysym(s[1 .. s.length-1])).array;
+            auto keysyms_str = split(m[1], SPACE_REGEX);
+            uint[] keysyms;
+            keysyms.length = keysyms_str.length;
+            for (int i = 0; i < keysyms_str.length; i++) {
+                string s = keysyms_str[i];
+                keysyms[i] = parseKeysym(s[1 .. s.length-1]);
+            }
+
             wstring result = m[2].to!(wstring);
 
             return ComposeFileLine(keysyms, result);
