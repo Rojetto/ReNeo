@@ -94,10 +94,12 @@ void initKeysyms(string exeDir) {
 	}
 }
 
+auto UNICODE_REGEX = regex(r"^U([0-9a-fA-F]+)$");
+
 uint parseKeysym(string keysym) {
     if (keysym in keysymdefs) {
         return keysymdefs[keysym].key_code;
-    } else if (auto m = matchFirst(keysym, r"^U([0-9a-fA-F]+)$")) {
+    } else if (auto m = matchFirst(keysym, UNICODE_REGEX)) {
         uint codepoint = to!uint(m[1], 16);
 
         if (codepoint <= 0xFFFF) {

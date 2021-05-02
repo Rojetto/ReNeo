@@ -14,7 +14,107 @@ import std.datetime.stopwatch;
 
 import reneo;
 
-auto COMPOSE_REGEX = regex(`^(<[a-zA-Z0-9_]+>(?: *<[a-zA-Z0-9_]+>)+) *: *"(.*?)"`);
+
+class ComposeParser {
+    string line;
+    uint pos;
+    int chunkStart = -1;
+
+    this(string line) {
+        this.line = line;
+    }
+
+    char peek() {
+        return line[pos];
+    }
+
+    void advance() {
+        pos++;
+    }
+
+    bool match(char[] cs ...) {
+        foreach (char c; cs) {
+            if (check(c)) {
+                advance();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool check(char c) {
+        if(atEnd()) {
+            return false;
+        }
+        return peek() == c;
+    }
+
+    bool atEnd() {
+        return pos >= line.length;
+    }
+
+    void consumeWhitespace() {
+        while (match(' ', '\t')) {}
+    }
+
+    void startChunk() {
+        assert(chunkStart == -1);
+        chunkStart = pos;
+    }
+
+    string endChunk() {
+        assert(chunkStart != -1);
+        string chunk = line[chunkStart .. pos];
+        chunkStart = -1;
+        return chunk;
+    }
+
+    uint composeSequenceKey() {
+        /// parse "<Multi_Key>" into a matching keysym
+        assert(match('<'));
+        startChunk();
+        while (!check('>')) {
+            advance();
+        }
+        string keysym_str = endChunk();
+        match('>');
+        return parseKeysym(keysym_str);
+    }
+
+    string quotedString() {
+        assert(match('"'));
+        startChunk();
+        while (!check('"')) {
+            advance();
+        }
+        string stringContent = endChunk();
+        match('"');
+        return stringContent;
+    }
+
+    ComposeFileLine composeEntry() {
+        ComposeFileLine entry; // remains empty if line is empty
+
+        consumeWhitespace();
+        if (!check('<')) {
+            // early return on empty/comment lines
+            return entry;
+        }
+
+        while (check('<')) {
+            entry.keysyms ~= composeSequenceKey();
+            consumeWhitespace();
+        }
+
+        assert(match(':'));
+        consumeWhitespace();
+        string resultString = quotedString();
+        entry.result = resultString.to!wstring;
+
+        return entry;
+    }
+}
 
 struct ComposeNode {
     uint keysym;
@@ -100,47 +200,16 @@ void initCompose(string exeDir) {
     }
 }
 
-uint[] parseKeysymSequence(string sequenceString) {
-    /// Parse string like "<Multi_key> <2> <exclam>" into array of keysyms
-    uint[] keysyms;
-
-    int keysymStartIndex = -1;
-    for (int i = 0; i < sequenceString.length; i++) {
-        if (keysymStartIndex < 0) {
-            // we are currently looking for the start of a new key
-            if (sequenceString[i] == '<') {
-                // found it!
-                keysymStartIndex = i + 1;
-            }
-        } else {
-            // we are inside a keysym and looking for the end
-            if (sequenceString[i] == '>') {
-                // found the end
-                uint keysym = parseKeysym(sequenceString[keysymStartIndex .. i]);
-                keysyms ~= keysym;
-                keysymStartIndex = -1;
-            }
-        }
-    }
-
-    return keysyms;
-}
-
 ComposeFileLine parseLine(string line) {
     /// Parse compose module line into an entry struct
     /// Throws if the line can't be parsed (e.g. it's empty or a comment)
-    if (auto m = matchFirst(line, COMPOSE_REGEX)) {
-        try {
-            auto keysyms = parseKeysymSequence(m[1]);
-            wstring result = m[2].to!(wstring);
-
-            return ComposeFileLine(keysyms, result);
-        } catch (Exception e) {
-            debug_writeln("Could not parse line '", line, "', skipping. Error: ", e.msg);
-        }
+    auto parser = new ComposeParser(line);
+    auto entry = parser.composeEntry();
+    if (entry.result == ""w) {
+        throw new Exception("Line does not contain compose entry");
     }
-    
-    throw new Exception("Line does not contain compose entry");
+
+    return entry;
 }
 
 void addComposeEntry(ComposeFileLine entry) {
