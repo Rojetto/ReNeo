@@ -51,13 +51,8 @@ struct NeoKey {
     }
 }
 
-
-struct KeySymEntry {
-    uint key_code;
-    wchar unicode_char;
-}
-
-KeySymEntry[string] keysymdefs;
+uint[string] keysyms_by_name;
+uint[uint] keysyms_by_codepoint;
 
 void initKeysyms(string exeDir) {
     auto keysymfile = buildPath(exeDir, "keysymdef.h");
@@ -67,7 +62,8 @@ void initKeysyms(string exeDir) {
     auto unicode_pattern_with_parens = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\*\(U\+([0-9A-F]{4,6}) (.*)\)\*\/\s*$";
     // group 1: name, group 2: hex, group 3 and 4: comment stuff
     auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
-    keysymdefs.clear();
+    keysyms_by_name.clear();
+    keysyms_by_codepoint.clear();
 
     File f = File(keysymfile, "r");
 	while(!f.eof()) {
@@ -76,17 +72,19 @@ void initKeysyms(string exeDir) {
             if (auto m = matchFirst(l, unicode_pattern)) {
                 string keysym_name = m[1];
                 uint key_code = to!uint(m[2], 16);
-                wchar unicode_char = to!wchar(to!ushort(m[3], 16));
-                keysymdefs[keysym_name] = KeySymEntry(key_code, unicode_char);
+                uint codepoint = to!uint(m[3], 16);
+                keysyms_by_name[keysym_name] = key_code;
+                keysyms_by_codepoint[codepoint] = key_code;
             } else if (auto m = matchFirst(l, unicode_pattern_with_parens)) {
                 string keysym_name = m[1];
                 uint key_code = to!uint(m[2], 16);
-                wchar unicode_char = to!wchar(to!ushort(m[3], 16));
-                keysymdefs[keysym_name] = KeySymEntry(key_code, unicode_char);
+                uint codepoint = to!uint(m[3], 16);
+                keysyms_by_name[keysym_name] = key_code;
+                keysyms_by_codepoint[codepoint] = key_code;
             } else if (auto m = matchFirst(l, no_unicode_pattern)) {
                 string keysym_name = m[1];
                 uint key_code = to!uint(m[2], 16);
-                keysymdefs[keysym_name] = KeySymEntry(key_code);
+                keysyms_by_name[keysym_name] = key_code;
             }
         } catch (Exception e) {
             debug_writeln("Could not parse line '", l, "', skipping. Error: ", e.msg);
@@ -96,25 +94,22 @@ void initKeysyms(string exeDir) {
 
 auto UNICODE_REGEX = regex(r"^U([0-9a-fA-F]+)$");
 
-uint parseKeysym(string keysym) {
-    if (keysym in keysymdefs) {
-        return keysymdefs[keysym].key_code;
-    } else if (auto m = matchFirst(keysym, UNICODE_REGEX)) {
+uint parseKeysym(string keysym_str) {
+    if (uint *keysym = keysym_str in keysyms_by_name) {
+        return *keysym;
+    } else if (auto m = matchFirst(keysym_str, UNICODE_REGEX)) {
         uint codepoint = to!uint(m[1], 16);
 
         if (codepoint <= 0xFFFF) {
-            wchar unicode_char = to!wchar(codepoint);
-            foreach (KeySymEntry entry; keysymdefs.byValue()) {
-                if (entry.unicode_char == unicode_char) {
-                    return entry.key_code;
-                }
+            if (uint *keysym = codepoint in keysyms_by_codepoint) {
+                return *keysym;
             }
         }
 
         return codepoint + 0x01000000;
     }
 
-    debug_writeln("Keysym ", keysym, " not found.");
+    debug_writeln("Keysym ", keysym_str, " not found.");
 
     return KEYSYM_VOID;
 }
