@@ -161,7 +161,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     if (low == 0xFF || kana || mod5 || mod6) {
         // char does not exist in native layout or requires exotic modifiers
-        debug_writeln("No standard key combination found, sending via VK packet");
+        debug_writeln("No standard key combination found, sending VK packet instead.");
         sendUTF16(unicode_char, down);
         return;
     }
@@ -177,6 +177,26 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
             debug_writeln("Key combination is " ~ to!string(cast(VKEY) vk) ~ " "
                 ~ shift_text ~ ctrl_text ~ alt_text ~ kana_text ~ mod5_text ~ mod6_text);
         } catch (Exception ex) {}
+    }
+
+    // The found key combination might send a dead key (like ^ or ~), which we want to avoid. MapVirtualKey()
+    // is only able to recognize a dead key if no modifier keys are involed. Instead ToUnicode() is used.
+    // Generally it would be necessary to get the current (physical) keyboard state first. But as we need
+    // to check a hypothetical keyboard state, we can just set flags for Shift, Control and Menu keys
+    // in an otherwise zero-initialized array.
+    ubyte[256] kb;
+    wchar[4] buf;
+    if (shift) { kb[VK_SHIFT] |= 128; }
+    if (ctrl) { kb[VK_CONTROL] |= 128; }
+    if (alt) { kb[VK_MENU] |= 128; }
+    if (ToUnicode(vk, 0, kb.ptr, buf.ptr, 4, 0) == -1) {
+        debug_writeln("Standard key combination results in a dead key, sending VK packet instead.");
+        // The same dead key needs to be queried again, because ToUnicode() inserts the dead key (state)
+        // into the queue, while anothèr call consumes the dead key.
+        // See https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2597
+        ToUnicode(vk, 0, kb.ptr, buf.ptr, 4, 0);
+        sendUTF16(unicode_char, down);
+        return;
     }
 
     INPUT[] inputs;
@@ -299,14 +319,10 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
         }
         sendVK(nk.vk_code, scan, down);
     } else {
-        switch (configSendKeyMode) {
-            case SendKeyMode.HONEST:
-            sendUTF16(nk.char_code, down);
-            break;
-            case SendKeyMode.FAKE_NATIVE:
+        if (configSendKeyMode == SendKeyMode.FAKE_NATIVE && standaloneModeActive) {
             sendUTF16OrKeyCombo(nk.char_code, down);
-            break;
-            default: break;
+        } else {
+            sendUTF16(nk.char_code, down);
         }
     }
 }
