@@ -165,6 +165,7 @@ void initCompose(string exeDir) {
     }
 
     ComposeFileLine[] combinedComposeEntries;
+    ComposeFileLine[] entriesToRemove;
 
     // Gather compose entries from all .module files
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
@@ -180,10 +181,10 @@ void initCompose(string exeDir) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
             debug_writeln("Removing compose module ", fname);
-            ComposeFileLine[] entriesToRemove = loadModule(fname);
-            combinedComposeEntries = combinedComposeEntries.filter!(e => !entriesToRemove.canFind(e)).array;
+            entriesToRemove ~= loadModule(fname);
         }
     }
+    combinedComposeEntries = combinedComposeEntries.filter!(e => !entriesToRemove.canFind(e)).array;
 
     debug {
         debug_writeln("Time spent reading and parsing module files: ", sw.peek().total!"msecs", " ms");
@@ -254,10 +255,9 @@ ComposeFileLine[] loadModule(string fname) {
     ComposeFileLine[] entries;
 
     /// Load a module file and return all entries
-    File f = File(fname, "r");
-	while(!f.eof()) {
-		string l = f.readln();
-        
+    string content = cast(string) std.file.read(fname);
+    string[] lines = split(content, "\n");
+    foreach(l; lines) {
         try {
             entries ~= parseLine(l);
         } catch (Exception e) {
