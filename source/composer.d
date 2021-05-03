@@ -124,6 +124,7 @@ struct ComposeNode {
 }
 
 ComposeNode composeRoot;
+ComposeNode removeComposeRoot;
 
 bool active;
 ComposeNode *currentNode;
@@ -149,6 +150,9 @@ struct ComposeFileLine {
     wstring result;
 }
 
+
+uint addedEntries;
+
 void initCompose(string exeDir) {
     debug_writeln("Initializing compose");
 
@@ -164,41 +168,30 @@ void initCompose(string exeDir) {
         return;
     }
 
-    ComposeFileLine[] combinedComposeEntries;
-    ComposeFileLine[] entriesToRemove;
+    // Gather all entries that appear in .remove files
+    foreach (dirEntry; dirEntries(composeDir, "*.remove", SpanMode.shallow)) {
+        if (dirEntry.isFile) {
+            string fname = dirEntry.name;
+            debug_writeln("Removing compose module ", fname);
+            loadRemoveModule(fname);
+        }
+    }
 
     // Gather compose entries from all .module files
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
             debug_writeln("Loading compose module ", fname);
-            combinedComposeEntries ~= loadModule(fname);
+            loadModule(fname);
         }
     }
-
-    // Filter all entries that appear in .remove files
-    foreach (dirEntry; dirEntries(composeDir, "*.remove", SpanMode.shallow)) {
-        if (dirEntry.isFile) {
-            string fname = dirEntry.name;
-            debug_writeln("Removing compose module ", fname);
-            entriesToRemove ~= loadModule(fname);
-        }
-    }
-    combinedComposeEntries = combinedComposeEntries.filter!(e => !entriesToRemove.canFind(e)).array;
 
     debug {
         debug_writeln("Time spent reading and parsing module files: ", sw.peek().total!"msecs", " ms");
         sw.reset();
     }
 
-    // Build compose tree consisting of all entries
-    foreach (entry; combinedComposeEntries) {
-        addComposeEntry(entry);
-    }
-
-    debug {
-        debug_writeln("Time spent building compose tree: ", sw.peek().total!"msecs", " ms");
-    }
+    debug_writeln("Loaded ", addedEntries, " compose sequences.");
 }
 
 ComposeFileLine parseLine(string line) {
@@ -213,8 +206,29 @@ ComposeFileLine parseLine(string line) {
     return entry;
 }
 
-void addComposeEntry(ComposeFileLine entry) {
-    auto currentNode = &composeRoot;
+bool isEntryInComposeTree(ComposeFileLine entry, ref ComposeNode nodeRoot) {
+    auto currentNode = &nodeRoot;
+
+    foreach (keysym; entry.keysyms) {
+        ComposeNode *next;
+        bool foundNext;
+
+        foreach (nextIter; currentNode.next) {
+            if (nextIter.keysym == keysym) {
+                foundNext = true;
+                next = nextIter;
+                break;
+            }
+        }
+        if (!foundNext) break;
+        currentNode = next;
+    }
+
+    return (currentNode.result == entry.result);
+}
+
+void addComposeEntry(ComposeFileLine entry, ref ComposeNode nodeRoot) {
+    auto currentNode = &nodeRoot;
 
     foreach (keysym; entry.keysyms) {
         ComposeNode *next;
@@ -250,22 +264,35 @@ void addComposeEntry(ComposeFileLine entry) {
     currentNode.result = entry.result;
 }
 
-
-ComposeFileLine[] loadModule(string fname) {
-    ComposeFileLine[] entries;
-
-    /// Load a module file and return all entries
+void loadModule(string fname) {
+    /// Load a module file and add all entries, if they are not in the remove-tree
     string content = cast(string) std.file.read(fname);
     string[] lines = split(content, "\n");
     foreach(l; lines) {
         try {
-            entries ~= parseLine(l);
+            auto entry = parseLine(l);
+            if (!isEntryInComposeTree(entry, removeComposeRoot)) {
+                addComposeEntry(entry, composeRoot);
+                addedEntries += 1;
+            }
         } catch (Exception e) {
             // Do nothing, most likely because the line just was a comment
         }
     }
+}
 
-    return entries;
+void loadRemoveModule(string fname) {
+    /// Load a module file and add all entries to the remove-tree
+    string content = cast(string) std.file.read(fname);
+    string[] lines = split(content, "\n");
+    foreach(l; lines) {
+        try {
+            auto entry = parseLine(l);
+            addComposeEntry(entry, removeComposeRoot);
+        } catch (Exception e) {
+            // Do nothing, most likely because the line just was a comment
+        }
+    }
 }
 
 ComposeResult compose(NeoKey nk) nothrow {
