@@ -58,8 +58,7 @@ void initKeysyms(string exeDir) {
     auto keysymfile = buildPath(exeDir, "keysymdef.h");
     debug_writeln("Initializing keysyms from ", keysymfile);
     // group 1: name, group 2: hex, group 3: unicode codepoint
-    auto unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\* U\+([0-9A-F]{4,6}) (.*) \*\/\s*$";
-    auto unicode_pattern_with_parens = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\*\(U\+([0-9A-F]{4,6}) (.*)\)\*\/\s*$";
+    auto unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\*[ \(]U\+([0-9A-F]{4,6}) (.*)[ \)]\*\/\s*$";
     // group 1: name, group 2: hex, group 3 and 4: comment stuff
     auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
     keysyms_by_name.clear();
@@ -70,12 +69,6 @@ void initKeysyms(string exeDir) {
 		string l = f.readln();
         try {
             if (auto m = matchFirst(l, unicode_pattern)) {
-                string keysym_name = m[1];
-                uint key_code = to!uint(m[2], 16);
-                uint codepoint = to!uint(m[3], 16);
-                keysyms_by_name[keysym_name] = key_code;
-                keysyms_by_codepoint[codepoint] = key_code;
-            } else if (auto m = matchFirst(l, unicode_pattern_with_parens)) {
                 string keysym_name = m[1];
                 uint key_code = to!uint(m[2], 16);
                 uint codepoint = to!uint(m[3], 16);
