@@ -182,6 +182,8 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     if (shift) { kb[VK_SHIFT] |= 128; }
     if (ctrl) { kb[VK_CONTROL] |= 128; }
     if (alt) { kb[VK_MENU] |= 128; }
+    if (capslock) { kb[VK_CAPITAL] = 1; } // Set toggle state of capslock
+    
     if (ToUnicode(vk, 0, kb.ptr, buf.ptr, 4, 0) == -1) {
         debug_writeln("Standard key combination results in a dead key, sending VK packet instead.");
         // The same dead key needs to be queried again, because ToUnicode() inserts the dead key (state)
@@ -194,34 +196,43 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     INPUT[] inputs;
 
-    // If Shift modifier is not used: unpress Shift key(s) if already pressed (only for down event).
-    // For Qwertz necessary only for Euro key (AltGr+E) by pressing Shift+7 in Neo layout.
-    bool unpressShift = false;
-    if ((leftShiftDown || rightShiftDown) && !shift && down) {
-        if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, false); }
-        if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, false); }
-        unpressShift = true;
-    }
-
     // For up events, release the main key before the modifiers
     if (!down) {
         appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
     }
 
-    // modifiers
-    // pay attention to current capslock state
-    // warning: this is only an approximation. whether capslock affects this key is dependent on the native layout
-    // this means sometimes we need to invert capslock with shift, sometimes not... as of yet this is an open issue.
-    //
-    // Only add Shift in two cases:
-    // (1) Capslock is disabled. If the virtual key combination needs Shift, it will be injected.
-    // (2) Capslock is enabled. Only if the virtual key combination needs no modifiers (Shift/Alt/Ctrl),
-    //     it will be injected. The shift state and the capslock state will cancel each other out.
-    // (2.1) If the key combination requires only Shift, the capslock state works as active Shift key.
-    // (2.2) If higher modifiers Ctrl or Alt are involved, the capslock state has no effect.
-    // So for cases 2.1 and 2.2, no additional Shift is sent.
-    if ((shift && !capslock) || (high == 0 && capslock)) {
-        appendInput(inputs, VKEY.VK_SHIFT, scanLShift, down);
+    // There are three flags that affect the overall result of a current Shift state:
+    // (1) a Shift key is physically pressed
+    // (2) Capslock is active
+    // (3) the key is capslockable
+
+    // The latter can be queried indirectly by reversely generating the Unicode char with a given
+    // keyboard state. If the result of toUnicode() is different from the expected char (and capslock
+    // is active), the key is capslockable.
+    // The other way round, if a key is not capslockable, the Capslock state must not be considered.
+
+    // On capslock disabled, this flag is set to false in both cases (simplifies the XOR later).
+    bool notCapslockable = (buf[0] == unicode_char) && capslock;
+    // Is any Shift key pressed physically?
+    bool shiftDown = leftShiftDown || rightShiftDown;
+    // Calculate the overall Shift state from the flags described, using XOR
+    bool overallShift = shiftDown ^ capslock ^ notCapslockable;
+    bool unpressShift = false;
+
+    // If the required and the current Shift states differ, the current Shift state is changed
+    if (overallShift != shift) {
+        if (shiftDown) {
+            // If any Shift key is already down, changing can only be done by unpressing the pressed
+            // key. This is executed for key-down events only. For key-up it does not matter and saves
+            // two unnecessary key events.
+            if (down) {
+                if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, false); }
+                if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, false); }
+                unpressShift = true;
+            }
+        } else {
+            appendInput(inputs, VK_SHIFT, scanLShift, down);
+        }
     }
     if (ctrl) {
         appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
@@ -513,7 +524,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         layer = 4;
     }  else if (mod3Down) {
         layer = 3;
-    }  else if (shiftDown || (capslock && isCapslockable(scan))) {
+    }  else if (shiftDown != (capslock && isCapslockable(scan))) {
+        // Shift layer is set if EITHER Shift is pressed OR Capslock is enabled (and the char is capslockable).
+        // In other cases (no Shift pressed, or both Shift and Capslock) the layer remains at 1.
         layer = 2;
     }
 
