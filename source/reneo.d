@@ -211,12 +211,13 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // is active), the key is capslockable.
     // The other way round, if a key is not capslockable, the Capslock state must not be considered.
 
-    // On capslock disabled, this flag is set to false in both cases (simplifies the XOR later).
-    bool notCapslockable = (buf[0] == unicode_char) && capslock;
+    // This flag is set to false if Capslock is not active. This is because the capslockable state
+    // can only be checked when Capslock is active (and only then has any influence).
+    bool nativeCapslockable = (buf[0] != unicode_char) && capslock;
     // Is any Shift key pressed physically?
     bool shiftDown = leftShiftDown || rightShiftDown;
-    // Calculate the overall Shift state from the flags described, using XOR
-    bool overallShift = shiftDown ^ capslock ^ notCapslockable;
+    // Calculate the overall Shift state from the flags described
+    bool overallShift = (!nativeCapslockable && shiftDown) || (nativeCapslockable && (shiftDown ^ capslock));
     bool unpressShift = false;
 
     // If the required and the current Shift states differ, the current Shift state is changed
