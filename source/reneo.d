@@ -468,7 +468,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // - on dual state numpad key up with real held shift key, prime the hook to expect a shift key down as the next event
     // - if we are primed for a shift key down and get one, eat that. otherwise release the primed state
     if (expectFakeShiftDown) {
-        if (down && (vk == VKEY.VK_LSHIFT || vk == VKEY.VK_SHIFT)) {
+        if (down && (vk == VKEY.VK_LSHIFT || vk == VKEY.VK_RSHIFT)) {
             return true;
         }
         expectFakeShiftDown = false;
