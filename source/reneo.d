@@ -411,6 +411,9 @@ NeoLayout *activeLayout;
 // should we take over all layers? activated when standaloneMode is true in the config file and the currently selected native layout is not Neo related
 bool standaloneModeActive;
 
+// the last event was a dual state numpad key up with held shift key, eat the next shift down
+bool expectFakeShiftDown;
+
 
 bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
     bool changed = newLayout != activeLayout;
@@ -453,8 +456,31 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
                        
     // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
     setKanaState(false);
-    // We want Numlock to be always off so that we don't get fake shift events on layer 2
-    setNumlockState(false);
+    // We want Numlock to be always on, because some apps (built on WinUI, see #32) misinterpret VK_NUMPADx events if Numlock is disabled
+    // However, this means we have to deal with fake shift events on Numpad layer 2 (#15)
+    setNumlockState(true);
+
+    // When Numlock is enabled, pressing Shift and a "dual state" numpad key generates fake key events to temporarily lift
+    // and repress the active shift key. Fake Shift key ups are always marked as such with a special scancode, the
+    // corresponding down events sometimes are and sometimes are not (seems to have something to do with whether
+    // multiple numpad keys are pressed simultaneously). Here's the strategy:
+    // - eat all shift key events marked with the fake scancode
+    // - on dual state numpad key up with real held shift key, prime the hook to expect a shift key down as the next event
+    // - if we are primed for a shift key down and get one, eat that. otherwise release the primed state
+    if (expectFakeShiftDown) {
+        if (down && (vk == VKEY.VK_LSHIFT || vk == VKEY.VK_SHIFT)) {
+            return true;
+        }
+        expectFakeShiftDown = false;
+    }
+
+    if (scan.scan == SC_FAKE_LSHIFT || scan.scan == SC_FAKE_RSHIFT) {
+        return true;
+    }
+
+    if (isDualStateNumpadKey && !down && (leftShiftDown || rightShiftDown)) {
+        expectFakeShiftDown = true;
+    }
 
     // Disable fake LCTRL on AltGr as we use that for Mod4
     if (scan.scan == SC_FAKE_LCTRL) {
