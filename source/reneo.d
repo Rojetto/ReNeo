@@ -131,6 +131,11 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
     SendInput(1, &input_struct, INPUT.sizeof);
 }
 
+// Persistent state of virtually pressed standard modifiers
+bool virtualShiftDown;
+bool virtualCtrlDown;
+bool virtualAltDown;
+
 void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
     debug {
@@ -196,6 +201,23 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     INPUT[] inputs;
 
+    // Release virtually pressed modifiers, if they must not be used for the virtual key combination
+    if (down) {
+        if (virtualShiftDown && !shift) {
+            appendInput(inputs, VK_SHIFT, scanLShift, false);
+            virtualShiftDown = false;
+        }
+        if (virtualCtrlDown && !ctrl) {
+            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, false);
+            virtualCtrlDown = false;
+        }
+        if (virtualAltDown && !alt) {
+            appendInput(inputs, VKEY.VK_MENU, scanLAlt, false);
+            virtualAltDown = false;
+        }
+    }
+
+
     // For up events, release the main key before the modifiers
     if (!down) {
         appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
@@ -232,15 +254,20 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
                 if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, false); }
                 releasedShift = true;
             }
-        } else {
+        } else if (virtualShiftDown != down) {
+            // We did not check before if any virtual shift key is already in the desired state.
+            // If so, no action is necessary, which saves key events.
             appendInput(inputs, VK_SHIFT, scanLShift, down);
+            virtualShiftDown = down;
         }
     }
-    if (ctrl) {
+    if (ctrl && virtualCtrlDown != down) {
         appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
+        virtualCtrlDown = down;
     }
-    if (alt) {
+    if (alt && virtualAltDown != down) {
         appendInput(inputs, VKEY.VK_MENU, scanLAlt, down);
+        virtualAltDown = down;
     }
 
     // For down events, set the main key after the modifiers
