@@ -215,21 +215,22 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // can only be checked when Capslock is active (and only then has any influence).
     bool nativeCapslockable = (buf[0] != unicode_char) && capslock;
     // Is any Shift key pressed physically?
-    bool shiftDown = leftShiftDown || rightShiftDown;
+    bool physicalShiftDown = leftShiftDown || rightShiftDown;
     // Calculate the overall Shift state from the flags described
-    bool overallShift = (!nativeCapslockable && shiftDown) || (nativeCapslockable && (shiftDown ^ capslock));
-    bool unpressShift = false;
+    bool overallShift = (!nativeCapslockable && physicalShiftDown)
+                      || (nativeCapslockable && (physicalShiftDown ^ capslock));
+    bool releasedShift = false;
 
     // If the required and the current Shift states differ, the current Shift state is changed
     if (overallShift != shift) {
-        if (shiftDown) {
-            // If any Shift key is already down, changing can only be done by unpressing the pressed
+        if (physicalShiftDown) {
+            // If any Shift key is already down, changing can only be done by releasing the pressed
             // key. This is executed for key-down events only. For key-up it does not matter and saves
             // two unnecessary key events.
             if (down) {
                 if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, false); }
                 if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, false); }
-                unpressShift = true;
+                releasedShift = true;
             }
         } else {
             appendInput(inputs, VK_SHIFT, scanLShift, down);
@@ -248,7 +249,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     }
 
     // Re-press Shift key(s)
-    if (unpressShift) {
+    if (releasedShift) {
         if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, true); }
         if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, true); }
     }
