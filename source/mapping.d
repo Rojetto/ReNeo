@@ -271,6 +271,7 @@ void initLayouts(JSONValue jsonLayoutArray) {
 
 NeoKey parseNeoKey(JSONValue jsonKey) {
     NeoKey key;
+    key.vk_code = VKEY.VK_VOID;
     
     if ("keysym" in jsonKey) {
         key.keysym = parseKeysym(jsonKey["keysym"].str);
@@ -285,7 +286,6 @@ NeoKey parseNeoKey(JSONValue jsonKey) {
         key.keytype = NeoKeyType.CHAR;
         key.char_code = jsonKey["char"].str.to!wstring[0];
     }
-
 
     return key;
 }
