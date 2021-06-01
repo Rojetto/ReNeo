@@ -58,9 +58,9 @@ void initKeysyms(string exeDir) {
     auto keysymfile = buildPath(exeDir, "keysymdef.h");
     debug_writeln("Initializing keysyms from ", keysymfile);
     // group 1: name, group 2: hex, group 3: unicode codepoint
-    auto unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*\/\*[ \(]U\+([0-9A-F]{4,6}) (.*)[ \)]\*\/\s*$";
+    auto unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*\/\*[ \(]U\+([0-9a-fA-F]{4,6}) (.*)[ \)]\*\/\s*$";
     // group 1: name, group 2: hex, group 3 and 4: comment stuff
-    auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-f]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
+    auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
     keysyms_by_name.clear();
     keysyms_by_codepoint.clear();
 
