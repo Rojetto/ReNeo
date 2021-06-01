@@ -1,5 +1,5 @@
 {
     "standaloneLayout": "Neo",
-    "standaloneMode": false,
+    "standaloneMode": true,
     "sendKeyMode": "fakeNative"
 }
