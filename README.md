@@ -1,40 +1,90 @@
-# ReNeo – Ebene 4, Compose und mehr für kbdneo
+# ReNeo – Die Neo-Tastaturlayouts für Windows
 
-## Was ist ReNeo?
-ReNeo ist eine Erweiterung für den kbdneo-Treiber, der das [Neo-Layout](http://neo-layout.org/) nativ in Windows integriert.
-Funktionen wie Capslock, die Steuertasten auf Ebene 4 und Compose können technisch bedingt nur eingeschränkt im reinen Tastaturtreiber implementiert werden und werden deshalb mit dieser Anwendung nachgerüstet.
+ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine Verwandten für Windows. Dabei kann man sich für eine von zwei Varianten entscheiden:
+1. Im *Standalone-Modus* ersetzt ReNeo alle Tastendrücke des nativen Layouts (meistens QWERTZ) durch das gewünschte Neo-Layout. Dafür muss zum Systemstart nur die ReNeo-EXE ausgeführt werden.
+2. Im *Erweiterungsmodus* installiert man einen nativen Neo-Treiber wie [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/). ReNeo ergänzt dann alle Funktionen, die nativ nicht umsetzbar sind (Capslock, Steuertasten auf Ebene 4, Compose, ...).
 
 ## Installation
-1. [kbdneo](https://neo-layout.org/Benutzerhandbuch/kbdneo/) normal installieren
-2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in beliebiges Verzeichnis entpacken
-3. `reneo.exe` starten oder zu Autostart hinzufügen. Über das Trayicon kann das Programm deaktiviert und beendet werden.
+1. *Optional*: [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/) normal installieren
+2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in ein Verzeichnis mit Schreibrechten entpacken (z. B. `C:\Users\[USER]\ReNeo`)
+3. *Optional*: [`config.json` anpassen](#Allgemeine-Konfiguration)
+4. `reneo.exe` starten oder zu Autostart hinzufügen. Über das Trayicon kann das Programm deaktiviert und beendet werden.
+
+*Deinstallation*
+1. *Optional*: kbdneo nach Wiki-Anleitung deinstallieren
+2. ReNeo-Verzeichnis löschen und aus Autostart entfernen
 
 ## Funktionen
 
+Allgemein:
+- Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*
+- Im Traymenü kann zwischen Layouts gewechselt werden
+- Weitere Layouts können in `layouts.json` hinzugefügt und angepasst werden
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
 - Steuertasten auf Ebene 4
-- *Alle* tote Tasten und Compose-Kombinationen. Diese sind auch durch den Nutzer erweiterbar, alle `.module`-Dateien im Verzeichnis „compose“ werden beim Start geladen.
+- *Alle* tote Tasten und Compose-Kombinationen. Diese sind auch durch den Nutzer erweiterbar, alle `.module`-Dateien im Verzeichnis `compose/` werden beim Start geladen.
+- `Shift+Pause` (de)aktiviert die Anwendung
+
+Als Erweiterung zum nativen Treiber:
+- Wird das native Layout als Neo-verwandt erkannt (`kbdneo.dll`, `kbdbone.dll`, `kbdgr2.dll`), schaltet ReNeo automatisch in den Erweiterungs-Modus. Umschalten zwischen Layouts ist ganz normal möglich.
 - Verbesserte Kompatibilität mit Qt- und GTK-Anwendungen. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
 - Compose-Taste `M3+Tab` sendet keinen Tab mehr an Anwendung. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/397).
-- Funktioniert mit Bone (`kbdbone.dll`) und NeoQwertz (`kbdgr2.dll`). Das aktive Layout wird auf Basis des DLL-Namens erkannt und es wird automatisch umgeschaltet, wenn der Nutzer in Windows das Layout wechselt.
 
-## Vergleich mit anderen Windows-Treibern
-Der Vergleich bezieht sich auf die Kombination kbdneo+ReNeo.
+## Konfiguration
 
-### kbdneo + AHK-Erweiterung
-🟢 Alle CoKos, durch Nutzer anpassbar  
-🟢 Behebung der o.g. Bugs  
-🟠 Keine Bildschirmtastatur für obere Ebenen  
+ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 
-### NeoVars
-🟢 Native Integration in Windows Layoutauflistung  
-🟢 Native Bildschirmtastatur für untere Ebenen  
-🟢 Grundfunktionen funktionieren auf Anmeldebildschirm, unmittelbar nach Login und in Admin-Anwendungen, ohne dass Skript im Admin-Modus gestartet werden muss  
-🟢 CoKos ohne Rekompilation erweiterbar  
-🟡 Installation von kbdneo braucht Adminrechte  
-🟠 Keine Bildschirmtastatur für obere Ebenen  
-🟠 Keine Extra-Features (Einhandmodus, ſ-Modus, Taschenrechner…)
+### Allgemeine Konfiguration
+`config.json` hat folgende Optionen:
+- `"standaloneMode"`:
+    - `true` (Standard): Das native Layout (z. B. QWERTZ) wird von ReNeo mit dem ausgewählten Neo-Layout ersetzt. Hinweis: ist das native Layout bereits Neo-verwandt, verändert ReNeo das Layout nicht und schaltet stattdessen automatisch in den Erweiterungsmodus.
+    - `false`: Ist das native Layout Neo-verwandt, schaltet ReNeo in den Erweiterungsmodus. Bei allen anderen Layouts deaktiviert sich ReNeo automatisch.
+- `"standaloneLayout"`: Layout, das für den Standalone-Modus genutzt werden soll. Auch übers Traymenü auswählbar.
+- `"sendKeyMode"`: *Experimentell*. 
+    - `fakeNative` (Standard): Buchstaben und Sonderzeichen, die im nativen Layout existieren, werden über entsprechende Tastenanschläge und -kombinationen simuliert. So sieht es für Anwendungen aus, als ob  das native Layout ganz normal verwendet wird.
+    - `honest`: Sonderzeichen werden grundsätzlich als Unicode-Pakete gesendet.
 
+### Layouts anpassen
+In `layouts.json` können Layouts angepasst und hinzugefügt werden. Jeder Eintrag besitzt folgende Parameter:
+- `"name"`: Name des Layouts, so wie er im Menü angezeigt wird.
+- `"dllName"` (Optional): Name der zugehörigen nativen Treiber-DLL. Existiert diese nicht, kann der Parameter weggelassen werden.
+- `"modifiers"`: Scancodes der Modifier Shift, Mod3 und Mod4 (links und rechts). Mit `+` am Ende wird das Extended-Bit gesetzt, zum Beispiel `36+` für die rechte Shift-Taste.
+- `"capslockableKeys"`: Array von Scancodes, die von Capslock beeinflusst werden sollen. Typischerweise sind das alle Buchstaben, inklusive „äöüß“.
+- `"map"`: Das tatsächliche Layout in Form von Arrays mit 6 Elementen (für die 6 Ebenen) für jeden Scancode. Jeder Eintrag enthält dabei
+    - `"keysym"`: X11-Keysym der Taste, entweder aus `keysymdef.h` oder in der Form `U1234` für Unicode-Zeichen. Wird für Compose benutzt.
+    - **Entweder** `"vk"`: Windows Virtual Key aus dem Enum `VKEY` in `mapping.d`. Nur genutzt für Steuertasten.
+    - **Oder** `"char"`: Unicode-Zeichen, das mit der Taste erzeugt werden soll.
+
+Zum Erstellen neuer Layouts hat sich folgender Arbeitsablauf bewährt:
+1. Bestehendes Layout kopieren und neuen Namen eintragen
+2. Die Zeilen der Buchstabentasten (also ab Scancode `0C`) neu ordnen, sodass diese auf der Tastatur von oben links nach unten rechts gelesen in der richtigen Reihenfolge sind.
+3. Mit Blockauswahl die Scancodes eines bestehenden Layouts kopieren, und die (jetzt falsch geordneten) Scancodes des neuen Layouts überschreiben.
+4. Mit Blockauswahl Ebenen 3 und 4 eines bestehenden Layouts kopieren, und Ebenen 3 und 4 des neuen Layouts überschreiben.
+5. `modifiers` und `capslockableKeys` ggf. anpassen
+
+So bleiben Ebenen 3 und 4 an der richtigen Stelle, und die anderen Ebenen werden nach der neuen Buchstabenanordnung permutiert.
+
+
+## Vergleich vorhandener Windows-Treiber
+| Feature                               | ReNeo (Standalone) | ReNeo+kbdneo | AHK+kbdneo | NeoVars |
+| ------------------------------------- | ------------------ | ------------ | ---------- | ------- |
+| Unterstützte Layouts                  | 🟢                  | 🟡            | 🟡          | 🟡 1     |
+| Compose                               | 🟢                  | 🟢            | 🟠          | 🟡       |
+| Admin-Rechte                          | 🟢                  | 🟡            | 🟡          | 🟢       |
+| Zusammenspiel mit nativem Layout      | 🟢 2                | 🟢            | 🟠          | 🟠 3     |
+| Anmeldebildschirm & Admin-Anwendungen | 🟡                  | 🟢            | 🟢          | 🟡       |
+| Kompatibilität                        | 🟢                  | 🟢            | 🟡 4        | 🟡 5     |
+| Bildschirmtastatur                    | 🟠                  | 🟠            | 🟡          | 🟢       |
+| Extra-Features                        | 🟠                  | 🟠            | 🟠          | 🟢 6     |
+
+1. Buchstabenanordnung kann zwar vertauscht werden, sonst ist Anpassung aber schwer
+2. Verträgt sich mit den meisten Layouts (QWERTZ, QWERTY, QWERTZ-CH), inklusive IMEs wie Chinesisch/Japanisch (eingeschränkt). Umschalten ist in Windows ganz normal möglich.
+3. QWERTZ muss aktiv sein und in der Liste an erster Stelle stehen
+4. siehe o.g. Bugs
+5. Key-Events „klappern“ bei Sonderzeichen, Steuertasten gehen nicht überall
+6. Einhandmodus, ſ-Modus, Taschenrechner, ...
+
+# Für Entwickler
 ## Kompilieren
 ReNeo ist in D geschrieben und nutzt `dub` für Projektkonfiguration und Kompilation.
 Es gibt zwei wichtige Kompilationsvarianten:
@@ -43,12 +93,7 @@ Es gibt zwei wichtige Kompilationsvarianten:
 
 Die Ressourcendatei `res/icons.res` wird mit `rc.exe` aus dem Windows SDK erstellt. Dazu reicht der Befehl `rc.exe icons.rc`.
 
-## Offene Aufgaben
-- [ ] Prüfung ob Anwendung bereits läuft
-- [ ] Latenz messen
-
-## Fernziele
-- [x] Kompatibilität mit anderen Neo-verwandten Layouts (NeoQwertz und Bone)
-- [ ] Integration in Hauptrepository
-- [ ] Flexibleres Mappingformat
-- [ ] UI für Compose
+## Release
+1. Build mit `dub build --build=release`
+2. Erstelle Zip-Datei mit Name `ReNeo_vX.Y.Z.zip`. Inhalt: `reneo.exe`, `README.md`, `keysymdef.h`, `config.json`, `layouts.json`, `compose/`
+3. Neuen Release auf GitHub. Änderungen seit letzter Version raussuchen.
