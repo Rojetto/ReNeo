@@ -212,7 +212,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
             virtualCtrlDown = false;
         }
         if (virtualAltDown && !alt) {
-            appendInput(inputs, VKEY.VK_MENU, scanLAlt, false);
+            appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
             virtualAltDown = false;
         }
     }
@@ -266,7 +266,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         virtualCtrlDown = down;
     }
     if (alt && virtualAltDown != down) {
-        appendInput(inputs, VKEY.VK_MENU, scanLAlt, down);
+        appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
         virtualAltDown = down;
     }
 
