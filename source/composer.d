@@ -90,6 +90,11 @@ class ComposeParser {
         }
         string stringContent = endChunk();
         match('"');
+        if (stringContent == r"\") {
+            stringContent = "\"";
+        } else if (stringContent == r"\\") {
+            stringContent = r"\";
+        }
         return stringContent;
     }
 
