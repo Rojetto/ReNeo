@@ -84,11 +84,30 @@ class ComposeParser {
 
     string quotedString() {
         assert(match('"'));
-        startChunk();
+        
+        string stringContent;
+
         while (!check('"')) {
+            char next = peek();
+
+            if (next == '\\') {
+                // For backslash escaped characters, skip the backslash and decide based on the next char
+                advance();
+
+                if (check('n')) {
+                    stringContent ~= '\n';
+                } else if (check('t')) {
+                    stringContent ~= '\t';
+                } else {
+                    stringContent ~= peek();
+                }
+            } else {
+                stringContent ~= next;
+            }
+
             advance();
         }
-        string stringContent = endChunk();
+
         match('"');
         return stringContent;
     }
