@@ -110,6 +110,17 @@ uint parseKeysym(string keysym_str) {
 void sendVK(uint vk, Scancode scan, bool down) nothrow {
     INPUT[] inputs;
 
+    // check virtual modifier keys currently held down and release them if necessary
+    if (virtualShiftDown) {
+        appendInput(inputs, VKEY.VK_SHIFT, scanLShift, false);
+        virtualShiftDown = false;
+    }
+    if (virtualAltDown) {
+        expectFakeLCtrl = true;
+        appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
+        virtualAltDown = false;
+    }
+
     // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
     scan.extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
     appendInput(inputs, vk, scan, down);
@@ -133,7 +144,6 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
 
 // Persistent state of virtually pressed standard modifiers
 bool virtualShiftDown;
-bool virtualCtrlDown;
 bool virtualAltDown;
 
 void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
@@ -201,23 +211,6 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     INPUT[] inputs;
 
-    // Release virtually pressed modifiers, if they must not be used for the virtual key combination
-    if (down) {
-        if (virtualShiftDown && !shift) {
-            appendInput(inputs, VK_SHIFT, scanLShift, false);
-            virtualShiftDown = false;
-        }
-        if (virtualCtrlDown && !ctrl) {
-            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, false);
-            virtualCtrlDown = false;
-        }
-        if (virtualAltDown && !alt) {
-            appendInput(inputs, VKEY.VK_MENU, scanLAlt, false);
-            virtualAltDown = false;
-        }
-    }
-
-
     // For up events, release the main key before the modifiers
     if (!down) {
         appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
@@ -243,6 +236,22 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
                       || (nativeCapslockable && (physicalShiftDown ^ capslock));
     bool releasedShift = false;
 
+    // Release virtually pressed modifiers, if they must not be used for the virtual key combination
+    if (down) {
+        // If the required and the current Shift states are already matching, an additionally pressed
+        // virtual Shift key must be released then.
+        if (virtualShiftDown && (overallShift == shift)) {
+            appendInput(inputs, VK_SHIFT, scanLShift, false);
+            virtualShiftDown = false;
+        }
+        if (virtualAltDown && !alt) {
+            // AltGr-up automatically adds combined fake LCtrl-up
+            expectFakeLCtrl = true;
+            appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
+            virtualAltDown = false;
+        }
+    }
+
     // If the required and the current Shift states differ, the current Shift state is changed
     if (overallShift != shift) {
         if (physicalShiftDown) {
@@ -255,18 +264,18 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
                 releasedShift = true;
             }
         } else if (virtualShiftDown != down) {
-            // We did not check before if any virtual shift key is already in the desired state.
-            // If so, no action is necessary, which saves key events.
+            // At this point an additional virtual Shift key is necessary to reach the correct Shift state.
+            // Only if the (virtual) key is still up it will be pressed down.
             appendInput(inputs, VK_SHIFT, scanLShift, down);
             virtualShiftDown = down;
         }
     }
-    if (ctrl && virtualCtrlDown != down) {
-        appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
-        virtualCtrlDown = down;
-    }
+    // The Alt modifier is considered as AltGr, which is equivalent to LCtrl and RAlt.
+    // Accordingly, Ctrl will not be handled separately, as it occurs always in combination with Alt.
     if (alt && virtualAltDown != down) {
-        appendInput(inputs, VKEY.VK_MENU, scanLAlt, down);
+        // AltGr down/up automatically adds combined fake LCtrl down/up
+        expectFakeLCtrl = true;
+        appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
         virtualAltDown = down;
     }
 
@@ -441,6 +450,8 @@ bool standaloneModeActive;
 
 // the last event was a dual state numpad key up with held shift key, eat the next shift down
 bool expectFakeShiftDown;
+// if virtual AltGr (down/up) is injected, we expect a valid fake LCtrl event first
+bool expectFakeLCtrl;
 
 
 bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
@@ -510,9 +521,16 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         expectFakeShiftDown = true;
     }
 
-    // Disable fake LCTRL on AltGr as we use that for Mod4
+    // Disable fake LCtrl on physical AltGr key, as we use that for Mod4.
+    // In case of an injected AltGr, fake LCtrl is expected instead and will be processed.
     if (scan.scan == SC_FAKE_LCTRL) {
-        return true;
+        if (!expectFakeLCtrl) {
+            return true;
+        } else {
+            expectFakeLCtrl = false;
+            // Early exit, but keep this event
+            return false;
+        }
     }
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
