@@ -1,5 +1,6 @@
 {
     "standaloneLayout": "Neo",
     "standaloneMode": true,
-    "sendKeyMode": "fakeNative"
+    "sendKeyMode": "fakeNative",
+    "oskNumpad": true
 }

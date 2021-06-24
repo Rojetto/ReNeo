@@ -1,3 +1,4 @@
 IDI_APPLICATION ICON "neo_enabled.ico"
 trayenabled  ICON "neo_enabled.ico"
 traydisabled ICON "neo_disabled.ico"
+1 24 "reneo.exe.manifest"

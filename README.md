@@ -19,13 +19,14 @@ ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine V
 Allgemein:
 - Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*
 - Im Traymenü kann zwischen Layouts gewechselt werden
-- Weitere Layouts können in `layouts.json` hinzugefügt und angepasst werden
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
-- Steuertasten auf Ebene 4
+- **Bildschirmtastatur**: Wird über Tray-Menü ein- und ausgeschaltet oder per Shortcut `M3+F1`
 - *Alle* tote Tasten und Compose-Kombinationen. Diese sind auch durch den Nutzer erweiterbar, alle `.module`-Dateien im Verzeichnis `compose/` werden beim Start geladen.
 - `Shift+Pause` (de)aktiviert die Anwendung
+- Weitere Layouts können in `layouts.json` hinzugefügt und angepasst werden
 
 Als Erweiterung zum nativen Treiber:
+- Steuertasten auf Ebene 4
 - Wird das native Layout als Neo-verwandt erkannt (`kbdneo.dll`, `kbdbone.dll`, `kbdgr2.dll`), schaltet ReNeo automatisch in den Erweiterungs-Modus. Umschalten zwischen Layouts ist ganz normal möglich.
 - Verbesserte Kompatibilität mit Qt- und GTK-Anwendungen. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
 - Compose-Taste `M3+Tab` sendet keinen Tab mehr an Anwendung. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/397).
@@ -40,6 +41,7 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
     - `true` (Standard): Das native Layout (z. B. QWERTZ) wird von ReNeo mit dem ausgewählten Neo-Layout ersetzt. Hinweis: ist das native Layout bereits Neo-verwandt, verändert ReNeo das Layout nicht und schaltet stattdessen automatisch in den Erweiterungsmodus.
     - `false`: Ist das native Layout Neo-verwandt, schaltet ReNeo in den Erweiterungsmodus. Bei allen anderen Layouts deaktiviert sich ReNeo automatisch.
 - `"standaloneLayout"`: Layout, das für den Standalone-Modus genutzt werden soll. Auch übers Traymenü auswählbar.
+- `"oskNumpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
 - `"sendKeyMode"`: *Experimentell*. 
     - `fakeNative` (Standard): Buchstaben und Sonderzeichen, die im nativen Layout existieren, werden über entsprechende Tastenanschläge und -kombinationen simuliert. So sieht es für Anwendungen aus, als ob  das native Layout ganz normal verwendet wird.
     - `honest`: Sonderzeichen werden grundsätzlich als Unicode-Pakete gesendet.
@@ -54,6 +56,7 @@ In `layouts.json` können Layouts angepasst und hinzugefügt werden. Jeder Eintr
     - `"keysym"`: X11-Keysym der Taste, entweder aus `keysymdef.h` oder in der Form `U1234` für Unicode-Zeichen. Wird für Compose benutzt.
     - **Entweder** `"vk"`: Windows Virtual Key aus dem Enum `VKEY` in `mapping.d`. Nur genutzt für Steuertasten.
     - **Oder** `"char"`: Unicode-Zeichen, das mit der Taste erzeugt werden soll.
+    - `"label"`: (Optional) Beschriftung für Bildschirmtastatur. Als Fallback wird der Wert von `"char"` genutzt.
 
 Zum Erstellen neuer Layouts hat sich folgender Arbeitsablauf bewährt:
 1. Bestehendes Layout kopieren und neuen Namen eintragen
@@ -74,7 +77,7 @@ So bleiben Ebenen 3 und 4 an der richtigen Stelle, und die anderen Ebenen werden
 | Zusammenspiel mit nativem Layout      | 🟢 2                | 🟢            | 🟠          | 🟠 3     |
 | Anmeldebildschirm & Admin-Anwendungen | 🟡                  | 🟢            | 🟢          | 🟡       |
 | Kompatibilität                        | 🟢                  | 🟢            | 🟡 4        | 🟡 5     |
-| Bildschirmtastatur                    | 🟠                  | 🟠            | 🟡          | 🟢       |
+| Bildschirmtastatur                    | 🟢                  | 🟢            | 🟡          | 🟡       |
 | Extra-Features                        | 🟠                  | 🟠            | 🟠          | 🟢 6     |
 
 1. Buchstabenanordnung kann zwar vertauscht werden, sonst ist Anpassung aber schwer
@@ -91,7 +94,9 @@ Es gibt zwei wichtige Kompilationsvarianten:
 1. Debug mit `dub build`: Neben Debuggingsymbolen öffnet die generierte EXE eine Konsole um Informationen ausgeben zu können.
 2. Release mit `dub build --build=release`: Optimierungen sind aktiviert und es wird keine Konsole geöffnet.
 
-Die Ressourcendatei `res/icons.res` wird mit `rc.exe` aus dem Windows SDK erstellt. Dazu reicht der Befehl `rc.exe icons.rc`.
+Die Ressourcendatei `res/reneo.res` wird mit `rc.exe` aus dem Windows SDK erstellt (x68-Version, die generierte res-Datei funktioniert sonst nicht). Dazu reicht der Befehl `rc.exe reneo.rc`.
+
+Cairo-DLL stammt von https://github.com/preshing/cairo-windows. Die zugehörigen D-Header wurden mit [DStep](https://github.com/jacob-carlborg/dstep) aus den C-Headern generiert und manuell angepasst.
 
 ## Release
 1. Build mit `dub build --build=release`

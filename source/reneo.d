@@ -11,7 +11,7 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import app : configSendKeyMode;
+import app : configSendKeyMode, updateOSK, toggleOSK;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -49,6 +49,7 @@ struct NeoKey {
         VKEY vk_code;
         wchar char_code;
     }
+    string label;
 }
 
 uint[string] keysyms_by_name;
@@ -438,7 +439,8 @@ bool rightMod4Down;
 bool capslock;
 bool mod4Lock;
 
-uint previousLayer = 1;
+uint previousPatchedLayer = 1;
+uint activeLayer = 1;
 
 // when we press a VK, store what NeoKey we send so that we can release it correctly later
 NeoKey[Scancode] heldKeys;
@@ -584,7 +586,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool mod4Down = leftMod4Down || rightMod4Down;
 
     // is capslock active?
-    capslock = GetKeyState(VKEY.VK_CAPITAL) & 0x0001;
+    bool newCapslock = GetKeyState(VKEY.VK_CAPITAL) & 0x0001;
+    bool capslockChanged = capslock != newCapslock;
+    capslock = newCapslock;
 
     // determine the layer we are currently on
     uint layer = 1;
@@ -612,6 +616,29 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         }
     }
 
+    uint oskLayer = layer;
+    // Simplify capslock logic for OSK
+    if (capslock && (oskLayer == 1 || oskLayer == 2)) {
+        if (shiftDown) {
+            oskLayer = 2;
+        } else {
+            oskLayer = 1;
+        }
+    }
+
+    // Update OSK if necessary
+    if (oskLayer != activeLayer || capslockChanged) {
+        // Store globally for OSK
+        activeLayer = oskLayer;
+        updateOSK();
+    }
+
+    // Toggle OSK on M3+F1
+    if (vk == VK_F1 && down && mod3Down) {
+        toggleOSK();
+        return true;  // Eat F1
+    }
+
     // We want to treat layers 1 and 2 the same in terms of checking whether we switched
     // This is because pressing or releasing shift should not send a keyup for all held keys
     // (where as it should for keys from all other layers)
@@ -619,8 +646,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     if (patchedLayer == 2) {
         patchedLayer = 1;
     }
-    bool changedLayer = patchedLayer != previousLayer;
-    previousLayer = patchedLayer;
+    bool changedLayer = patchedLayer != previousPatchedLayer;
+    previousPatchedLayer = patchedLayer;
 
     // if we switched layers release all currently held keys
     if (changedLayer) {

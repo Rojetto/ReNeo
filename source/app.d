@@ -7,8 +7,7 @@ import reneo;
 import mapping;
 import composer;
 import trayicon;
-import std.path : dirName;
-import std.file : thisExePath;
+import osk;
 import std.utf;
 import std.string;
 import std.conv;
@@ -25,9 +24,14 @@ bool foregroundWindowChanged;
 bool keyboardHookActive;
 bool previousNumlockState;
 
+bool oskOpen;
+
 bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
 SendKeyMode configSendKeyMode;
+bool configOskNumpad;
+
+HWND hwnd;
 
 HMENU contextMenu;
 HMENU layoutMenu;
@@ -35,23 +39,37 @@ HICON iconEnabled;
 HICON iconDisabled;
 
 const MOD_NOREPEAT = 0x4000;
+const WM_DPICHANGED = 0x02E0;
 
 const UINT ID_MYTRAYICON = 0x1000;
 const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
 const UINT ID_TRAY_RELOAD_CONTEXTMENU = 0x1101;
+const UINT ID_TRAY_OSK_CONTEXTMENU = 0x1102;
 const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x110F;
 const UINT ID_LAYOUTMENU = 0x1200;
+
+const UINT ID_HOTKEY_DEACTIVATE = 0x001;
+const UINT ID_HOTKEY_OSK = 0x002;
+
 const UINT LAYOUTMENU_POSITION = 0;
+
 string disableAppMenuMsg = "ReNeo deaktivieren";
 string enableAppMenuMsg  = "ReNeo aktivieren";
 string reloadMenuMsg     = "Neu laden";
 string layoutMenuMsg     = "Tastaturlayout auswählen";
 string quitMenuMsg       = "ReNeo beenden";
+string openOskMenuMsg    = "Bildschirmtastatur öffnen";
+string closeOskMenuMsg   = "Bildschirmtastatur schließen";
 
 const APPNAME            = "ReNeo"w;
 string executableDir;
 
 TrayIcon trayIcon;
+
+const UINT OSK_WIDTH_WITH_NUMPAD_96DPI = 1000;
+const UINT OSK_WIDTH_NO_NUMPAD_96DPI = 750;
+const UINT OSK_HEIGHT_96DPI = 280;
+const UINT OSK_BOTTOM_OFFSET_96DPI = 5;
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
@@ -189,14 +207,9 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
     try {
 
     switch (msg) {
-        case WM_DESTROY:
-        // Hide the tray icon and cleanup before closing the application
-        trayIcon.hide();
-        DestroyMenu(contextMenu);
-        // Not necessary to unload icons loaded from file
-        
-        PostQuitMessage(0);
-        break;
+        case WM_CLOSE:
+        toggleOSK();
+        return 0;  // Don't actually close the window
 
         case WM_TRAYICON:
         // From https://docs.microsoft.com/en-us/windows/win32/shell/taskbar#adding-modifying-and-deleting-icons-in-the-notification-area:
@@ -227,13 +240,22 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             updateTrayTooltip();
             break;
 
+            case ID_TRAY_OSK_CONTEXTMENU:
+            toggleOSK();
+            break;
+
             case ID_TRAY_RELOAD_CONTEXTMENU:
             debug_writeln("Re-initialize...");
             initialize();
             break;
 
             case ID_TRAY_QUIT_CONTEXTMENU:
-            SendMessage(hwnd, WM_CLOSE, 0, 0);
+            // Hide the tray icon and cleanup before closing the application
+            trayIcon.hide();
+            DestroyMenu(contextMenu);
+            // Not necessary to unload icons loaded from file
+            
+            PostQuitMessage(0);
             break;
 
             default:
@@ -248,6 +270,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
                 auto configJson = parseJSONFile("config.json");
                 configJson["standaloneLayout"] = layouts[newLayoutIdx].name;
                 std.file.write(buildPath(executableDir, "config.json"), toJSON(configJson, true));
+                updateOSK();
             }
             break;
         }
@@ -259,6 +282,42 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         updateContextMenu();
         break;
 
+        case WM_PAINT:
+        // Double buffer to prevent flickering on layer change
+        // http://www.catch22.net/tuts/win32/flicker-free-drawing
+        RECT win_size;
+        GetClientRect(hwnd, &win_size);
+
+        uint win_width = win_size.right;
+        uint win_height = win_size.bottom;
+
+        PAINTSTRUCT paint_struct;
+        HDC dc = BeginPaint(hwnd, &paint_struct);
+
+        HDC dcMem = CreateCompatibleDC(dc);
+        HBITMAP bmMem = CreateCompatibleBitmap(dc, win_width, win_height);
+
+        auto hOld = SelectObject(dcMem, bmMem);
+
+        draw_osk(dcMem, win_width, win_height, configOskNumpad, activeLayout, activeLayer, capslock);
+
+        BitBlt(dc, 0, 0, win_width, win_height, dcMem, 0, 0, SRCCOPY);
+
+        SelectObject(dcMem, hOld);
+
+        DeleteObject(bmMem);
+        DeleteDC (dcMem);
+
+        EndPaint(hwnd, &paint_struct);
+        break;
+
+        case WM_DPICHANGED:
+        RECT* suggestedRect = cast(RECT*) lParam;
+        SetWindowPos(hwnd, cast(HWND) 0, suggestedRect.left, suggestedRect.top,
+            suggestedRect.right - suggestedRect.left, suggestedRect.bottom - suggestedRect.top,
+            SWP_NOZORDER);
+        break;
+
         default: break;
     }
 
@@ -267,6 +326,24 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
     }
 
     return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void updateOSK() nothrow {
+    InvalidateRect(hwnd, NULL, FALSE);
+}
+
+void toggleOSK() nothrow {
+    oskOpen = !oskOpen;
+    if (oskOpen) {
+        ShowWindow(hwnd, SW_SHOWNA);
+        updateOSK();
+    } else {
+        ShowWindow(hwnd, SW_HIDE);
+    }
+    try {
+        updateContextMenu();
+    } catch (Exception e) {
+    }
 }
 
 void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
@@ -285,6 +362,12 @@ void updateContextMenu() {
     } else {
         trayIcon.setIcon(iconEnabled);
         modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg);
+    }
+
+    if (oskOpen) {
+        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, closeOskMenuMsg);
+    } else {
+        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, openOskMenuMsg);
     }
 }
 
@@ -332,6 +415,8 @@ void initialize() {
     auto layoutsJson = parseJSONFile("layouts.json");
     initLayouts(layoutsJson["layouts"]);
 
+    initialize_osk(executableDir);
+
     // Initialize layout menu
     layoutMenu = CreatePopupMenu();
     for (int i = 0; i < layouts.length; i++) {
@@ -365,6 +450,8 @@ void initialize() {
         default: break;
     }
 
+    configOskNumpad = configJson["oskNumpad"].boolean;
+
     debug_writeln("Initialization complete!");
 }
 
@@ -390,19 +477,51 @@ void main(string[] args) {
         debug_writeln("Could not install foreground window hook!");
     }
 
-    HWND hwnd;
     WNDCLASS wndclass;
 
     // The necessary actions for getting a handle without displaying an actual window
-    wndclass.lpszClassName = "MyWindow";
+    wndclass.lpszClassName = "ReNeo";
     wndclass.lpfnWndProc   = &WndProc;
+    wndclass.style = CS_HREDRAW | CS_VREDRAW;
     RegisterClass(&wndclass);
     HINSTANCE hInstance = GetModuleHandle(NULL);
-    hwnd = CreateWindowEx(0, wndclass.lpszClassName, "", WS_TILED | WS_SYSMENU, 0, 0, 50, 50, NULL, NULL, hInstance, NULL);
+    hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW, wndclass.lpszClassName, "ReNeo".toUTF16z, WS_SIZEBOX | WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+
+    // Move and scale window to center of its current monitor
+    auto wndMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO monitorInfo;
+    GetMonitorInfo(wndMonitor, &monitorInfo);
+    RECT workArea = monitorInfo.rcWork;
+    uint dpi = 96;
+
+    HMODULE user32Lib = GetModuleHandle("User32.dll".toUTF16z);
+    auto ptrGetDpiForWindow = cast(UINT function(HWND)) GetProcAddress(user32Lib, "GetDpiForWindow".toStringz);
+    if (ptrGetDpiForWindow) {
+        dpi = ptrGetDpiForWindow(hwnd);  // Only available for Win 10 1607 and up
+        debug_writeln("Running with PerMonitorV2 DPI scaling");
+    } else {
+        HDC screen = GetDC(NULL);  // Get system DPI on older versions of windows
+        dpi = GetDeviceCaps(screen, LOGPIXELSX);
+        debug_writeln("Running with system DPI scaling");
+    }
+
+    uint win_width = ((configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI) * dpi) / 96;
+    uint win_height = (OSK_HEIGHT_96DPI * dpi) / 96;
+    uint win_bottom_offset = (OSK_BOTTOM_OFFSET_96DPI * dpi) / 96;
+    SetWindowPos(hwnd, cast(HWND) 0,
+        workArea.left + (workArea.right - workArea.left - win_width) / 2,
+        workArea.bottom - win_height - win_bottom_offset,
+        win_width, win_height, SWP_NOZORDER);
 
     // Names of icons are defined in icons.rc
     iconEnabled = LoadImage(hInstance, "trayenabled", IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
     iconDisabled = LoadImage(hInstance, "traydisabled", IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
+
+    SetClassLongPtr(hwnd, GCLP_HICON, cast(LONG_PTR) iconEnabled);
+    // Set OSK transparency to 90%
+    SetLayeredWindowAttributes(hwnd, 0, (255 * 90) / 100, LWA_ALPHA);
+    UpdateWindow(hwnd);
+
     // Install icon in notification area, based on the hwnd
     trayIcon = new TrayIcon(hwnd, ID_MYTRAYICON, iconEnabled, APPNAME.to!(wchar[]));
     trayIcon.show();
@@ -413,6 +532,7 @@ void main(string[] args) {
         AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, layoutMenuMsg.toUTF16z);
         AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     }
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, openOskMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
@@ -424,7 +544,7 @@ void main(string[] args) {
     updateTrayTooltip();
 
     // Register global (de)activation hotkey (Shift+Pause)
-    RegisterHotKey(hwnd, 0, core.sys.windows.winuser.MOD_SHIFT | MOD_NOREPEAT, VK_PAUSE);
+    RegisterHotKey(hwnd, ID_HOTKEY_DEACTIVATE, core.sys.windows.winuser.MOD_SHIFT | MOD_NOREPEAT, VK_PAUSE);
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
@@ -432,7 +552,7 @@ void main(string[] args) {
         DispatchMessage(&msg);
     }
 
-    UnregisterHotKey(hwnd, 0);
+    UnregisterHotKey(hwnd, ID_HOTKEY_DEACTIVATE);
 
     if (keyboardHookActive) { switchKeyboardHook(); }
 }

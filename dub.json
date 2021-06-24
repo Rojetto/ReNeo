@@ -5,9 +5,9 @@
 	"copyright": "Copyright © 2021, Robert Heedt",
 	"description": "Supplementary application for native NEO keyboard driver, implementing the upper layers and compose.",
 	"libs": [
-		"user32"
+		"user32", "gdi32"
 	],
-    "sourceFiles": ["res\\icons.res"],
+    "sourceFiles": ["res\\reneo.res"],
 	"license": "GPL-3.0",
     "name": "reneo",
     "versions": ["Windows10"],
@@ -22,5 +22,7 @@
         "release": {
             "lflags": ["/SUBSYSTEM:windows", "/ENTRY:mainCRTStartup"]
         }
-    }
+    },
+    "libs-windows-x86_64": ["lib/x86_64/cairo"],
+    "copyFiles-windows-x86_64": ["lib/x86_64/*.dll"]
 }

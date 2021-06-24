@@ -287,6 +287,12 @@ NeoKey parseNeoKey(JSONValue jsonKey) {
         key.char_code = jsonKey["char"].str.to!wstring[0];
     }
 
+    if ("label" in jsonKey) {
+        key.label = jsonKey["label"].str;
+    } else if ("char" in jsonKey) {
+        key.label = jsonKey["char"].str;
+    }
+
     return key;
 }
 
