@@ -70,6 +70,7 @@ const UINT OSK_WIDTH_WITH_NUMPAD_96DPI = 1000;
 const UINT OSK_WIDTH_NO_NUMPAD_96DPI = 750;
 const UINT OSK_HEIGHT_96DPI = 250;
 const UINT OSK_BOTTOM_OFFSET_96DPI = 5;
+uint osk_min_width = 250;
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
@@ -206,6 +207,10 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
     RECT win_rect;
     GetWindowRect(hwnd, &win_rect);
 
+    uint calculateHeightWithAspectRatio(uint width) {
+        return width * OSK_HEIGHT_96DPI / (configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI);
+    }
+
     // Huge try block because WndProc is defined as "nothrow"
     try {
 
@@ -297,7 +302,13 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         case WM_WINDOWPOSCHANGING:
         // Preserve aspect ratio when resizing
         WINDOWPOS *new_window_pos = cast(WINDOWPOS*) lParam;
-        new_window_pos.cy = new_window_pos.cx * OSK_HEIGHT_96DPI / (configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI);
+        new_window_pos.cy = calculateHeightWithAspectRatio(new_window_pos.cx);
+        break;
+
+        case WM_GETMINMAXINFO:
+        // // Preserve a minimal OSK width
+        MINMAXINFO *minmaxinfo = cast(MINMAXINFO*) lParam;
+        minmaxinfo.ptMinTrackSize = POINT(osk_min_width, calculateHeightWithAspectRatio(osk_min_width));
         break;
 
         case WM_SIZE:
@@ -549,6 +560,7 @@ void main(string[] args) {
         debug_writeln("Running with system DPI scaling");
     }
 
+    osk_min_width = (osk_min_width * dpi) / 96;
     uint win_width = ((configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI) * dpi) / 96;
     uint win_height = (OSK_HEIGHT_96DPI * dpi) / 96;
     uint win_bottom_offset = (OSK_BOTTOM_OFFSET_96DPI * dpi) / 96;
