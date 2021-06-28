@@ -68,7 +68,7 @@ TrayIcon trayIcon;
 
 const UINT OSK_WIDTH_WITH_NUMPAD_96DPI = 1000;
 const UINT OSK_WIDTH_NO_NUMPAD_96DPI = 750;
-const UINT OSK_HEIGHT_96DPI = 280;
+const UINT OSK_HEIGHT_96DPI = 250;
 const UINT OSK_BOTTOM_OFFSET_96DPI = 5;
 
 extern (Windows)
@@ -203,6 +203,9 @@ void checkKeyboardLayout() nothrow {
 
 extern(Windows)
 LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
+    RECT win_rect;
+    GetWindowRect(hwnd, &win_rect);
+
     // Huge try block because WndProc is defined as "nothrow"
     try {
 
@@ -276,6 +279,31 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         }
         break;
 
+        case WM_NCHITTEST:
+        // Manually implement left and right resize handles, all other points drag the window
+        short x = cast(short) (lParam & 0xFFFF);
+        short y = cast(short) ((lParam >> 16) & 0xFFFF);
+
+        const GRAB_WIDTH = 20;
+        
+        if (x < win_rect.left + GRAB_WIDTH) {
+            return HTLEFT;
+        } else if (x > win_rect.right - GRAB_WIDTH) {
+            return HTRIGHT;
+        } else {
+            return HTCAPTION;
+        }
+
+        case WM_WINDOWPOSCHANGING:
+        // Preserve aspect ratio when resizing
+        WINDOWPOS *new_window_pos = cast(WINDOWPOS*) lParam;
+        new_window_pos.cy = new_window_pos.cx * OSK_HEIGHT_96DPI / (configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI);
+        break;
+
+        case WM_SIZE:
+        updateOSK();
+        break;
+
         case WM_HOTKEY:
         // De(activation) hotkey
         switchKeyboardHook();
@@ -294,19 +322,35 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         PAINTSTRUCT paint_struct;
         HDC dc = BeginPaint(hwnd, &paint_struct);
 
-        HDC dcMem = CreateCompatibleDC(dc);
-        HBITMAP bmMem = CreateCompatibleBitmap(dc, win_width, win_height);
+        // Offscreen hdc for painting
+        HDC hdcMem = CreateCompatibleDC(dc);
+        // Corresponding bitmap
+        HBITMAP hbmMem = CreateCompatibleBitmap(dc, win_width, win_height);
+        // Default bitmap being replaced
+        auto hOld = SelectObject(hdcMem, hbmMem);
 
-        auto hOld = SelectObject(dcMem, bmMem);
+        // Draw using offscreen hdc
+        draw_osk(hdcMem, win_width, win_height, configOskNumpad, activeLayout, activeLayer, capslock);
 
-        draw_osk(dcMem, win_width, win_height, configOskNumpad, activeLayout, activeLayer, capslock);
+        BLENDFUNCTION blend = { 0 };
+        blend.BlendOp = AC_SRC_OVER;
+        blend.SourceConstantAlpha = 255;
+        blend.AlphaFormat = AC_SRC_ALPHA;
 
-        BitBlt(dc, 0, 0, win_width, win_height, dcMem, 0, 0, SRCCOPY);
+        HDC hdcScreen = GetDC(NULL);
+        POINT ptZero = POINT(0, 0);
 
-        SelectObject(dcMem, hOld);
+        POINT win_pos = POINT(win_rect.left, win_rect.top);
+        SIZE win_dims = SIZE(win_rect.right - win_rect.left, win_rect.bottom - win_rect.top);
 
-        DeleteObject(bmMem);
-        DeleteDC (dcMem);
+        UpdateLayeredWindow(hwnd, hdcScreen, &win_pos, &win_dims, hdcMem, &ptZero, RGB(0, 0, 0), &blend, ULW_ALPHA);
+
+        // Reset offscreen hdc to default bitmap
+        SelectObject(hdcMem, hOld);
+
+        // Cleanup
+        DeleteObject(hbmMem);
+        DeleteDC (hdcMem);
 
         EndPaint(hwnd, &paint_struct);
         break;
@@ -485,7 +529,7 @@ void main(string[] args) {
     wndclass.style = CS_HREDRAW | CS_VREDRAW;
     RegisterClass(&wndclass);
     HINSTANCE hInstance = GetModuleHandle(NULL);
-    hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW, wndclass.lpszClassName, "ReNeo".toUTF16z, WS_SIZEBOX | WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+    hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW, wndclass.lpszClassName, "ReNeo".toUTF16z, WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
     // Move and scale window to center of its current monitor
     auto wndMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
@@ -518,8 +562,6 @@ void main(string[] args) {
     iconDisabled = LoadImage(hInstance, "traydisabled", IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
 
     SetClassLongPtr(hwnd, GCLP_HICON, cast(LONG_PTR) iconEnabled);
-    // Set OSK transparency to 90%
-    SetLayeredWindowAttributes(hwnd, 0, (255 * 90) / 100, LWA_ALPHA);
     UpdateWindow(hwnd);
 
     // Install icon in notification area, based on the hwnd
