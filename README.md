@@ -102,5 +102,5 @@ Cairo-DLL stammt von https://github.com/preshing/cairo-windows. Die zugehörigen
 
 ## Release
 1. Build mit `dub build --build=release`
-2. Erstelle Zip-Datei mit Name `ReNeo_vX.Y.Z.zip`. Inhalt: `reneo.exe`, `README.md`, `keysymdef.h`, `config.json`, `layouts.json`, `compose/`
+2. Erstelle Zip-Datei mit Name `ReNeo_vX.Y.Z.zip`. Inhalt: `reneo.exe`, `README.md`, `COPYING`, `keysymdef.h`, `config.json`, `layouts.json`, `cairo.dll`, `compose/`
 3. Neuen Release auf GitHub. Änderungen seit letzter Version raussuchen.
