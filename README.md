@@ -4,6 +4,8 @@ ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine V
 1. Im *Standalone-Modus* ersetzt ReNeo alle Tastendrücke des nativen Layouts (meistens QWERTZ) durch das gewünschte Neo-Layout. Dafür muss zum Systemstart nur die ReNeo-EXE ausgeführt werden.
 2. Im *Erweiterungsmodus* installiert man einen nativen Neo-Treiber wie [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/). ReNeo ergänzt dann alle Funktionen, die nativ nicht umsetzbar sind (Capslock, Steuertasten auf Ebene 4, Compose, ...).
 
+![ReNeo Bildschirmtastatur Ebene 1](docs/osk_screenshot.png "ReNeo Bildschirmtastatur")
+
 ## Installation
 1. *Optional*: [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/) normal installieren
 2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in ein Verzeichnis mit Schreibrechten entpacken (z. B. `C:\Users\[USER]\ReNeo`)
@@ -20,7 +22,7 @@ Allgemein:
 - Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*
 - Im Traymenü kann zwischen Layouts gewechselt werden
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
-- **Bildschirmtastatur**: Wird über Tray-Menü ein- und ausgeschaltet oder per Shortcut `M3+F1`
+- **Bildschirmtastatur**: Wird über Tray-Menü ein- und ausgeschaltet oder per Shortcut `M3+F1`. Wechselt zwischen Ebenen, wenn Modifier gedrückt werden.
 - *Alle* tote Tasten und Compose-Kombinationen. Diese sind auch durch den Nutzer erweiterbar, alle `.module`-Dateien im Verzeichnis `compose/` werden beim Start geladen.
 - `Shift+Pause` (de)aktiviert die Anwendung
 - Weitere Layouts können in `layouts.json` hinzugefügt und angepasst werden
