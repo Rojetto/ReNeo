@@ -351,20 +351,19 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         blend.SourceConstantAlpha = 255;
         blend.AlphaFormat = AC_SRC_ALPHA;
 
-        HDC hdcScreen = GetDC(NULL);
         POINT ptZero = POINT(0, 0);
 
         POINT win_pos = POINT(win_rect.left, win_rect.top);
         SIZE win_dims = SIZE(win_rect.right - win_rect.left, win_rect.bottom - win_rect.top);
 
-        UpdateLayeredWindow(hwnd, hdcScreen, &win_pos, &win_dims, hdcMem, &ptZero, RGB(0, 0, 0), &blend, ULW_ALPHA);
+        UpdateLayeredWindow(hwnd, dc, &win_pos, &win_dims, hdcMem, &ptZero, RGB(0, 0, 0), &blend, ULW_ALPHA);
 
         // Reset offscreen hdc to default bitmap
         SelectObject(hdcMem, hOld);
 
         // Cleanup
         DeleteObject(hbmMem);
-        DeleteDC (hdcMem);
+        DeleteDC(hdcMem);
 
         EndPaint(hwnd, &paint_struct);
         break;
