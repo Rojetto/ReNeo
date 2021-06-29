@@ -70,7 +70,9 @@ const UINT OSK_WIDTH_WITH_NUMPAD_96DPI = 1000;
 const UINT OSK_WIDTH_NO_NUMPAD_96DPI = 750;
 const UINT OSK_HEIGHT_96DPI = 250;
 const UINT OSK_BOTTOM_OFFSET_96DPI = 5;
-uint osk_min_width = 250;
+const UINT OSK_MIN_WIDTH_96DPI = 250;
+
+uint dpi = 96;
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
@@ -307,6 +309,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
 
         case WM_GETMINMAXINFO:
         // // Preserve a minimal OSK width
+        uint osk_min_width = (OSK_MIN_WIDTH_96DPI * dpi) / 96;
         MINMAXINFO *minmaxinfo = cast(MINMAXINFO*) lParam;
         minmaxinfo.ptMinTrackSize = POINT(osk_min_width, calculateHeightWithAspectRatio(osk_min_width));
         break;
@@ -367,6 +370,8 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         break;
 
         case WM_DPICHANGED:
+        dpi = LOWORD(wParam);  // Update cached DPI
+        // Accept new window size suggestion
         RECT* suggestedRect = cast(RECT*) lParam;
         SetWindowPos(hwnd, cast(HWND) 0, suggestedRect.left, suggestedRect.top,
             suggestedRect.right - suggestedRect.left, suggestedRect.bottom - suggestedRect.top,
@@ -547,7 +552,6 @@ void main(string[] args) {
     MONITORINFO monitorInfo;
     GetMonitorInfo(wndMonitor, &monitorInfo);
     RECT workArea = monitorInfo.rcWork;
-    uint dpi = 96;
 
     HMODULE user32Lib = GetModuleHandle("User32.dll".toUTF16z);
     auto ptrGetDpiForWindow = cast(UINT function(HWND)) GetProcAddress(user32Lib, "GetDpiForWindow".toStringz);
@@ -560,7 +564,6 @@ void main(string[] args) {
         debug_writeln("Running with system DPI scaling");
     }
 
-    osk_min_width = (osk_min_width * dpi) / 96;
     uint win_width = ((configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI) * dpi) / 96;
     uint win_height = (OSK_HEIGHT_96DPI * dpi) / 96;
     uint win_bottom_offset = (OSK_BOTTOM_OFFSET_96DPI * dpi) / 96;
