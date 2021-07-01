@@ -251,7 +251,7 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     // Draw “regular” keys, i.e. keys with height 1
     foreach (key; configOskNumpad ? KEY_POSITIONS ~ KEY_POSITIONS_NUMPAD : KEY_POSITIONS) {    
         round_rectangle(cr, key.x + PADDING, key.y + PADDING, key.width - 2*PADDING, 1 - 2*PADDING, CORNER_RADIUS);
-        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.8);
+        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
         cairo_fill(cr);
 
         show_key_label_centered(key.scan, key.x, key.width, key.y + BASE_LINE);
@@ -261,18 +261,18 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     if (configOskNumpad) {
         // Numpad Add
         round_rectangle(cr, 19 + PADDING, 1 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
-        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.8);
+        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
         cairo_fill(cr);
         show_key_label_centered(Scancode(0x4E, false), 19, 1, 1.5 + BASE_LINE);
         // Numpad Return
         round_rectangle(cr, 19 + PADDING, 3 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
-        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.8);
+        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
         cairo_fill(cr);
         show_key_label_centered(Scancode(0x1C, true), 19, 1, 3.5 + BASE_LINE);
     }
     // Return
     return_key(cr, 13.5 + PADDING, 1 + PADDING, 1.5 - 2*PADDING, 1.25 - 2*PADDING, 1 - 2*PADDING, 1, CORNER_RADIUS);
-    cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.8);
+    cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
     cairo_fill(cr);
     show_key_label_centered(Scancode(0x1C, false), 13.75, 1.25, 1.5 + BASE_LINE);
 
