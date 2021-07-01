@@ -174,9 +174,13 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     auto surface = cairo_win32_surface_create(hdcMem);
     auto cr = cairo_create(surface);
 
-    // Background
-    cairo_rectangle(cr, 0, 0, win_width, win_height);
-    cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0);
+    // There seems to be a Cairo bug where the first draw calls alpha value can't be exactly 0 or 1
+    // If it is, alpha behaves strangely on later drawcalls, i.e. opaque regions disappear or are blended weirdly.
+    // https://gitlab.freedesktop.org/cairo/cairo/-/issues/494
+    // Workaround: draw a very faint 1px by 1px rectangle in the upper left corner
+    // All following draw calls should then work correctly.
+    cairo_rectangle(cr, 0, 0, 1, 1);
+    cairo_set_source_rgba(cr, 0, 0, 0, 0.01);
     cairo_fill(cr);
 
     // Move coordinate system to keyboard coords
