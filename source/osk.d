@@ -8,10 +8,20 @@ import std.utf;
 
 import mapping;
 import reneo;
+import app : configOskNumpad, updateOSK, toggleOSK;
 
 import cairo;
 import cairo_win32;
 
+const WM_DPICHANGED = 0x02E0;
+
+const UINT OSK_WIDTH_WITH_NUMPAD_96DPI = 1000;
+const UINT OSK_WIDTH_NO_NUMPAD_96DPI = 750;
+const UINT OSK_HEIGHT_96DPI = 250;
+const UINT OSK_BOTTOM_OFFSET_96DPI = 5;
+const UINT OSK_MIN_WIDTH_96DPI = 250;
+
+uint dpi = 96;
 
 
 struct OSKKeyInfo {
@@ -142,8 +152,26 @@ cairo_font_face_t* get_font_face_for_char(HDC hdc, string c) {
     return CAIRO_FONTS[CAIRO_FONTS.length - 1];
 }
 
-void draw_osk(HDC dc, float win_width, float win_height, bool numpad, NeoLayout *layout, uint layer, bool capslock) {
-    auto surface = cairo_win32_surface_create(dc);
+void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
+    RECT win_rect;
+    GetWindowRect(hwnd, &win_rect);
+    const uint win_width = win_rect.right - win_rect.left;
+    const uint win_height = win_rect.bottom - win_rect.top;
+
+    // window is unsuitable for drawing
+    if (win_width == 0 || win_height == 0) {
+        return;
+    }
+    
+    HDC hdcScreen = GetDC(NULL);
+
+    // Offscreen hdc for painting
+    HDC hdcMem = CreateCompatibleDC(hdcScreen);
+    HBITMAP hbmMem = CreateCompatibleBitmap(hdcScreen, win_width, win_height);
+    auto hOld = SelectObject(hdcMem, hbmMem);
+
+    // Draw using offscreen hdc
+    auto surface = cairo_win32_surface_create(hdcMem);
     auto cr = cairo_create(surface);
 
     // Background
@@ -155,12 +183,12 @@ void draw_osk(HDC dc, float win_width, float win_height, bool numpad, NeoLayout 
     // normal keys are 1 unit wide and high, (0, 0) is upper left,
     // with whole keyboard proportionally centered in window
     float keyboard_width_px, keyboard_height_px;
-    const float KEYBOARD_WIDTH = numpad ? KEYBOARD_WIDTH_WITH_NUMPAD : KEYBOARD_WIDTH_NO_NUMPAD;
+    const float KEYBOARD_WIDTH = configOskNumpad ? KEYBOARD_WIDTH_WITH_NUMPAD : KEYBOARD_WIDTH_NO_NUMPAD;
     // should we letterbox left and right or on top and bottom?
     if (win_width / win_height > KEYBOARD_WIDTH / KEYBOARD_HEIGHT) {
         // letterbox left and right
         keyboard_height_px = win_height;
-        keyboard_width_px = keyboard_height_px * KEYBOARD_WIDTH  / KEYBOARD_HEIGHT;
+        keyboard_width_px = keyboard_height_px * KEYBOARD_WIDTH / KEYBOARD_HEIGHT;
     } else {
         // letterbox top and bottom
         keyboard_width_px = win_width;
@@ -207,7 +235,7 @@ void draw_osk(HDC dc, float win_width, float win_height, bool numpad, NeoLayout 
             }
 
             cairo_set_source_rgba(cr, 0.95, 0.95, 0.95, 1.0);
-            cairo_set_font_face(cr, get_font_face_for_char(dc, label));
+            cairo_set_font_face(cr, get_font_face_for_char(hdcMem, label));
             auto labelz = label.toStringz;
             cairo_text_extents_t extents;
             cairo_text_extents(cr, labelz, &extents);
@@ -217,7 +245,7 @@ void draw_osk(HDC dc, float win_width, float win_height, bool numpad, NeoLayout 
     }
 
     // Draw “regular” keys, i.e. keys with height 1
-    foreach (key; numpad ? KEY_POSITIONS ~ KEY_POSITIONS_NUMPAD : KEY_POSITIONS) {    
+    foreach (key; configOskNumpad ? KEY_POSITIONS ~ KEY_POSITIONS_NUMPAD : KEY_POSITIONS) {    
         round_rectangle(cr, key.x + PADDING, key.y + PADDING, key.width - 2*PADDING, 1 - 2*PADDING, CORNER_RADIUS);
         cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.8);
         cairo_fill(cr);
@@ -226,7 +254,7 @@ void draw_osk(HDC dc, float win_width, float win_height, bool numpad, NeoLayout 
     }
 
     // Draw special keys with height ≠ 1
-    if (numpad) {
+    if (configOskNumpad) {
         // Numpad Add
         round_rectangle(cr, 19 + PADDING, 1 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
         cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.8);
@@ -244,9 +272,29 @@ void draw_osk(HDC dc, float win_width, float win_height, bool numpad, NeoLayout 
     cairo_fill(cr);
     show_key_label_centered(Scancode(0x1C, false), 13.75, 1.25, 1.5 + BASE_LINE);
 
-    // Cleanup    
+    // Cairo cleanup    
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
+
+    // Show on screen
+    BLENDFUNCTION blend = { 0 };
+    blend.BlendOp = AC_SRC_OVER;
+    blend.SourceConstantAlpha = 255;
+    blend.AlphaFormat = AC_SRC_ALPHA;
+
+    POINT ptZero = POINT(0, 0);
+    POINT win_pos = POINT(win_rect.left, win_rect.top);
+    SIZE win_dims = SIZE(win_width, win_height);
+
+    UpdateLayeredWindow(hwnd, hdcScreen, &win_pos, &win_dims, hdcMem, &ptZero, RGB(0, 0, 0), &blend, ULW_ALPHA);
+
+    // Reset offscreen hdc to default bitmap
+    SelectObject(hdcMem, hOld);
+
+    // Cleanup
+    DeleteObject(hbmMem);
+    DeleteDC(hdcMem);
+    ReleaseDC(NULL, hdcScreen);
 }
 
 void round_rectangle(cairo_t *cr, float x, float y, float w, float h, float r) {
@@ -283,4 +331,91 @@ void return_key(cairo_t *cr, float x, float y, float w_u, float w_l, float h_u, 
     cairo_close_path(cr);
 
     cairo_restore(cr);
+}
+
+LRESULT oskWndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) {
+    RECT win_rect;
+    GetWindowRect(hwnd, &win_rect);
+
+    uint calculateHeightWithAspectRatio(uint width) {
+        return width * OSK_HEIGHT_96DPI / (configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI);
+    }
+
+    switch (msg) {
+        case WM_CLOSE:
+        toggleOSK();
+        return 0;  // Don't actually close the window
+
+        case WM_NCHITTEST:
+        // Manually implement left and right resize handles, all other points drag the window
+        short x = cast(short) (lParam & 0xFFFF);
+        short y = cast(short) ((lParam >> 16) & 0xFFFF);
+
+        const GRAB_WIDTH = 20;
+        
+        if (x < win_rect.left + GRAB_WIDTH) {
+            return HTLEFT;
+        } else if (x > win_rect.right - GRAB_WIDTH) {
+            return HTRIGHT;
+        } else {
+            return HTCAPTION;
+        }
+
+        case WM_WINDOWPOSCHANGING:
+        // Preserve aspect ratio when resizing
+        WINDOWPOS *new_window_pos = cast(WINDOWPOS*) lParam;
+        new_window_pos.cy = calculateHeightWithAspectRatio(new_window_pos.cx);
+        break;
+
+        case WM_GETMINMAXINFO:
+        // // Preserve a minimal OSK width
+        uint osk_min_width = (OSK_MIN_WIDTH_96DPI * dpi) / 96;
+        MINMAXINFO *minmaxinfo = cast(MINMAXINFO*) lParam;
+        minmaxinfo.ptMinTrackSize = POINT(osk_min_width, calculateHeightWithAspectRatio(osk_min_width));
+        break;
+
+        case WM_SIZE:
+        updateOSK();
+        break;
+
+        case WM_DPICHANGED:
+        dpi = LOWORD(wParam);  // Update cached DPI
+        // Accept new window size suggestion
+        RECT* suggestedRect = cast(RECT*) lParam;
+        SetWindowPos(hwnd, cast(HWND) 0, suggestedRect.left, suggestedRect.top,
+            suggestedRect.right - suggestedRect.left, suggestedRect.bottom - suggestedRect.top,
+            SWP_NOZORDER);
+        break;
+
+        default: break;
+    }
+
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+void centerOskOnScreen(HWND hwnd) {
+    auto wndMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO monitorInfo;
+    GetMonitorInfo(wndMonitor, &monitorInfo);
+    RECT workArea = monitorInfo.rcWork;
+
+    HMODULE user32Lib = GetModuleHandle("User32.dll".toUTF16z);
+    auto ptrGetDpiForWindow = cast(UINT function(HWND)) GetProcAddress(user32Lib, "GetDpiForWindow".toStringz);
+    if (ptrGetDpiForWindow) {
+        dpi = ptrGetDpiForWindow(hwnd);  // Only available for Win 10 1607 and up
+        debug_writeln("Running with PerMonitorV2 DPI scaling");
+    } else {
+        HDC screen = GetDC(NULL);  // Get system DPI on older versions of windows
+        dpi = GetDeviceCaps(screen, LOGPIXELSX);
+        ReleaseDC(NULL, screen);
+        debug_writeln("Running with system DPI scaling");
+    }
+
+    uint win_width = ((configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI) * dpi) / 96;
+    uint win_height = (OSK_HEIGHT_96DPI * dpi) / 96;
+    uint win_bottom_offset = (OSK_BOTTOM_OFFSET_96DPI * dpi) / 96;
+    SetWindowPos(hwnd, cast(HWND) 0,
+        workArea.left + (workArea.right - workArea.left - win_width) / 2,
+        workArea.bottom - win_height - win_bottom_offset,
+        win_width, win_height, SWP_NOZORDER);
 }

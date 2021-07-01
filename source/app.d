@@ -39,7 +39,6 @@ HICON iconEnabled;
 HICON iconDisabled;
 
 const MOD_NOREPEAT = 0x4000;
-const WM_DPICHANGED = 0x02E0;
 
 const UINT ID_MYTRAYICON = 0x1000;
 const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
@@ -65,14 +64,6 @@ const APPNAME            = "ReNeo"w;
 string executableDir;
 
 TrayIcon trayIcon;
-
-const UINT OSK_WIDTH_WITH_NUMPAD_96DPI = 1000;
-const UINT OSK_WIDTH_NO_NUMPAD_96DPI = 750;
-const UINT OSK_HEIGHT_96DPI = 250;
-const UINT OSK_BOTTOM_OFFSET_96DPI = 5;
-const UINT OSK_MIN_WIDTH_96DPI = 250;
-
-uint dpi = 96;
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
@@ -206,21 +197,10 @@ void checkKeyboardLayout() nothrow {
 
 extern(Windows)
 LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
-    RECT win_rect;
-    GetWindowRect(hwnd, &win_rect);
-
-    uint calculateHeightWithAspectRatio(uint width) {
-        return width * OSK_HEIGHT_96DPI / (configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI);
-    }
-
     // Huge try block because WndProc is defined as "nothrow"
     try {
 
     switch (msg) {
-        case WM_CLOSE:
-        toggleOSK();
-        return 0;  // Don't actually close the window
-
         case WM_TRAYICON:
         // From https://docs.microsoft.com/en-us/windows/win32/shell/taskbar#adding-modifying-and-deleting-icons-in-the-notification-area:
         // The wParam parameter of the message contains the identifier of the taskbar icon in which the event occurred.
@@ -286,98 +266,14 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         }
         break;
 
-        case WM_NCHITTEST:
-        // Manually implement left and right resize handles, all other points drag the window
-        short x = cast(short) (lParam & 0xFFFF);
-        short y = cast(short) ((lParam >> 16) & 0xFFFF);
-
-        const GRAB_WIDTH = 20;
-        
-        if (x < win_rect.left + GRAB_WIDTH) {
-            return HTLEFT;
-        } else if (x > win_rect.right - GRAB_WIDTH) {
-            return HTRIGHT;
-        } else {
-            return HTCAPTION;
-        }
-
-        case WM_WINDOWPOSCHANGING:
-        // Preserve aspect ratio when resizing
-        WINDOWPOS *new_window_pos = cast(WINDOWPOS*) lParam;
-        new_window_pos.cy = calculateHeightWithAspectRatio(new_window_pos.cx);
-        break;
-
-        case WM_GETMINMAXINFO:
-        // // Preserve a minimal OSK width
-        uint osk_min_width = (OSK_MIN_WIDTH_96DPI * dpi) / 96;
-        MINMAXINFO *minmaxinfo = cast(MINMAXINFO*) lParam;
-        minmaxinfo.ptMinTrackSize = POINT(osk_min_width, calculateHeightWithAspectRatio(osk_min_width));
-        break;
-
-        case WM_SIZE:
-        updateOSK();
-        break;
-
         case WM_HOTKEY:
         // De(activation) hotkey
         switchKeyboardHook();
         updateContextMenu();
         break;
 
-        case WM_PAINT:
-        // Double buffer to prevent flickering on layer change
-        // http://www.catch22.net/tuts/win32/flicker-free-drawing
-        RECT win_size;
-        GetClientRect(hwnd, &win_size);
-
-        uint win_width = win_size.right;
-        uint win_height = win_size.bottom;
-
-        PAINTSTRUCT paint_struct;
-        HDC dc = BeginPaint(hwnd, &paint_struct);
-
-        // Offscreen hdc for painting
-        HDC hdcMem = CreateCompatibleDC(dc);
-        // Corresponding bitmap
-        HBITMAP hbmMem = CreateCompatibleBitmap(dc, win_width, win_height);
-        // Default bitmap being replaced
-        auto hOld = SelectObject(hdcMem, hbmMem);
-
-        // Draw using offscreen hdc
-        draw_osk(hdcMem, win_width, win_height, configOskNumpad, activeLayout, activeLayer, capslock);
-
-        BLENDFUNCTION blend = { 0 };
-        blend.BlendOp = AC_SRC_OVER;
-        blend.SourceConstantAlpha = 255;
-        blend.AlphaFormat = AC_SRC_ALPHA;
-
-        POINT ptZero = POINT(0, 0);
-
-        POINT win_pos = POINT(win_rect.left, win_rect.top);
-        SIZE win_dims = SIZE(win_rect.right - win_rect.left, win_rect.bottom - win_rect.top);
-
-        UpdateLayeredWindow(hwnd, dc, &win_pos, &win_dims, hdcMem, &ptZero, RGB(0, 0, 0), &blend, ULW_ALPHA);
-
-        // Reset offscreen hdc to default bitmap
-        SelectObject(hdcMem, hOld);
-
-        // Cleanup
-        DeleteObject(hbmMem);
-        DeleteDC(hdcMem);
-
-        EndPaint(hwnd, &paint_struct);
-        break;
-
-        case WM_DPICHANGED:
-        dpi = LOWORD(wParam);  // Update cached DPI
-        // Accept new window size suggestion
-        RECT* suggestedRect = cast(RECT*) lParam;
-        SetWindowPos(hwnd, cast(HWND) 0, suggestedRect.left, suggestedRect.top,
-            suggestedRect.right - suggestedRect.left, suggestedRect.bottom - suggestedRect.top,
-            SWP_NOZORDER);
-        break;
-
-        default: break;
+        default:  // Pass everything else to OSK
+        return oskWndProc(hwnd, msg, wParam, lParam);
     }
 
     } catch (Exception e) {
@@ -388,7 +284,9 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
 }
 
 void updateOSK() nothrow {
-    InvalidateRect(hwnd, NULL, FALSE);
+    try {
+        draw_osk(hwnd, activeLayout, activeLayer, capslock);
+    } catch (Exception e) {}
 }
 
 void toggleOSK() nothrow {
@@ -536,47 +434,22 @@ void main(string[] args) {
         debug_writeln("Could not install foreground window hook!");
     }
 
+    // Create window for on-screen keyboard
     WNDCLASS wndclass;
-
-    // The necessary actions for getting a handle without displaying an actual window
-    wndclass.lpszClassName = "ReNeo";
-    wndclass.lpfnWndProc   = &WndProc;
-    wndclass.style = CS_HREDRAW | CS_VREDRAW;
+    wndclass.lpszClassName = APPNAME.toUTF16z;
+    wndclass.lpfnWndProc = &WndProc;
     RegisterClass(&wndclass);
     HINSTANCE hInstance = GetModuleHandle(NULL);
-    hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW, wndclass.lpszClassName, "ReNeo".toUTF16z, WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+    hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TOOLWINDOW, wndclass.lpszClassName, APPNAME.toUTF16z, WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
     // Move and scale window to center of its current monitor
-    auto wndMonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-    MONITORINFO monitorInfo;
-    GetMonitorInfo(wndMonitor, &monitorInfo);
-    RECT workArea = monitorInfo.rcWork;
-
-    HMODULE user32Lib = GetModuleHandle("User32.dll".toUTF16z);
-    auto ptrGetDpiForWindow = cast(UINT function(HWND)) GetProcAddress(user32Lib, "GetDpiForWindow".toStringz);
-    if (ptrGetDpiForWindow) {
-        dpi = ptrGetDpiForWindow(hwnd);  // Only available for Win 10 1607 and up
-        debug_writeln("Running with PerMonitorV2 DPI scaling");
-    } else {
-        HDC screen = GetDC(NULL);  // Get system DPI on older versions of windows
-        dpi = GetDeviceCaps(screen, LOGPIXELSX);
-        debug_writeln("Running with system DPI scaling");
-    }
-
-    uint win_width = ((configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI) * dpi) / 96;
-    uint win_height = (OSK_HEIGHT_96DPI * dpi) / 96;
-    uint win_bottom_offset = (OSK_BOTTOM_OFFSET_96DPI * dpi) / 96;
-    SetWindowPos(hwnd, cast(HWND) 0,
-        workArea.left + (workArea.right - workArea.left - win_width) / 2,
-        workArea.bottom - win_height - win_bottom_offset,
-        win_width, win_height, SWP_NOZORDER);
+    centerOskOnScreen(hwnd);
 
     // Names of icons are defined in icons.rc
     iconEnabled = LoadImage(hInstance, "trayenabled", IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
     iconDisabled = LoadImage(hInstance, "traydisabled", IMAGE_ICON, 0, 0, LR_SHARED | LR_DEFAULTSIZE);
 
     SetClassLongPtr(hwnd, GCLP_HICON, cast(LONG_PTR) iconEnabled);
-    UpdateWindow(hwnd);
 
     // Install icon in notification area, based on the hwnd
     trayIcon = new TrayIcon(hwnd, ID_MYTRAYICON, iconEnabled, APPNAME.to!(wchar[]));
