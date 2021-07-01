@@ -11,7 +11,7 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import app : configSendKeyMode, updateOSK, toggleOSK;
+import app : configSendKeyMode, updateOSKAsync, toggleOSK;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -630,7 +630,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     if (oskLayer != activeLayer || capslockChanged) {
         // Store globally for OSK
         activeLayer = oskLayer;
-        updateOSK();
+        updateOSKAsync();
     }
 
     // Toggle OSK on M3+F1

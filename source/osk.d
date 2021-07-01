@@ -14,6 +14,7 @@ import cairo;
 import cairo_win32;
 
 const WM_DPICHANGED = 0x02E0;
+const WM_DRAWOSK = WM_APP + 1;
 
 const UINT OSK_WIDTH_WITH_NUMPAD_96DPI = 1000;
 const UINT OSK_WIDTH_NO_NUMPAD_96DPI = 750;
@@ -379,6 +380,10 @@ LRESULT oskWndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) {
         break;
 
         case WM_SIZE:
+        updateOSK();
+        break;
+
+        case WM_DRAWOSK:
         updateOSK();
         break;
 

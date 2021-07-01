@@ -283,10 +283,16 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
+// Redraw OSK. WARNING: This function blocks and shouldn't be called from the key event handler
 void updateOSK() nothrow {
     try {
         draw_osk(hwnd, activeLayout, activeLayer, capslock);
     } catch (Exception e) {}
+}
+
+// Schedule an OSK redraw on the message queue. Safe to call from the key event handler
+void updateOSKAsync() nothrow {
+    PostMessage(hwnd, WM_DRAWOSK, 0, 0);
 }
 
 void toggleOSK() nothrow {
