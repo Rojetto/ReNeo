@@ -2,5 +2,8 @@
     "standaloneLayout": "Neo",
     "standaloneMode": true,
     "sendKeyMode": "fakeNative",
-    "oskNumpad": true
+    "osk": {
+        "numpad": true,
+        "theme": "Grey"
+    }
 }

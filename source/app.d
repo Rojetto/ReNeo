@@ -378,7 +378,7 @@ void initialize() {
     auto layoutsJson = parseJSONFile("layouts.json");
     initLayouts(layoutsJson["layouts"]);
 
-    initialize_osk(executableDir);
+    initOsk(configJson["osk"]);
 
     // Initialize layout menu
     layoutMenu = CreatePopupMenu();
@@ -412,8 +412,6 @@ void initialize() {
         break;
         default: break;
     }
-
-    configOskNumpad = configJson["oskNumpad"].boolean;
 
     debug_writeln("Initialization complete!");
 }

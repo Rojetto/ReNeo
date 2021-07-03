@@ -43,7 +43,9 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
     - `true` (Standard): Das native Layout (z. B. QWERTZ) wird von ReNeo mit dem ausgewählten Neo-Layout ersetzt. Hinweis: ist das native Layout bereits Neo-verwandt, verändert ReNeo das Layout nicht und schaltet stattdessen automatisch in den Erweiterungsmodus.
     - `false`: Ist das native Layout Neo-verwandt, schaltet ReNeo in den Erweiterungsmodus. Bei allen anderen Layouts deaktiviert sich ReNeo automatisch.
 - `"standaloneLayout"`: Layout, das für den Standalone-Modus genutzt werden soll. Auch übers Traymenü auswählbar.
-- `"oskNumpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
+- `"osk"`:
+    - `"numpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
+    - `"theme"`: Farbschema für Bildschirmtastatur. Mögliche Werte: `"Grey"`, `"NeoBlue"`
 - `"sendKeyMode"`: *Experimentell*. 
     - `fakeNative` (Standard): Buchstaben und Sonderzeichen, die im nativen Layout existieren, werden über entsprechende Tastenanschläge und -kombinationen simuliert. So sieht es für Anwendungen aus, als ob  das native Layout ganz normal verwendet wird.
     - `honest`: Sonderzeichen werden grundsätzlich als Unicode-Pakete gesendet.

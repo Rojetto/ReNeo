@@ -5,10 +5,12 @@ import core.sys.windows.windows;
 import std.string;
 import std.path;
 import std.utf;
+import std.json;
+import std.conv;
 
 import mapping;
 import reneo;
-import app : configOskNumpad, updateOSK, toggleOSK;
+import app : updateOSK, toggleOSK;
 
 import cairo;
 import cairo_win32;
@@ -23,6 +25,15 @@ const UINT OSK_BOTTOM_OFFSET_96DPI = 5;
 const UINT OSK_MIN_WIDTH_96DPI = 250;
 
 uint dpi = 96;
+
+bool configOskNumpad;
+OSKTheme configOskTheme;
+
+
+enum OSKTheme {
+    Grey,
+    NeoBlue
+}
 
 
 struct OSKKeyInfo {
@@ -128,7 +139,12 @@ HFONT[] WIN_FONTS;
 cairo_font_face_t*[] CAIRO_FONTS;
 
 
-void initialize_osk(string exe_dir) {
+void initOsk(JSONValue oskJson) {
+    // Read config
+    configOskNumpad = oskJson["numpad"].boolean;
+    configOskTheme = oskJson["theme"].str.to!OSKTheme;
+
+    // Load fonts
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Segoe UI".toUTF16z);
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -209,6 +225,17 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     const float FONT_SIZE = 0.45;
     const float BASE_LINE = 0.7;
 
+    cairo_pattern_t *KEY_COLOR;
+    switch (configOskTheme) {
+        case OSKTheme.Grey:
+        KEY_COLOR = cairo_pattern_create_rgba(0.4, 0.4, 0.4, 0.9);
+        break;
+        case OSKTheme.NeoBlue:
+        KEY_COLOR = cairo_pattern_create_rgba(0.024, 0.533, 0.612, 0.95);
+        break;
+        default: break;
+    }
+
     cairo_set_font_size(cr, FONT_SIZE);
 
     void show_key_label_centered(Scancode scan, float key_x, float key_width, float baseline) {
@@ -252,7 +279,7 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     // Draw “regular” keys, i.e. keys with height 1
     foreach (key; configOskNumpad ? KEY_POSITIONS ~ KEY_POSITIONS_NUMPAD : KEY_POSITIONS) {    
         round_rectangle(cr, key.x + PADDING, key.y + PADDING, key.width - 2*PADDING, 1 - 2*PADDING, CORNER_RADIUS);
-        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
+        cairo_set_source(cr, KEY_COLOR);
         cairo_fill(cr);
 
         show_key_label_centered(key.scan, key.x, key.width, key.y + BASE_LINE);
@@ -262,18 +289,18 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     if (configOskNumpad) {
         // Numpad Add
         round_rectangle(cr, 19 + PADDING, 1 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
-        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
+        cairo_set_source(cr, KEY_COLOR);
         cairo_fill(cr);
         show_key_label_centered(Scancode(0x4E, false), 19, 1, 1.5 + BASE_LINE);
         // Numpad Return
         round_rectangle(cr, 19 + PADDING, 3 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
-        cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
+        cairo_set_source(cr, KEY_COLOR);
         cairo_fill(cr);
         show_key_label_centered(Scancode(0x1C, true), 19, 1, 3.5 + BASE_LINE);
     }
     // Return
     return_key(cr, 13.5 + PADDING, 1 + PADDING, 1.5 - 2*PADDING, 1.25 - 2*PADDING, 1 - 2*PADDING, 1, CORNER_RADIUS);
-    cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.9);
+    cairo_set_source(cr, KEY_COLOR);
     cairo_fill(cr);
     show_key_label_centered(Scancode(0x1C, false), 13.75, 1.25, 1.5 + BASE_LINE);
 
