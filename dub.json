@@ -1,9 +1,9 @@
 {
 	"authors": [
-		"Robert Heedt"
+		"Rojetto",
+        "qwertfisch"
 	],
-	"copyright": "Copyright © 2021, Robert Heedt",
-	"description": "Supplementary application for native NEO keyboard driver, implementing the upper layers and compose.",
+	"description": "Neo-Tastaturlayouts für Windows",
 	"libs": [
 		"user32", "gdi32"
 	],
