@@ -166,6 +166,15 @@ uint KEYSYM_SPACE;
 // Unicode input special mode
 string unicodeInput;
 
+// Roman numeral special mode
+const ROMAN_DIGITS = [
+    [["ⅰ"w, "Ⅰ"w], ["ⅰⅰ"w, "ⅠⅠ"w], ["ⅰⅰⅰ"w, "ⅠⅠⅠ"w], ["ⅰⅴ"w, "ⅠⅤ"w], ["ⅴ"w, "Ⅴ"w], ["ⅴⅰ"w, "ⅤⅠ"w], ["ⅴⅰⅰ"w, "ⅤⅠⅠ"w], ["ⅴⅰⅰⅰ"w, "ⅤⅠⅠⅠ"w], ["ⅰⅹ"w, "ⅠⅩ"w]],
+    [["ⅹ"w, "Ⅹ"w], ["ⅹⅹ"w, "ⅩⅩ"w], ["ⅹⅹⅹ"w, "ⅩⅩⅩ"w], ["ⅹⅼ"w, "ⅩⅬ"w], ["ⅼ"w, "Ⅼ"w], ["ⅼⅹ"w, "ⅬⅩ"w], ["ⅼⅹⅹ"w, "ⅬⅩⅩ"w], ["ⅼⅹⅹⅹ"w, "ⅬⅩⅩⅩ"w], ["ⅹⅽ"w, "ⅩⅭ"w]],
+    [["ⅽ"w, "Ⅽ"w], ["ⅽⅽ"w, "ⅭⅭ"w], ["ⅽⅽⅽ"w, "ⅭⅭⅭ"w], ["ⅽⅾ"w, "ⅭⅮ"w], ["ⅾ"w, "Ⅾ"w], ["ⅾⅽ"w, "ⅮⅭ"w], ["ⅾⅽⅽ"w, "ⅮⅭⅭ"w], ["ⅾⅽⅽⅽ"w, "ⅮⅭⅭⅭ"w], ["ⅽⅿ"w, "ⅭⅯ"w]],
+    [["ⅿ"w, "Ⅿ"w], ["ⅿⅿ"w, "ⅯⅯ"w], ["ⅿⅿⅿ"w, "ⅯⅯⅯ"w]]
+];
+string romanNumeralInput;
+
 enum ComposeResultType {
     PASS,
     EAT,
@@ -230,8 +239,14 @@ void initCompose(string exeDir) {
 
     debug_writeln("Loaded ", addedEntries, " compose sequences.");
 
-    // Register unicode input special mode with prefix "uu"
+    // Register unicode input special mode with prefix "♫uu"
     addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("u"), parseKeysym("u")], ""w, &composeUnicode), composeRoot);
+
+    // Register lower case roman numeral special mode with prefix "♫rn"
+    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("r"), parseKeysym("n")], ""w, &composeLowerRoman), composeRoot);
+    
+    // Register upper case roman numeral special mode with prefix "♫RN"
+    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("R"), parseKeysym("N")], ""w, &composeUpperRoman), composeRoot);
 
     // For unicode input
     KEYSYM_SPACE = parseKeysym("space");
@@ -454,4 +469,57 @@ ComposeResult composeUnicode(NeoKey nk) nothrow {
         unicodeInput = "";
         return ComposeResult(ComposeResultType.ABORT, ""w);
     }
+}
+
+ComposeResult composeRoman(NeoKey nk, bool upper) nothrow {
+    // Accepts 1 to 4 decimal digits (1 to 3999), terminated by "space"
+    if (romanNumeralInput.length < 4 && nk.keysym >= KEYSYM_0 && nk.keysym <= KEYSYM_0 + 9) {
+        romanNumeralInput ~= '0' + (nk.keysym - KEYSYM_0);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (romanNumeralInput.length < 4 && nk.keysym >= KEYSYM_KP_0 && nk.keysym <= KEYSYM_KP_0 + 9) {
+        romanNumeralInput ~= '0' + (nk.keysym - KEYSYM_KP_0);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (romanNumeralInput.length >= 1 && nk.keysym == KEYSYM_SPACE) {
+        ComposeResult result;
+
+        try {
+            uint number = to!uint(romanNumeralInput);
+            if (1 <= number && number <= 3999) {
+                uint caseIndex = upper ? 1 : 0;
+
+                if (uint thousands = number / 1000) {
+                    result.result ~= ROMAN_DIGITS[3][thousands - 1][caseIndex];
+                }
+                if (uint hundreds = (number / 100) % 10) {
+                    result.result ~= ROMAN_DIGITS[2][hundreds - 1][caseIndex];
+                }
+                if (uint tens = (number / 10) % 10) {
+                    result.result ~= ROMAN_DIGITS[1][tens - 1][caseIndex];
+                }
+                if (uint units = number % 10) {
+                    result.result ~= ROMAN_DIGITS[0][units - 1][caseIndex];
+                }
+
+                result.type = ComposeResultType.FINISH;
+            } else {
+                result.type = ComposeResultType.ABORT;
+            }
+        } catch (Exception e) {
+            result.type = ComposeResultType.ABORT;
+        }
+
+        romanNumeralInput = "";  // Important: reset stored number string on finish
+        return result;
+    } else {
+        romanNumeralInput = "";
+        return ComposeResult(ComposeResultType.ABORT, ""w);
+    }
+}
+
+ComposeResult composeLowerRoman(NeoKey nk) nothrow {
+    return composeRoman(nk, false);
+}
+
+ComposeResult composeUpperRoman(NeoKey nk) nothrow {
+    return composeRoman(nk, true);
 }
