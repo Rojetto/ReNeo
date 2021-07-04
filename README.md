@@ -89,6 +89,26 @@ So bleiben Ebenen 3 und 4 an der richtigen Stelle, und die anderen Ebenen werden
 5. Key-Events „klappern“ bei Sonderzeichen, Steuertasten gehen nicht überall
 6. Einhandmodus, ſ-Modus, Taschenrechner, ...
 
+# Virtuelle Maschinen und Remote Desktop
+Sobald mehrere „ineinander“ laufende Betriebssysteme ins Spiel kommen, wird es mit alternativen Tastaturlayouts fast immer haarig.
+Da sich die verschiedenen VM-Programme und Remote Desktop Clients unterschiedlich verhalten, gibt es leider keine universelle Lösung, sondern nur eine grundsätzliche Empfehlung und ein paar erprobte Konfigurationen.
+
+Für beste Kompatibilität sollte im Allgemeinen das *innerste* System das Alternativlayout übernehmen, und in allen äußeren Systeme QWERTZ eingestellt sein.
+Bei VMs bedeutet das QWERTZ im Wirt und den passenden Neo-Treiber im Gast.
+Im Fall von Remote-Desktop-Verbindungen heißt es QWERTZ lokal und einen Neo-Treiber im Remote-System.
+
+## WSL mit VcXsrv als X-Server
+
+In Windows QWERTZ (ohne ReNeo), dann das Neo-Layout in X11 einstellen. Für Neo lautet der Befehl `setxkbmap de neo`, für andere Layouts muss eventuell noch eine passende xkbmap installiert werden.
+
+## VirtualBox
+
+Im Wirtsystem QWERTZ einstellen, dann Neo-Treiber (z. B. ReNeo) im Gastsystem installieren.
+
+## [Remote Desktop Manager](https://remotedesktopmanager.com/)
+
+Es geht offenbar auch ReNeo im Standalone-Modus auf dem lokalen System mit QWERTZ auf dem Remote-System. Zumindest Buchstaben und (nicht-Unicode)-Sonderzeichen werden dann auf die Remote-Systeme korrekt weitergeleitet.
+
 # Für Entwickler
 ## Kompilieren
 ReNeo ist in D geschrieben und nutzt `dub` für Projektkonfiguration und Kompilation.
