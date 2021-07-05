@@ -180,6 +180,7 @@ void checkKeyboardLayout() nothrow {
             debug_writeln("No bypassing keyboard input");
             bypassMode = false;
             previousNumlockState = getNumlockState();
+            resetHookStates();  // Reset potential locks when activating hook
         }
 
         if (setActiveLayout(layout)) {
@@ -354,6 +355,7 @@ void switchKeyboardHook() {
         // the already active Numlock state.
         bypassMode = false;
         checkKeyboardLayout();
+        resetHookStates();  // Reset potential locks when activating hook
     } else {
         UnhookWindowsHookEx(hHook);
         // Only reset Numlock state if we were active before

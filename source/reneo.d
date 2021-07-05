@@ -404,6 +404,18 @@ void sendMouseClick(bool down) nothrow {
     SendInput(1, &input_struct, INPUT.sizeof);
 }
 
+bool getCapslockState() nothrow {
+    bool state = GetKeyState(VK_CAPITAL) & 0x0001;
+    return state;
+}
+
+void setCapslockState(bool state) nothrow {
+    if (getCapslockState() != state) {
+        sendVK(VK_CAPITAL, Scancode(0, false), true);
+        sendVK(VK_CAPITAL, Scancode(0, false), false);
+    }
+}
+
 bool getKanaState() nothrow {
     bool state = GetKeyState(VK_KANA) & 0x0001;
     return state;
@@ -460,6 +472,23 @@ bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
     bool changed = newLayout != activeLayout;
     activeLayout = newLayout;
     return changed;
+}
+
+
+void resetHookStates() nothrow {
+    // Reset all stored states that might lead to unwanted locks
+    leftShiftDown = false;
+    rightShiftDown = false;
+    leftMod3Down = false;
+    rightMod3Down = false;
+    leftMod4Down = false;
+    rightMod4Down = false;
+
+    capslock = false;
+    mod4Lock = false;
+
+    setCapslockState(false);
+    setKanaState(false);
 }
 
 
@@ -586,7 +615,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool mod4Down = leftMod4Down || rightMod4Down;
 
     // is capslock active?
-    bool newCapslock = GetKeyState(VKEY.VK_CAPITAL) & 0x0001;
+    bool newCapslock = getCapslockState();
     bool capslockChanged = capslock != newCapslock;
     capslock = newCapslock;
 
