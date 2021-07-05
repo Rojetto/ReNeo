@@ -433,18 +433,18 @@ ComposeResult compose(NeoKey nk) nothrow {
 }
 
 ComposeResult composeUnicode(NeoKey nk) nothrow {
-    // Starts processing keys after "uu", then accepts up to eight hex digits, terminated by "space"
+    // Starts processing keys after "uu", then accepts up to six hex digits, terminated by "space"
     // If complete, return matching Unicode char, otherwise abort
-    if (unicodeInput.length < 8 && nk.keysym >= KEYSYM_0 && nk.keysym <= KEYSYM_0 + 9) {
+    if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_0 && nk.keysym <= KEYSYM_0 + 9) {
         unicodeInput ~= '0' + (nk.keysym - KEYSYM_0);
         return ComposeResult(ComposeResultType.EAT, ""w);
-    } else if (unicodeInput.length < 8 && nk.keysym >= KEYSYM_KP_0 && nk.keysym <= KEYSYM_KP_0 + 9) {
+    } else if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_KP_0 && nk.keysym <= KEYSYM_KP_0 + 9) {
         unicodeInput ~= '0' + (nk.keysym - KEYSYM_KP_0);
         return ComposeResult(ComposeResultType.EAT, ""w);
-    } else if (unicodeInput.length < 8 && nk.keysym >= KEYSYM_a && nk.keysym <= KEYSYM_a + 5) {
+    } else if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_a && nk.keysym <= KEYSYM_a + 5) {
         unicodeInput ~= 'a' + (nk.keysym - KEYSYM_a);
         return ComposeResult(ComposeResultType.EAT, ""w);
-    } else if (unicodeInput.length < 8 && nk.keysym >= KEYSYM_A && nk.keysym <= KEYSYM_A + 5) {
+    } else if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_A && nk.keysym <= KEYSYM_A + 5) {
         unicodeInput ~= 'a' + (nk.keysym - KEYSYM_A);
         return ComposeResult(ComposeResultType.EAT, ""w);
     } else if (unicodeInput.length >= 2 && nk.keysym == KEYSYM_SPACE) {
@@ -452,7 +452,7 @@ ComposeResult composeUnicode(NeoKey nk) nothrow {
 
         try {
             uint codepoint = to!uint(unicodeInput, 16);
-            if (codepoint >= 0x20) { // 0x20 ≙ space
+            if (codepoint >= 0x20 && codepoint <= 0x10FFFF) { // 0x20 ≙ space
                 result.type = ComposeResultType.FINISH;
                 // There might be a simpler way to do this...
                 // uint codepoint (32 bit) -> UTF-16 string
