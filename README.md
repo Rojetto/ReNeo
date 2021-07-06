@@ -24,6 +24,9 @@ Allgemein:
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
 - **Bildschirmtastatur**: Wird über Tray-Menü ein- und ausgeschaltet oder per Shortcut `M3+F1`. Wechselt zwischen Ebenen, wenn Modifier gedrückt werden.
 - *Alle* tote Tasten und Compose-Kombinationen. Diese sind auch durch den Nutzer erweiterbar, alle `.module`-Dateien im Verzeichnis `compose/` werden beim Start geladen.
+- Spezial-Compose-Sequenzen
+    - Unicode-Eingabe: `♫uu[codepoint hex]<space>` fügt Unicode-Zeichen ein. Beispiel: `♫uu1f574<space>` → 🕴
+    - Römische Zahlen: `♫rn[zahl]<space>` für kleine Zahlen, `♫RN[zahl]<space>` für große Zahlen zwischen 1 und 3999. Beispiel: `♫rn1970<space>` → ⅿⅽⅿⅼⅹⅹ, `♫RN1970<space>` → ⅯⅭⅯⅬⅩⅩ
 - `Shift+Pause` (de)aktiviert die Anwendung
 - Weitere Layouts können in `layouts.json` hinzugefügt und angepasst werden
 
@@ -43,7 +46,9 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
     - `true` (Standard): Das native Layout (z. B. QWERTZ) wird von ReNeo mit dem ausgewählten Neo-Layout ersetzt. Hinweis: ist das native Layout bereits Neo-verwandt, verändert ReNeo das Layout nicht und schaltet stattdessen automatisch in den Erweiterungsmodus.
     - `false`: Ist das native Layout Neo-verwandt, schaltet ReNeo in den Erweiterungsmodus. Bei allen anderen Layouts deaktiviert sich ReNeo automatisch.
 - `"standaloneLayout"`: Layout, das für den Standalone-Modus genutzt werden soll. Auch übers Traymenü auswählbar.
-- `"oskNumpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
+- `"osk"`:
+    - `"numpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
+    - `"theme"`: Farbschema für Bildschirmtastatur. Mögliche Werte: `"Grey"`, `"NeoBlue"`
 - `"sendKeyMode"`: *Experimentell*. 
     - `fakeNative` (Standard): Buchstaben und Sonderzeichen, die im nativen Layout existieren, werden über entsprechende Tastenanschläge und -kombinationen simuliert. So sieht es für Anwendungen aus, als ob  das native Layout ganz normal verwendet wird.
     - `honest`: Sonderzeichen werden grundsätzlich als Unicode-Pakete gesendet.

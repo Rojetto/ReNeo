@@ -117,7 +117,6 @@ void sendVK(uint vk, Scancode scan, bool down) nothrow {
         virtualShiftDown = false;
     }
     if (virtualAltDown) {
-        expectFakeLCtrl = true;
         appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
         virtualAltDown = false;
     }
@@ -247,7 +246,6 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         }
         if (virtualAltDown && !alt) {
             // AltGr-up automatically adds combined fake LCtrl-up
-            expectFakeLCtrl = true;
             appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
             virtualAltDown = false;
         }
@@ -275,7 +273,6 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // Accordingly, Ctrl will not be handled separately, as it occurs always in combination with Alt.
     if (alt && virtualAltDown != down) {
         // AltGr down/up automatically adds combined fake LCtrl down/up
-        expectFakeLCtrl = true;
         appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
         virtualAltDown = down;
     }
@@ -404,6 +401,18 @@ void sendMouseClick(bool down) nothrow {
     SendInput(1, &input_struct, INPUT.sizeof);
 }
 
+bool getCapslockState() nothrow {
+    bool state = GetKeyState(VK_CAPITAL) & 0x0001;
+    return state;
+}
+
+void setCapslockState(bool state) nothrow {
+    if (getCapslockState() != state) {
+        sendVK(VK_CAPITAL, Scancode(0, false), true);
+        sendVK(VK_CAPITAL, Scancode(0, false), false);
+    }
+}
+
 bool getKanaState() nothrow {
     bool state = GetKeyState(VK_KANA) & 0x0001;
     return state;
@@ -452,14 +461,29 @@ bool standaloneModeActive;
 
 // the last event was a dual state numpad key up with held shift key, eat the next shift down
 bool expectFakeShiftDown;
-// if virtual AltGr (down/up) is injected, we expect a valid fake LCtrl event first
-bool expectFakeLCtrl;
 
 
 bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
     bool changed = newLayout != activeLayout;
     activeLayout = newLayout;
     return changed;
+}
+
+
+void resetHookStates() nothrow {
+    // Reset all stored states that might lead to unwanted locks
+    leftShiftDown = false;
+    rightShiftDown = false;
+    leftMod3Down = false;
+    rightMod3Down = false;
+    leftMod4Down = false;
+    rightMod4Down = false;
+
+    capslock = false;
+    mod4Lock = false;
+
+    setCapslockState(false);
+    setKanaState(false);
 }
 
 
@@ -524,15 +548,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
 
     // Disable fake LCtrl on physical AltGr key, as we use that for Mod4.
-    // In case of an injected AltGr, fake LCtrl is expected instead and will be processed.
+    // In case of an injected AltGr, the fake LCtrl is also marked as injected and passed through further above
     if (scan.scan == SC_FAKE_LCTRL) {
-        if (!expectFakeLCtrl) {
-            return true;
-        } else {
-            expectFakeLCtrl = false;
-            // Early exit, but keep this event
-            return false;
-        }
+        return true;  // Eat event
     }
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
@@ -586,7 +604,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     bool mod4Down = leftMod4Down || rightMod4Down;
 
     // is capslock active?
-    bool newCapslock = GetKeyState(VKEY.VK_CAPITAL) & 0x0001;
+    bool newCapslock = getCapslockState();
     bool capslockChanged = capslock != newCapslock;
     capslock = newCapslock;
 

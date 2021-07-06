@@ -140,13 +140,40 @@ struct ComposeNode {
     ComposeNode *prev;
     ComposeNode *[] next;
     wstring result;
+    // Everything after this node is processed by the special mode function
+    SpecialComposeFunction specialMode;
 }
+
+// Function signature for special compose functions, e.g. for Unicode input
+alias SpecialComposeFunction = ComposeResult function(NeoKey) nothrow;
 
 ComposeNode composeRoot;
 ComposeNode removeComposeRoot;
 
 bool active;
 ComposeNode *currentNode;
+// Function pointer if currently switched to special compose mode
+SpecialComposeFunction currentSpecialMode;
+uint addedEntries;
+
+// Keysym constants for Unicode input
+uint KEYSYM_0;
+uint KEYSYM_KP_0;
+uint KEYSYM_a;
+uint KEYSYM_A;
+uint KEYSYM_SPACE;
+
+// Unicode input special mode
+string unicodeInput;
+
+// Roman numeral special mode
+const ROMAN_DIGITS = [
+    [["ⅰ"w, "Ⅰ"w], ["ⅰⅰ"w, "ⅠⅠ"w], ["ⅰⅰⅰ"w, "ⅠⅠⅠ"w], ["ⅰⅴ"w, "ⅠⅤ"w], ["ⅴ"w, "Ⅴ"w], ["ⅴⅰ"w, "ⅤⅠ"w], ["ⅴⅰⅰ"w, "ⅤⅠⅠ"w], ["ⅴⅰⅰⅰ"w, "ⅤⅠⅠⅠ"w], ["ⅰⅹ"w, "ⅠⅩ"w]],
+    [["ⅹ"w, "Ⅹ"w], ["ⅹⅹ"w, "ⅩⅩ"w], ["ⅹⅹⅹ"w, "ⅩⅩⅩ"w], ["ⅹⅼ"w, "ⅩⅬ"w], ["ⅼ"w, "Ⅼ"w], ["ⅼⅹ"w, "ⅬⅩ"w], ["ⅼⅹⅹ"w, "ⅬⅩⅩ"w], ["ⅼⅹⅹⅹ"w, "ⅬⅩⅩⅩ"w], ["ⅹⅽ"w, "ⅩⅭ"w]],
+    [["ⅽ"w, "Ⅽ"w], ["ⅽⅽ"w, "ⅭⅭ"w], ["ⅽⅽⅽ"w, "ⅭⅭⅭ"w], ["ⅽⅾ"w, "ⅭⅮ"w], ["ⅾ"w, "Ⅾ"w], ["ⅾⅽ"w, "ⅮⅭ"w], ["ⅾⅽⅽ"w, "ⅮⅭⅭ"w], ["ⅾⅽⅽⅽ"w, "ⅮⅭⅭⅭ"w], ["ⅽⅿ"w, "ⅭⅯ"w]],
+    [["ⅿ"w, "Ⅿ"w], ["ⅿⅿ"w, "ⅯⅯ"w], ["ⅿⅿⅿ"w, "ⅯⅯⅯ"w]]
+];
+string romanNumeralInput;
 
 enum ComposeResultType {
     PASS,
@@ -167,10 +194,10 @@ struct ComposeFileLine {
     **/
     uint [] keysyms;
     wstring result;
+    // Minor abuse of this type, as actual .module files can't specify special modes
+    SpecialComposeFunction specialMode;
 }
 
-
-uint addedEntries;
 
 void initCompose(string exeDir) {
     debug_writeln("Initializing compose");
@@ -211,6 +238,22 @@ void initCompose(string exeDir) {
     }
 
     debug_writeln("Loaded ", addedEntries, " compose sequences.");
+
+    // Register unicode input special mode with prefix "♫uu"
+    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("u"), parseKeysym("u")], ""w, &composeUnicode), composeRoot);
+
+    // Register lower case roman numeral special mode with prefix "♫rn"
+    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("r"), parseKeysym("n")], ""w, &composeLowerRoman), composeRoot);
+    
+    // Register upper case roman numeral special mode with prefix "♫RN"
+    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("R"), parseKeysym("N")], ""w, &composeUpperRoman), composeRoot);
+
+    // For unicode input
+    KEYSYM_SPACE = parseKeysym("space");
+    KEYSYM_0 = parseKeysym("0");
+    KEYSYM_KP_0 = parseKeysym("KP_0");
+    KEYSYM_a = parseKeysym("a");
+    KEYSYM_A = parseKeysym("A");
 }
 
 ComposeFileLine parseLine(string line) {
@@ -262,13 +305,13 @@ void addComposeEntry(ComposeFileLine entry, ref ComposeNode nodeRoot) {
         }
 
         if (!foundNext) {
-            if (currentNode.result != ""w) {
+            if (currentNode.result != ""w || currentNode.specialMode) {
                 // We are creating a compose sequence that is a continuation of an existing one
                 debug_writeln("Conflict in compose sequence ", entry.keysyms.map!(k => format("0x%X", k)).join("->"));
                 return;
             }
 
-            next = new ComposeNode(keysym, currentNode, [], ""w);
+            next = new ComposeNode(keysym, currentNode, [], ""w, null);
             currentNode.next ~= next;
         }
 
@@ -281,6 +324,7 @@ void addComposeEntry(ComposeFileLine entry, ref ComposeNode nodeRoot) {
         return;
     } 
     currentNode.result = entry.result;
+    currentNode.specialMode = entry.specialMode;
 }
 
 void loadModule(string fname) {
@@ -332,38 +376,150 @@ ComposeResult compose(NeoKey nk) nothrow {
     }
 
     if (active) {
-        ComposeNode *next;
-        bool foundNext;
-
-        foreach (nextIter; currentNode.next) {
-            if (nextIter.keysym == nk.keysym) {
-                foundNext = true;
-                next = nextIter;
-                break;
-            }
-        }
-
-        if (foundNext) {
-            if (next.next.length == 0) {
-                // this was the final key
+        if (currentSpecialMode) {
+            auto specialResult = currentSpecialMode(nk);
+            if (specialResult.type == ComposeResultType.ABORT || specialResult.type == ComposeResultType.FINISH) {
+                // Special mode has finished, reset compose to normal state
                 active = false;
-                debug_writeln("Compose finished");
-                return ComposeResult(ComposeResultType.FINISH, next.result);
-            } else {
-                currentNode = next;
-                try {
-                    debug_writeln("Next: ", currentNode.next.map!(n => format("0x%X", n.keysym)).join(", "));
-                } catch (Exception e) {
-                    // Doesn't matter
-                }
-                return ComposeResult(ComposeResultType.EAT, ""w);
+                currentSpecialMode = null;
+                debug_writeln("Special compose sequence finished");
             }
+            return specialResult;
         } else {
-            active = false;
-            debug_writeln("Compose aborted");
-            return ComposeResult(ComposeResultType.ABORT, ""w);
+            ComposeNode *next;
+            bool foundNext;
+
+            foreach (nextIter; currentNode.next) {
+                if (nextIter.keysym == nk.keysym) {
+                    foundNext = true;
+                    next = nextIter;
+                    break;
+                }
+            }
+
+            if (foundNext) {
+                if (next.next.length == 0) {
+                    // this was the final key
+                    if (next.specialMode) {
+                        // user entered the leader sequence for a special mode
+                        // the following key presses will be handled by the associated special mode function
+                        debug_writeln("Starting special compose sequence");
+                        currentSpecialMode = next.specialMode;
+                        return ComposeResult(ComposeResultType.EAT, ""w);
+                    } else {
+                        // normal compose sequence end
+                        active = false;
+                        debug_writeln("Compose finished");
+                        return ComposeResult(ComposeResultType.FINISH, next.result);
+                    }
+                } else {
+                    currentNode = next;
+                    try {
+                        debug_writeln("Next: ", currentNode.next.map!(n => format("0x%X", n.keysym)).join(", "));
+                    } catch (Exception e) {
+                        // Doesn't matter
+                    }
+                    return ComposeResult(ComposeResultType.EAT, ""w);
+                }
+            } else {
+                active = false;
+                debug_writeln("Compose aborted");
+                return ComposeResult(ComposeResultType.ABORT, ""w);
+            }
         }
     }
     
     return ComposeResult(ComposeResultType.PASS, ""w);
+}
+
+ComposeResult composeUnicode(NeoKey nk) nothrow {
+    // Starts processing keys after "uu", then accepts up to six hex digits, terminated by "space"
+    // If complete, return matching Unicode char, otherwise abort
+    if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_0 && nk.keysym <= KEYSYM_0 + 9) {
+        unicodeInput ~= '0' + (nk.keysym - KEYSYM_0);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_KP_0 && nk.keysym <= KEYSYM_KP_0 + 9) {
+        unicodeInput ~= '0' + (nk.keysym - KEYSYM_KP_0);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_a && nk.keysym <= KEYSYM_a + 5) {
+        unicodeInput ~= 'a' + (nk.keysym - KEYSYM_a);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (unicodeInput.length < 6 && nk.keysym >= KEYSYM_A && nk.keysym <= KEYSYM_A + 5) {
+        unicodeInput ~= 'a' + (nk.keysym - KEYSYM_A);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (unicodeInput.length >= 2 && nk.keysym == KEYSYM_SPACE) {
+        ComposeResult result;
+
+        try {
+            uint codepoint = to!uint(unicodeInput, 16);
+            if (codepoint >= 0x20 && codepoint <= 0x10FFFF) { // 0x20 ≙ space
+                result.type = ComposeResultType.FINISH;
+                // There might be a simpler way to do this...
+                // uint codepoint (32 bit) -> UTF-16 string
+                result.result = codepoint.to!dchar.to!dstring.to!wstring;
+            } else {
+                result.type = ComposeResultType.ABORT;
+            }
+        } catch (Exception e) {
+            result.type = ComposeResultType.ABORT;
+        }
+        unicodeInput = "";  // Important: reset stored codepoint string on finish
+        return result;
+    } else {
+        unicodeInput = "";
+        return ComposeResult(ComposeResultType.ABORT, ""w);
+    }
+}
+
+ComposeResult composeRoman(NeoKey nk, bool upper) nothrow {
+    // Accepts 1 to 4 decimal digits (1 to 3999), terminated by "space"
+    if (romanNumeralInput.length < 4 && nk.keysym >= KEYSYM_0 && nk.keysym <= KEYSYM_0 + 9) {
+        romanNumeralInput ~= '0' + (nk.keysym - KEYSYM_0);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (romanNumeralInput.length < 4 && nk.keysym >= KEYSYM_KP_0 && nk.keysym <= KEYSYM_KP_0 + 9) {
+        romanNumeralInput ~= '0' + (nk.keysym - KEYSYM_KP_0);
+        return ComposeResult(ComposeResultType.EAT, ""w);
+    } else if (romanNumeralInput.length >= 1 && nk.keysym == KEYSYM_SPACE) {
+        ComposeResult result;
+
+        try {
+            uint number = to!uint(romanNumeralInput);
+            if (1 <= number && number <= 3999) {
+                uint caseIndex = upper ? 1 : 0;
+
+                if (uint thousands = number / 1000) {
+                    result.result ~= ROMAN_DIGITS[3][thousands - 1][caseIndex];
+                }
+                if (uint hundreds = (number / 100) % 10) {
+                    result.result ~= ROMAN_DIGITS[2][hundreds - 1][caseIndex];
+                }
+                if (uint tens = (number / 10) % 10) {
+                    result.result ~= ROMAN_DIGITS[1][tens - 1][caseIndex];
+                }
+                if (uint units = number % 10) {
+                    result.result ~= ROMAN_DIGITS[0][units - 1][caseIndex];
+                }
+
+                result.type = ComposeResultType.FINISH;
+            } else {
+                result.type = ComposeResultType.ABORT;
+            }
+        } catch (Exception e) {
+            result.type = ComposeResultType.ABORT;
+        }
+
+        romanNumeralInput = "";  // Important: reset stored number string on finish
+        return result;
+    } else {
+        romanNumeralInput = "";
+        return ComposeResult(ComposeResultType.ABORT, ""w);
+    }
+}
+
+ComposeResult composeLowerRoman(NeoKey nk) nothrow {
+    return composeRoman(nk, false);
+}
+
+ComposeResult composeUpperRoman(NeoKey nk) nothrow {
+    return composeRoman(nk, true);
 }
