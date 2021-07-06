@@ -117,7 +117,6 @@ void sendVK(uint vk, Scancode scan, bool down) nothrow {
         virtualShiftDown = false;
     }
     if (virtualAltDown) {
-        expectFakeLCtrl = true;
         appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
         virtualAltDown = false;
     }
@@ -247,7 +246,6 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         }
         if (virtualAltDown && !alt) {
             // AltGr-up automatically adds combined fake LCtrl-up
-            expectFakeLCtrl = true;
             appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
             virtualAltDown = false;
         }
@@ -275,7 +273,6 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // Accordingly, Ctrl will not be handled separately, as it occurs always in combination with Alt.
     if (alt && virtualAltDown != down) {
         // AltGr down/up automatically adds combined fake LCtrl down/up
-        expectFakeLCtrl = true;
         appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
         virtualAltDown = down;
     }
@@ -464,8 +461,6 @@ bool standaloneModeActive;
 
 // the last event was a dual state numpad key up with held shift key, eat the next shift down
 bool expectFakeShiftDown;
-// if virtual AltGr (down/up) is injected, we expect a valid fake LCtrl event first
-bool expectFakeLCtrl;
 
 
 bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
@@ -553,15 +548,9 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
 
     // Disable fake LCtrl on physical AltGr key, as we use that for Mod4.
-    // In case of an injected AltGr, fake LCtrl is expected instead and will be processed.
+    // In case of an injected AltGr, the fake LCtrl is also marked as injected and passed through further above
     if (scan.scan == SC_FAKE_LCTRL) {
-        if (!expectFakeLCtrl) {
-            return true;
-        } else {
-            expectFakeLCtrl = false;
-            // Early exit, but keep this event
-            return false;
-        }
+        return true;  // Eat event
     }
 
     // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
