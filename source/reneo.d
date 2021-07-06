@@ -117,7 +117,9 @@ void sendVK(uint vk, Scancode scan, bool down) nothrow {
         virtualShiftDown = false;
     }
     if (virtualAltDown) {
+        // Release virtual AltGr key, which consists of RAlt and LCtrl.
         appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
+        appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, false);
         virtualAltDown = false;
     }
 
@@ -245,8 +247,9 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
             virtualShiftDown = false;
         }
         if (virtualAltDown && !alt) {
-            // AltGr-up automatically adds combined fake LCtrl-up
+            // Release virtual AltGr key, which consists of RAlt and LCtrl.
             appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
+            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, false);
             virtualAltDown = false;
         }
     }
@@ -269,11 +272,21 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
             virtualShiftDown = down;
         }
     }
-    // The Alt modifier is considered as AltGr, which is equivalent to LCtrl and RAlt.
+    // The Alt modifier is considered as AltGr, which is equivalent to LCtrl and RAlt. To prevent
+    // Windows from inserting a fake LCtrl event (no matter if injected or not), we get there first
+    // by injecting both LCtrl and RAlt events.
     // Accordingly, Ctrl will not be handled separately, as it occurs always in combination with Alt.
     if (alt && virtualAltDown != down) {
-        // AltGr down/up automatically adds combined fake LCtrl down/up
-        appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
+        // Order matters: for up-events the RAlt key has to come first. Otherwise the LCtrl is not
+        // considering "matching" because it would still have LLKHF_ALTDOWN flag set, and a fake LCtrl
+        // is then generated.
+        if (down) {
+            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
+            appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
+        } else {
+            appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
+            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
+        }
         virtualAltDown = down;
     }
 
