@@ -6,3 +6,4 @@
 *.lst
 *.zip
 /*.dll
+config.json

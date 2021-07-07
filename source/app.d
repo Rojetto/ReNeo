@@ -376,7 +376,30 @@ void initialize() {
     initKeysyms(executableDir);
     initCompose(executableDir);
 
-    auto configJson = parseJSONFile("config.json");
+    // Load default config (shipped with the program) as a base
+    auto configJson = parseJSONFile("config.default.json");
+    // Load user config if it exists
+    if (exists("config.json")) {
+        auto userConfigJson = parseJSONFile("config.json");
+
+        // Overwrite values from default config with user config settings
+        void copyJsonObjectOverOther(ref JSONValue source, ref JSONValue destination) {
+            foreach (string key, JSONValue value; source) {
+                if (value.type == JSONType.OBJECT && key in destination) {
+                    copyJsonObjectOverOther(value, destination[key]);
+                } else {
+                    destination[key] = value;
+                }
+            }
+        }
+
+        copyJsonObjectOverOther(userConfigJson, configJson);
+    }
+
+    // Write combined config (default values + user settings) to user config file
+    std.file.write(buildPath(executableDir, "config.json"), toJSON(configJson, true));
+
+
     auto layoutsJson = parseJSONFile("layouts.json");
     initLayouts(layoutsJson["layouts"]);
 

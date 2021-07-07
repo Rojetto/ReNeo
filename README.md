@@ -9,8 +9,12 @@ ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine V
 ## Installation
 1. *Optional*: [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/) normal installieren
 2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in ein Verzeichnis mit Schreibrechten entpacken (z. B. `C:\Users\[USER]\ReNeo`)
-3. *Optional*: [`config.json` anpassen](#Allgemeine-Konfiguration)
-4. `reneo.exe` starten oder zu Autostart hinzufügen. Über das Trayicon kann das Programm deaktiviert und beendet werden.
+3. `reneo.exe` starten oder zu Autostart hinzufügen. Über das Trayicon kann das Programm deaktiviert und beendet werden.
+4. *Optional*: [`config.json` anpassen](#Allgemeine-Konfiguration) (wird beim ersten Start generiert)
+
+*Update*
+
+Neuen Release herunterladen und vorhandene Dateien mit den neuen überschreiben. Da `config.json` nicht im Release enthalten ist, bleiben Nutzereinstellungen erhalten.
 
 *Deinstallation*
 1. *Optional*: kbdneo nach Wiki-Anleitung deinstallieren
@@ -127,7 +131,7 @@ Cairo-DLL stammt von https://github.com/preshing/cairo-windows. Die zugehörigen
 
 ## Release
 1. Build mit `dub build --build=release`
-2. Erstelle Zip-Datei mit Name `ReNeo_vX.Y.Z.zip`. Inhalt: `reneo.exe`, `README.md`, `COPYING`, `keysymdef.h`, `config.json`, `layouts.json`, `cairo.dll`, `compose/`
+2. Erstelle Zip-Datei mit Name `ReNeo_vX.Y.Z.zip`. Inhalt: `reneo.exe`, `README.md`, `COPYING`, `keysymdef.h`, `config.default.json` (Layout-Voreinstellung anpassen), `layouts.json`, `cairo.dll`, `compose/`
 3. Neuen Release auf GitHub. Änderungen seit letzter Version raussuchen.
 
 # Bibliotheken
