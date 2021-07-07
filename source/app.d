@@ -29,7 +29,7 @@ bool oskOpen;
 bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
 SendKeyMode configSendKeyMode;
-bool configOskNumpad;
+bool configAutoNumlock;
 
 HWND hwnd;
 
@@ -437,6 +437,8 @@ void initialize() {
         break;
         default: break;
     }
+
+    configAutoNumlock = configJson["autoNumlock"].boolean;
 
     debug_writeln("Initialization complete!");
 }
