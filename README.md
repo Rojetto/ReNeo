@@ -131,9 +131,7 @@ Die Ressourcendatei `res/reneo.res` wird mit `rc.exe` aus dem Windows SDK erstel
 Cairo-DLL stammt von https://github.com/preshing/cairo-windows. Die zugehörigen D-Header wurden mit [DStep](https://github.com/jacob-carlborg/dstep) aus den C-Headern generiert und manuell angepasst.
 
 ## Release
-1. Build mit `dub build --build=release`
-2. Erstelle Zip-Datei mit Name `ReNeo_vX.Y.Z.zip`. Inhalt: `reneo.exe`, `README.md`, `COPYING`, `keysymdef.h`, `config.default.json` (Layout-Voreinstellung anpassen), `layouts.json`, `cairo.dll`, `compose/`
-3. Neuen Release auf GitHub. Änderungen seit letzter Version raussuchen.
+Wenn ein Tag nach dem Schema `v*` im Repo ankommt, löst eine GitHub Action den Release aus. Auf Basis der `config.[layout].json` Dateien werden verschiedene vorkonfigurierte ZIP-Archive erstellt und ein Release-Draft angelegt. Der kann dann manuell bearbeitet und freigeschaltet werden.
 
 # Bibliotheken
 Nutzt [Cairo](https://www.cairographics.org/), lizensiert unter der GNU Lesser General Public License (LGPL) Version 2.1.

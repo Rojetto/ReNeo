@@ -1,0 +1,38 @@
+name: Release
+on:
+  push:
+    tags:
+    - 'v*'
+jobs:
+  build-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up D compiler
+        uses: dlang-community/setup-dlang@v1
+      - name: Compile with Dub
+        run: dub build --build=release
+      - name: Replace config.default.json with Neo config
+        run: mv -Force config.neo.json config.default.json
+      - name: Create Neo ZIP file
+        run: 7z a -tzip ReNeo_Neo.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md reneo.exe
+      - name: Replace config.default.json with NeoQwertz config
+        run: mv -Force config.neoqwertz.json config.default.json
+      - name: Create NeoQwertz ZIP file
+        run: 7z a -tzip ReNeo_NeoQwertz.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md reneo.exe
+      - name: Replace config.default.json with Bone config
+        run: mv -Force config.bone.json config.default.json
+      - name: Create Bone ZIP file
+        run: 7z a -tzip ReNeo_Bone.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md reneo.exe
+      - name: Create Release
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          draft: true
+          prerelease: false
+          files: |
+            ReNeo_Neo.zip
+            ReNeo_NeoQwertz.zip
+            ReNeo_Bone.zip
+      

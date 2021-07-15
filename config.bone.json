@@ -1,0 +1,10 @@
+{
+    "standaloneLayout": "Bone",
+    "standaloneMode": true,
+    "sendKeyMode": "fakeNative",
+    "autoNumlock": true,
+    "osk": {
+        "numpad": true,
+        "theme": "Grey"
+    }
+}
