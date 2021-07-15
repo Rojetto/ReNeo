@@ -2,6 +2,7 @@ import core.sys.windows.windows;
 import core.stdc.stdio;
 import core.stdc.string;
 import core.stdc.wchar_;
+import core.stdc.stdlib : exit;
 
 import reneo;
 import mapping;
@@ -218,6 +219,14 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
     try {
 
     switch (msg) {
+        case WM_DESTROY:
+        // Hide the tray icon and cleanup before closing the application
+        trayIcon.hide();
+        DestroyMenu(contextMenu);
+        // Not necessary to unload icons loaded from file
+        PostQuitMessage(0);
+        return 0;
+
         case WM_TRAYICON:
         // From https://docs.microsoft.com/en-us/windows/win32/shell/taskbar#adding-modifying-and-deleting-icons-in-the-notification-area:
         // The wParam parameter of the message contains the identifier of the taskbar icon in which the event occurred.
@@ -257,12 +266,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             break;
 
             case ID_TRAY_QUIT_CONTEXTMENU:
-            // Hide the tray icon and cleanup before closing the application
-            trayIcon.hide();
-            DestroyMenu(contextMenu);
-            // Not necessary to unload icons loaded from file
-            
-            PostQuitMessage(0);
+            PostMessage(hwnd, WM_CLOSE, 0, 0);  // cleanup will be done in WM_DESTROY handler
             break;
 
             default:
@@ -389,80 +393,92 @@ void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idOb
 }
 
 void initialize() {
-    initKeysyms(executableDir);
-    initCompose(executableDir);
+    try {
+        initKeysyms(executableDir);
+        initCompose(executableDir);
 
-    // Load default config (shipped with the program) as a base
-    auto configJson = parseJSONFile("config.default.json");
-    // Load user config if it exists
-    if (exists("config.json")) {
-        auto userConfigJson = parseJSONFile("config.json");
+        // Load default config (shipped with the program) as a base
+        auto configJson = parseJSONFile("config.default.json");
+        // Load user config if it exists
+        if (exists("config.json")) {
+            auto userConfigJson = parseJSONFile("config.json");
 
-        // Overwrite values from default config with user config settings
-        void copyJsonObjectOverOther(ref JSONValue source, ref JSONValue destination) {
-            foreach (string key, JSONValue value; source) {
-                if (value.type == JSONType.OBJECT && key in destination) {
-                    copyJsonObjectOverOther(value, destination[key]);
-                } else {
-                    destination[key] = value;
+            // Overwrite values from default config with user config settings
+            void copyJsonObjectOverOther(ref JSONValue source, ref JSONValue destination) {
+                foreach (string key, JSONValue value; source) {
+                    if (value.type == JSONType.OBJECT && key in destination) {
+                        copyJsonObjectOverOther(value, destination[key]);
+                    } else {
+                        destination[key] = value;
+                    }
                 }
             }
+
+            copyJsonObjectOverOther(userConfigJson, configJson);
         }
 
-        copyJsonObjectOverOther(userConfigJson, configJson);
-    }
-
-    // Write combined config (default values + user settings) to user config file
-    std.file.write(buildPath(executableDir, "config.json"), toJSON(configJson, true));
+        // Write combined config (default values + user settings) to user config file
+        std.file.write(buildPath(executableDir, "config.json"), toJSON(configJson, true));
 
 
-    auto layoutsJson = parseJSONFile("layouts.json");
-    initLayouts(layoutsJson["layouts"]);
+        auto layoutsJson = parseJSONFile("layouts.json");
+        initLayouts(layoutsJson["layouts"]);
 
-    initOsk(configJson["osk"]);
+        initOsk(configJson["osk"]);
 
-    // Initialize layout menu
-    layoutMenu = CreatePopupMenu();
-    for (int i = 0; i < layouts.length; i++) {
-        AppendMenu(layoutMenu, MF_STRING, ID_LAYOUTMENU + i, layouts[i].name.toUTF16z);
-    }
-
-    configStandaloneMode = configJson["standaloneMode"].boolean;
-    if (configStandaloneMode) {
-        wstring standaloneLayoutName = configJson["standaloneLayout"].str.to!wstring;
+        // Initialize layout menu
+        layoutMenu = CreatePopupMenu();
         for (int i = 0; i < layouts.length; i++) {
-            if (layouts[i].name == standaloneLayoutName) {
-                configStandaloneLayout = &layouts[i];
-                // Select the current layout (only visible if standalone mode is active)
-                CheckMenuRadioItem(layoutMenu, 0, GetMenuItemCount(layoutMenu) - 1, i, MF_BYPOSITION);
-                break;
+            AppendMenu(layoutMenu, MF_STRING, ID_LAYOUTMENU + i, layouts[i].name.toUTF16z);
+        }
+
+        configStandaloneMode = configJson["standaloneMode"].boolean;
+        if (configStandaloneMode) {
+            wstring standaloneLayoutName = configJson["standaloneLayout"].str.to!wstring;
+            for (int i = 0; i < layouts.length; i++) {
+                if (layouts[i].name == standaloneLayoutName) {
+                    configStandaloneLayout = &layouts[i];
+                    // Select the current layout (only visible if standalone mode is active)
+                    CheckMenuRadioItem(layoutMenu, 0, GetMenuItemCount(layoutMenu) - 1, i, MF_BYPOSITION);
+                    break;
+                }
+            }
+
+            if (configStandaloneLayout == null) {
+                debug_writeln("Standalone layout '", standaloneLayoutName, "' not found!");
             }
         }
 
-        if (configStandaloneLayout == null) {
-            debug_writeln("Standalone layout '", standaloneLayoutName, "' not found!");
+        switch (configJson["sendKeyMode"].str) {
+            case "honest":
+            configSendKeyMode = SendKeyMode.HONEST;
+            break;
+            case "fakeNative":
+            configSendKeyMode = SendKeyMode.FAKE_NATIVE;
+            break;
+            default: break;
         }
-    }
 
-    switch (configJson["sendKeyMode"].str) {
-        case "honest":
-        configSendKeyMode = SendKeyMode.HONEST;
-        break;
-        case "fakeNative":
-        configSendKeyMode = SendKeyMode.FAKE_NATIVE;
-        break;
-        default: break;
+        configAutoNumlock = configJson["autoNumlock"].boolean;
+    } catch (Exception e) {
+        string text = "Beim Starten von ReNeo ist ein Fehler aufgetreten:\n" ~ e.msg;
+        MessageBox(hwnd, text.toUTF16z, "Fehler beim Initialisieren".toUTF16z, MB_OK | MB_ICONERROR);
+        exit(0);
     }
-
-    configAutoNumlock = configJson["autoNumlock"].boolean;
 
     debug_writeln("Initialization complete!");
 }
 
 JSONValue parseJSONFile(string jsonFilename) {
     string jsonFilePath = buildPath(executableDir, jsonFilename);
+    if (!exists(jsonFilePath))
+        throw new Exception(jsonFilePath ~ " existiert nicht.");
     string jsonString = readText(jsonFilePath);
-    return parseJSON(jsonString);
+    try {
+        return parseJSON(jsonString);
+    } catch (Exception e) {
+        throw new Exception("Fehler beim Parsen von " ~ jsonFilename ~ ".\n" ~ e.msg);
+    }
 }
 
 void main(string[] args) {

@@ -374,10 +374,6 @@ LRESULT oskWndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) {
     }
 
     switch (msg) {
-        case WM_CLOSE:
-        toggleOSK();
-        return 0;  // Don't actually close the window
-
         case WM_NCHITTEST:
         // Manually implement left and right resize handles, all other points drag the window
         short x = cast(short) (lParam & 0xFFFF);
