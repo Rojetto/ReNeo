@@ -152,18 +152,29 @@ void checkKeyboardLayout() nothrow {
         }
     }
 
-    if (layout == null) {
-        if (configStandaloneMode) {
-            // user enabled standalone mode in config, so we want to overtake and replace it with the selected Neo related layout
-            standaloneModeActive = true;
-            layout = configStandaloneLayout;
+    if (inputLocale) {
+        if (layout == null) {
+            if (configStandaloneMode) {
+                // user enabled standalone mode in config, so we want to overtake and replace it with the selected Neo related layout
+                standaloneModeActive = true;
+                layout = configStandaloneLayout;
+            } else {
+                // user just wants to use whatever native layout they selected
+                standaloneModeActive = false;
+            }
         } else {
-            // user just wants to use whatever native layout they selected
+            // there is a native Neo related layout active, just operate in extension mode
             standaloneModeActive = false;
         }
     } else {
-        // there is a native Neo related layout active, just operate in extension mode
-        standaloneModeActive = false;
+        // GetKeyboardLayout returns null in Windows terminal, see #11
+        // In that case, we want to just keep the current layout settings if there are any, otherwise deactivate
+        if (!bypassMode && activeLayout) {
+            layout = activeLayout;
+        } else {
+            layout = null;  // dllName and therefore might be an actual (but wrong) layout if inputLocale == null
+            standaloneModeActive = false;
+        }
     }
 
     // Update tray menu: enable layout selection only if standalone mode is currently active
