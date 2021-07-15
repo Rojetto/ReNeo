@@ -38,6 +38,9 @@ HMENU layoutMenu;
 HICON iconEnabled;
 HICON iconDisabled;
 
+// set in checkKeyboardLayout (if not null) and used when translating characters to native key combos
+HKL lastInputLocale;
+
 const MOD_NOREPEAT = 0x4000;
 
 const UINT ID_MYTRAYICON = 0x1000;
@@ -153,6 +156,8 @@ void checkKeyboardLayout() nothrow {
     }
 
     if (inputLocale) {
+        lastInputLocale = inputLocale;
+
         if (layout == null) {
             if (configStandaloneMode) {
                 // user enabled standalone mode in config, so we want to overtake and replace it with the selected Neo related layout
@@ -172,7 +177,7 @@ void checkKeyboardLayout() nothrow {
         if (!bypassMode && activeLayout) {
             layout = activeLayout;
         } else {
-            layout = null;  // dllName and therefore might be an actual (but wrong) layout if inputLocale == null
+            layout = null;  // "dllName" and therefore "layout" might be an actual (but wrong) layout if inputLocale == null
             standaloneModeActive = false;
         }
     }

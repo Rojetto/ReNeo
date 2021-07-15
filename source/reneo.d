@@ -11,7 +11,7 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import app : configSendKeyMode, configAutoNumlock, updateOSKAsync, toggleOSK;
+import app : configSendKeyMode, configAutoNumlock, updateOSKAsync, toggleOSK, lastInputLocale;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -157,7 +157,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         catch (Exception e) {}
     }
 
-    short result = VkKeyScan(unicode_char);
+    short result = VkKeyScanEx(unicode_char, lastInputLocale);
     ubyte low = cast(ubyte) result;
     ubyte high = cast(ubyte) (result >> 8);
 
@@ -190,7 +190,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     }
 
     // The found key combination might send a dead key (like ^ or ~), which we want to avoid. MapVirtualKey()
-    // is only able to recognize a dead key if no modifier keys are involed. Instead ToUnicode() is used.
+    // is only able to recognize a dead key if no modifier keys are involved. Instead ToUnicode() is used.
     // Generally it would be necessary to get the current (physical) keyboard state first. But as we need
     // to check a hypothetical keyboard state, we can just set flags for Shift, Control and Menu keys
     // in an otherwise zero-initialized array.
@@ -201,12 +201,12 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     if (alt) { kb[VK_MENU] |= 128; }
     if (capslock) { kb[VK_CAPITAL] = 1; } // Set toggle state of capslock
     
-    if (ToUnicode(vk, 0, kb.ptr, buf.ptr, 4, 0) == -1) {
+    if (ToUnicodeEx(vk, 0, kb.ptr, buf.ptr, 4, 0, lastInputLocale) == -1) {
         debug_writeln("Standard key combination results in a dead key, sending VK packet instead.");
         // The same dead key needs to be queried again, because ToUnicode() inserts the dead key (state)
         // into the queue, while anothèr call consumes the dead key.
         // See https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2597
-        ToUnicode(vk, 0, kb.ptr, buf.ptr, 4, 0);
+        ToUnicodeEx(vk, 0, kb.ptr, buf.ptr, 4, 0, lastInputLocale);
         sendUTF16(unicode_char, down);
         return;
     }
@@ -215,7 +215,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     // For up events, release the main key before the modifiers
     if (!down) {
-        appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
+        appendInput(inputs, vk, Scancode(MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, lastInputLocale), false), down);
     }
 
     // There are three flags that affect the overall result of a current Shift state:
@@ -292,7 +292,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     // For down events, set the main key after the modifiers
     if (down) {
-        appendInput(inputs, vk, Scancode(MapVirtualKey(vk, MAPVK_VK_TO_VSC), false), down);
+        appendInput(inputs, vk, Scancode(MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, lastInputLocale), false), down);
     }
 
     // Re-press Shift key(s)
@@ -344,11 +344,10 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
             sendMouseClick(down);
         } else if (nk.vk_code == VKEY.VK_UNDO) {
             if (down) {
-                // TODO: fix scancodes
                 sendVK(VK_CONTROL, scanLCtrl, true);
-                sendVK('Z', Scancode(MapVirtualKey(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC), false), true);
+                sendVK('Z', Scancode(MapVirtualKeyEx(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC, lastInputLocale), false), true);
             } else {
-                sendVK('Z', Scancode(MapVirtualKey(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC), false), false);
+                sendVK('Z', Scancode(MapVirtualKeyEx(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC, lastInputLocale), false), false);
                 sendVK(VK_CONTROL, scanLCtrl, false);
             }
         } else {
@@ -361,7 +360,7 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
         switch (configSendKeyMode) {
             case SendKeyMode.HONEST: break; // leave the real scan code
             case SendKeyMode.FAKE_NATIVE:
-            auto map_result = MapVirtualKey(nk.vk_code, MAPVK_VK_TO_VSC);
+            auto map_result = MapVirtualKeyEx(nk.vk_code, MAPVK_VK_TO_VSC, lastInputLocale);
             if (map_result) {
                 // vk does exist in native layout, use the fake native scan code
                 scan.extended = false;
