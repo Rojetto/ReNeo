@@ -53,6 +53,9 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 - `"osk"`:
     - `"numpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
     - `"theme"`: Farbschema für Bildschirmtastatur. Mögliche Werte: `"Grey"`, `"NeoBlue"`
+- `"hotkeys"`: Hotkeys für verschiedene Funktionen. Beispiel: `"Ctrl+Alt+F5"`. Erlaubte Modifier sind `Shift`, `Ctrl`, `Alt`, `Win`. Die Haupttaste ist ein beliebiger VK aus [dieser Liste](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes). Ist ein Wert `null`, wird kein globaler Hotkey angelegt.
+    - `"toggleActivation"`: ReNeo aktivieren/deaktivieren
+    - `"toggleOSK"`: Bildschirmtastatur öffnen/schließen. Zusätzlich zu dem hier konfigurierten Hotkey funktioniert immer `M3+F1`.
 - `"sendKeyMode"`: *Experimentell*. 
     - `fakeNative` (Standard): Buchstaben und Sonderzeichen, die im nativen Layout existieren, werden über entsprechende Tastenanschläge und -kombinationen simuliert. So sieht es für Anwendungen aus, als ob  das native Layout ganz normal verwendet wird.
     - `honest`: Sonderzeichen werden grundsätzlich als Unicode-Pakete gesendet.

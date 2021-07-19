@@ -6,5 +6,9 @@
     "osk": {
         "numpad": true,
         "theme": "Grey"
+    },
+    "hotkeys": {
+        "toggleActivation": "Shift+Pause",
+        "toggleOSK": null
     }
 }

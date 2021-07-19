@@ -31,6 +31,8 @@ bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
 SendKeyMode configSendKeyMode;
 bool configAutoNumlock;
+HotkeyConfig configHotkeyToggleActivation;
+HotkeyConfig configHotkeyToggleOSK;
 
 HWND hwnd;
 
@@ -68,6 +70,11 @@ const APPNAME            = "ReNeo"w;
 string executableDir;
 
 TrayIcon trayIcon;
+
+struct HotkeyConfig {
+    uint modFlags;
+    uint key;  // main key vk
+}
 
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
@@ -288,9 +295,17 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         break;
 
         case WM_HOTKEY:
-        // De(activation) hotkey
-        switchKeyboardHook();
-        updateContextMenu();
+        switch (wParam) {
+            case ID_HOTKEY_DEACTIVATE:
+            // De(activation) hotkey
+            switchKeyboardHook();
+            updateContextMenu();
+            break;
+            case ID_HOTKEY_OSK:
+            toggleOSK();
+            break;
+            default: break;
+        }
         break;
 
         default:  // Pass everything else to OSK
@@ -392,6 +407,27 @@ void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idOb
     foregroundWindowChanged = true;
 }
 
+HotkeyConfig parseHotkey(string hotkeyString) {
+    HotkeyConfig config;
+    config.modFlags = MOD_NOREPEAT;
+
+    foreach (string keyString; hotkeyString.split("+")) {
+        string normalizedKey = keyString.strip.toUpper;
+
+        switch (normalizedKey) {
+            case "SHIFT": config.modFlags |= core.sys.windows.winuser.MOD_SHIFT; break;
+            case "CTRL": config.modFlags |= core.sys.windows.winuser.MOD_CONTROL; break;
+            case "ALT": config.modFlags |= core.sys.windows.winuser.MOD_ALT; break;
+            case "WIN": config.modFlags |= core.sys.windows.winuser.MOD_WIN; break;
+            default:
+            config.key = ("VK_" ~ normalizedKey).to!VKEY;
+            break;
+        }
+    }
+
+    return config;
+}
+
 void initialize() {
     try {
         initKeysyms(executableDir);
@@ -460,6 +496,12 @@ void initialize() {
         }
 
         configAutoNumlock = configJson["autoNumlock"].boolean;
+
+        // Parse hotkeys (might be null -> user doesn't want to use hotkey)
+        if (configJson["hotkeys"]["toggleActivation"].type == JSONType.STRING)
+            configHotkeyToggleActivation = parseHotkey(configJson["hotkeys"]["toggleActivation"].str);
+        if (configJson["hotkeys"]["toggleOSK"].type == JSONType.STRING)
+            configHotkeyToggleOSK = parseHotkey(configJson["hotkeys"]["toggleOSK"].str);
     } catch (Exception e) {
         string text = "Beim Starten von ReNeo ist ein Fehler aufgetreten:\n" ~ e.msg;
         MessageBox(hwnd, text.toUTF16z, "Fehler beim Initialisieren".toUTF16z, MB_OK | MB_ICONERROR);
@@ -535,8 +577,12 @@ void main(string[] args) {
     switchKeyboardHook();
     updateTrayTooltip();
 
-    // Register global (de)activation hotkey (Shift+Pause)
-    RegisterHotKey(hwnd, ID_HOTKEY_DEACTIVATE, core.sys.windows.winuser.MOD_SHIFT | MOD_NOREPEAT, VK_PAUSE);
+    // Register global (de)activation hotkey
+    if (configHotkeyToggleActivation.key)
+        RegisterHotKey(hwnd, ID_HOTKEY_DEACTIVATE, configHotkeyToggleActivation.modFlags, configHotkeyToggleActivation.key);
+    // Register alternate OSK hotkey (M3+F1 always works)
+    if (configHotkeyToggleOSK.key)
+        RegisterHotKey(hwnd, ID_HOTKEY_OSK, configHotkeyToggleOSK.modFlags, configHotkeyToggleOSK.key);
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
@@ -544,6 +590,7 @@ void main(string[] args) {
         DispatchMessage(&msg);
     }
 
+    UnregisterHotKey(hwnd, ID_HOTKEY_OSK);
     UnregisterHotKey(hwnd, ID_HOTKEY_DEACTIVATE);
 
     if (keyboardHookActive) { switchKeyboardHook(); }
