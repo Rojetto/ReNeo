@@ -16,21 +16,21 @@ jobs:
       - name: Check Pandoc version
         run: pandoc --version
       - name: Compile Readme to HTML
-        run: pandoc README.md -f markdown -t html -s --metadata pagetitle="ReNeo README" --css gh-pandoc.css -o README.html
+        run: pandoc README.md -f markdown -t html -s --metadata pagetitle="ReNeo README" --css docs/gh-pandoc.css -o README.html
       - name: Compile with Dub
         run: dub build --build=release
       - name: Replace config.default.json with Neo config
         run: mv -Force config.neo.json config.default.json
       - name: Create Neo ZIP file
-        run: 7z a -tzip ReNeo_Neo.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html gh-pandoc.css gh-pandoc-LICENSE.md reneo.exe
+        run: 7z a -tzip ReNeo_Neo.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html docs\ reneo.exe
       - name: Replace config.default.json with NeoQwertz config
         run: mv -Force config.neoqwertz.json config.default.json
       - name: Create NeoQwertz ZIP file
-        run: 7z a -tzip ReNeo_NeoQwertz.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html gh-pandoc.css gh-pandoc-LICENSE.md reneo.exe
+        run: 7z a -tzip ReNeo_NeoQwertz.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html docs\ reneo.exe
       - name: Replace config.default.json with Bone config
         run: mv -Force config.bone.json config.default.json
       - name: Create Bone ZIP file
-        run: 7z a -tzip ReNeo_Bone.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html gh-pandoc.css gh-pandoc-LICENSE.md reneo.exe
+        run: 7z a -tzip ReNeo_Bone.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html docs\ reneo.exe
       - name: Create Release
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
