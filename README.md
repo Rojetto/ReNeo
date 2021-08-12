@@ -7,6 +7,7 @@ ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine V
 ![ReNeo Bildschirmtastatur Ebene 1](docs/osk_screenshot.png "ReNeo Bildschirmtastatur")
 
 ## Installation
+
 1. *Optional*: [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/) normal installieren
 2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in ein Verzeichnis mit Schreibrechten entpacken (z. B. `C:\Users\[USER]\ReNeo`)
 3. `reneo.exe` starten oder zu Autostart hinzufügen. Über das Trayicon kann das Programm deaktiviert und beendet werden.
@@ -17,12 +18,14 @@ ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine V
 Neuen Release herunterladen und vorhandene Dateien mit den neuen überschreiben. Da `config.json` nicht im Release enthalten ist, bleiben Nutzereinstellungen erhalten.
 
 *Deinstallation*
+
 1. *Optional*: kbdneo nach Wiki-Anleitung deinstallieren
 2. ReNeo-Verzeichnis löschen und aus Autostart entfernen
 
 ## Funktionen
 
 Allgemein:
+
 - Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*
 - Im Traymenü kann zwischen Layouts gewechselt werden
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
@@ -35,6 +38,7 @@ Allgemein:
 - Weitere Layouts können in `layouts.json` hinzugefügt und angepasst werden
 
 Als Erweiterung zum nativen Treiber:
+
 - Steuertasten auf Ebene 4
 - Wird das native Layout als Neo-verwandt erkannt (`kbdneo.dll`, `kbdbone.dll`, `kbdgr2.dll`), schaltet ReNeo automatisch in den Erweiterungs-Modus. Umschalten zwischen Layouts ist ganz normal möglich.
 - Verbesserte Kompatibilität mit Qt- und GTK-Anwendungen. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
@@ -45,7 +49,9 @@ Als Erweiterung zum nativen Treiber:
 ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 
 ### Allgemeine Konfiguration
+
 `config.json` hat folgende Optionen:
+
 - `"standaloneMode"`:
     - `true` (Standard): Das native Layout (z. B. QWERTZ) wird von ReNeo mit dem ausgewählten Neo-Layout ersetzt. Hinweis: ist das native Layout bereits Neo-verwandt, verändert ReNeo das Layout nicht und schaltet stattdessen automatisch in den Erweiterungsmodus.
     - `false`: Ist das native Layout Neo-verwandt, schaltet ReNeo in den Erweiterungsmodus. Bei allen anderen Layouts deaktiviert sich ReNeo automatisch.
@@ -62,7 +68,9 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 - `"autoNumlock"`: Soll Numlock automatisch angeschaltet werden? Wenn die Tastatur einen echten Nummernblock besitzt, sollte diese Option für beste Kompatibilität immer auf `true` gesetzt sein. Bei Laptops mit nativer Numpad-Ebene auf dem Hauptfeld kann dieses Verhalten aber mit `false` deaktiviert werden.
 
 ### Layouts anpassen
+
 In `layouts.json` können Layouts angepasst und hinzugefügt werden. Jeder Eintrag besitzt folgende Parameter:
+
 - `"name"`: Name des Layouts, so wie er im Menü angezeigt wird.
 - `"dllName"` (Optional): Name der zugehörigen nativen Treiber-DLL. Existiert diese nicht, kann der Parameter weggelassen werden.
 - `"modifiers"`: Scancodes der Modifier Shift, Mod3 und Mod4 (links und rechts). Mit `+` am Ende wird das Extended-Bit gesetzt, zum Beispiel `36+` für die rechte Shift-Taste.
@@ -74,6 +82,7 @@ In `layouts.json` können Layouts angepasst und hinzugefügt werden. Jeder Eintr
     - `"label"`: (Optional) Beschriftung für Bildschirmtastatur. Als Fallback wird der Wert von `"char"` genutzt.
 
 Zum Erstellen neuer Layouts hat sich folgender Arbeitsablauf bewährt:
+
 1. Bestehendes Layout kopieren und neuen Namen eintragen
 2. Die Zeilen der Buchstabentasten (also ab Scancode `0C`) neu ordnen, sodass diese auf der Tastatur von oben links nach unten rechts gelesen in der richtigen Reihenfolge sind.
 3. Mit Blockauswahl die Scancodes eines bestehenden Layouts kopieren, und die (jetzt falsch geordneten) Scancodes des neuen Layouts überschreiben.
@@ -126,6 +135,7 @@ Es geht offenbar auch ReNeo im Standalone-Modus auf dem lokalen System mit QWERT
 ## Kompilieren
 ReNeo ist in D geschrieben und nutzt `dub` für Projektkonfiguration und Kompilation.
 Es gibt zwei wichtige Kompilationsvarianten:
+
 1. Debug mit `dub build`: Neben Debuggingsymbolen öffnet die generierte EXE eine Konsole um Informationen ausgeben zu können.
 2. Release mit `dub build --build=release`: Optimierungen sind aktiviert und es wird keine Konsole geöffnet.
 
