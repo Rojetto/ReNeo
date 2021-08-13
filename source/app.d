@@ -31,6 +31,7 @@ bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
 SendKeyMode configSendKeyMode;
 bool configAutoNumlock;
+bool configFilterNeoModifiers;
 HotkeyConfig configHotkeyToggleActivation;
 HotkeyConfig configHotkeyToggleOSK;
 
@@ -496,6 +497,7 @@ void initialize() {
         }
 
         configAutoNumlock = configJson["autoNumlock"].boolean;
+        configFilterNeoModifiers = configJson["filterNeoModifiers"].boolean;
 
         // Parse hotkeys (might be null -> user doesn't want to use hotkey)
         if (configJson["hotkeys"]["toggleActivation"].type == JSONType.STRING)

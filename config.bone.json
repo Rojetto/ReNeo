@@ -2,6 +2,7 @@
     "standaloneLayout": "Bone",
     "standaloneMode": true,
     "sendKeyMode": "fakeNative",
+    "filterNeoModifiers": true,
     "autoNumlock": true,
     "osk": {
         "numpad": true,

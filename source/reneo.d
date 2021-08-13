@@ -11,7 +11,7 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import app : configSendKeyMode, configAutoNumlock, updateOSKAsync, toggleOSK, lastInputLocale;
+import app : configSendKeyMode, configAutoNumlock, configFilterNeoModifiers, updateOSKAsync, toggleOSK, lastInputLocale;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -693,8 +693,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
 
     // immediately eat M3 and M4 keys
+    // the events are filtered if we are in standalone mode ore filterNeoModifiers is true
+    // if we are in extension mode and filterNeoModifiers is false, let these events pass through
     if (isNeoModifier) {
-        return true;
+        return standaloneModeActive || configFilterNeoModifiers;
     }
 
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
