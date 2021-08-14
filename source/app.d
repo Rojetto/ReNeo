@@ -437,7 +437,7 @@ void initialize() {
         // Load default config (shipped with the program) as a base
         auto configJson = parseJSONFile("config.default.json");
         // Load user config if it exists
-        if (exists("config.json")) {
+        if (exists(buildPath(executableDir, "config.json"))) {
             auto userConfigJson = parseJSONFile("config.json");
 
             // Overwrite values from default config with user config settings
