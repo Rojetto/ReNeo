@@ -643,8 +643,10 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
 
     if (mod4Lock) {
-        if (mod4Down) {
-            // switch back to layer 1 while holding mod 4
+        // switch back to layer 1 while holding mod 4
+        // EXCEPT if we are in extension mode and "filterNeoModifiers" is false
+        // in that case we stay on layer 4, because the "real" M4 event interferes with layer 1 keys
+        if (mod4Down && (configFilterNeoModifiers || standaloneModeActive)) {
             layer = 1;
         } else {
             layer = 4;
@@ -719,14 +721,32 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     // translate keypress to NEO layout factoring in the current layer
     NeoKey nk = mapToNeo(scan, layer);
 
+    // not very pretty hack: if "filterNeoModifiers" is false, we only want to eat and replace navigation
+    // keys on layer 4 that don't work using kbdneo alone. for efficiency's sake we do a hardcoded check
+    // against those scancodes.
+    bool isLayer4NavKey = layer == 4 && (
+        scan == Scancode(0x09, false) ||
+        scan == Scancode(0x10, false) || scan == Scancode(0x11, false) || scan == Scancode(0x12, false) || scan == Scancode(0x13, false) || scan == Scancode(0x14, false) ||
+        scan == Scancode(0x1E, false) || scan == Scancode(0x1F, false) || scan == Scancode(0x20, false) || scan == Scancode(0x21, false) || scan == Scancode(0x22, false) ||
+        scan == Scancode(0x2C, false) || scan == Scancode(0x2D, false) || scan == Scancode(0x2E, false) || scan == Scancode(0x2F, false) || scan == Scancode(0x30, false)
+    );
+
+
     if (down) {
         auto composeResult = compose(nk);
 
         if (composeResult.type == ComposeResultType.PASS) {
             heldKeys[scan] = nk;
 
-            // Translate all layers for Numpad keys
-            if (layer >= 3 || isNumpadKey || standaloneModeActive) {
+            // We eat and replace keys under the following conditions:
+            // - Eat every key in standalone mode
+            // - Eat every numpad key (because they are not mapped according to spec in kbdneo)
+            // - For the extension mode, it depends on the config option "filterNeoModifiers"
+            //   - if true, eat every key on layers 3 and above
+            //   - if false, don't eat keys and instead leave the translation of those layers to kbdneo
+            //     except the navigation keys on layer 4 that are missing in kbdneo
+            //   - also eat every key if mod 4 lock is active, because that isn't handled in kbdneo
+            if (standaloneModeActive || isNumpadKey || (configFilterNeoModifiers && layer >= 3) || isLayer4NavKey || (mod4Lock && !mod4Down)) {
                 eat = true;
                 sendNeoKey(nk, scan, true);
             }
@@ -738,7 +758,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             }
         }
     } else {
-        if (layer >= 3 || isNumpadKey || standaloneModeActive) {
+        if (standaloneModeActive || isNumpadKey || (configFilterNeoModifiers && layer >= 3) || isLayer4NavKey || (mod4Lock && !mod4Down)) {
             eat = true;
 
             // release the key that is held for this vk
