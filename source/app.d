@@ -412,7 +412,9 @@ HotkeyConfig parseHotkey(string hotkeyString) {
     HotkeyConfig config;
     config.modFlags = MOD_NOREPEAT;
 
-    foreach (string keyString; hotkeyString.split("+")) {
+    auto keyStrings = hotkeyString.split("+");
+
+    foreach (i, keyString; keyStrings) {
         string normalizedKey = keyString.strip.toUpper;
 
         switch (normalizedKey) {
@@ -421,7 +423,11 @@ HotkeyConfig parseHotkey(string hotkeyString) {
             case "ALT": config.modFlags |= core.sys.windows.winuser.MOD_ALT; break;
             case "WIN": config.modFlags |= core.sys.windows.winuser.MOD_WIN; break;
             default:
-            config.key = ("VK_" ~ normalizedKey).to!VKEY;
+            if (i == keyStrings.length - 1) {
+                config.key = ("VK_" ~ normalizedKey).to!VKEY;
+            } else {
+                throw new Exception("Nicht existierender Hotkey-Modifier '" ~ keyString ~ "'. Mögliche Werte sind Shift, Ctrl, Alt, Win.");
+            }
             break;
         }
     }
