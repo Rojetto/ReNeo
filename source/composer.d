@@ -439,8 +439,12 @@ ComposeResult compose(NeoKey nk) nothrow {
             } else {
                 active = false;
                 debug_writeln("Compose aborted");
-                // Return and output typed compose sequence
-                return ComposeResult(ComposeResultType.ABORT, toUTF16(currentSequence));
+                // Return and output typed compose sequence, except if the last pressed key is Escape
+                if (nk.keysym == keysyms_by_name["Escape"]) {
+                    return ComposeResult(ComposeResultType.ABORT, ""w);
+                } else {
+                    return ComposeResult(ComposeResultType.ABORT, toUTF16(currentSequence));
+                }
             }
         }
     }
