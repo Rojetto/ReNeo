@@ -152,6 +152,7 @@ ComposeNode removeComposeRoot;
 
 bool active;
 ComposeNode *currentNode;
+dstring currentSequence;
 // Function pointer if currently switched to special compose mode
 SpecialComposeFunction currentSpecialMode;
 uint addedEntries;
@@ -363,6 +364,8 @@ ComposeResult compose(NeoKey nk) nothrow {
         foreach (startNode; composeRoot.next) {
             if (startNode.keysym == nk.keysym) {
                 active = true;
+                // Clear compose sequence at the beginning
+                currentSequence = "";
                 currentNode = &composeRoot;
                 break;
             }
@@ -388,6 +391,18 @@ ComposeResult compose(NeoKey nk) nothrow {
         } else {
             ComposeNode *next;
             bool foundNext;
+
+            // Add keysym to compose sequence, if it has a Unicode representation
+            dchar sequenceChar = 0;
+            if (nk.keysym in codepoints_by_keysym) {
+                sequenceChar = dchar(codepoints_by_keysym[nk.keysym]);
+            } else if (nk.keysym > KEYSYM_CODEPOINT_OFFSET) {
+                sequenceChar = dchar(nk.keysym - KEYSYM_CODEPOINT_OFFSET);
+            }
+            if (sequenceChar) {
+                debug_writeln("Added char to compose abort sequence: ", sequenceChar);
+                currentSequence ~= sequenceChar;
+            }
 
             foreach (nextIter; currentNode.next) {
                 if (nextIter.keysym == nk.keysym) {
@@ -424,7 +439,8 @@ ComposeResult compose(NeoKey nk) nothrow {
             } else {
                 active = false;
                 debug_writeln("Compose aborted");
-                return ComposeResult(ComposeResultType.ABORT, ""w);
+                // Return and output typed compose sequence
+                return ComposeResult(ComposeResultType.ABORT, toUTF16(currentSequence));
             }
         }
     }

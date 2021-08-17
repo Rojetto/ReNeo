@@ -54,6 +54,8 @@ struct NeoKey {
 
 uint[string] keysyms_by_name;
 uint[uint] keysyms_by_codepoint;
+uint[uint] codepoints_by_keysym;
+const KEYSYM_CODEPOINT_OFFSET = 0x01000000;
 
 void initKeysyms(string exeDir) {
     auto keysymfile = buildPath(exeDir, "keysymdef.h");
@@ -64,6 +66,7 @@ void initKeysyms(string exeDir) {
     auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
     keysyms_by_name.clear();
     keysyms_by_codepoint.clear();
+    codepoints_by_keysym.clear();
 
     File f = File(keysymfile, "r");
 	while(!f.eof()) {
@@ -75,6 +78,8 @@ void initKeysyms(string exeDir) {
                 uint codepoint = to!uint(m[3], 16);
                 keysyms_by_name[keysym_name] = key_code;
                 keysyms_by_codepoint[codepoint] = key_code;
+                // for quick reverse search
+                codepoints_by_keysym[key_code] = codepoint;
             } else if (auto m = matchFirst(l, no_unicode_pattern)) {
                 string keysym_name = m[1];
                 uint key_code = to!uint(m[2], 16);
@@ -100,7 +105,7 @@ uint parseKeysym(string keysym_str) {
             }
         }
 
-        return codepoint + 0x01000000;
+        return codepoint + KEYSYM_CODEPOINT_OFFSET;
     }
 
     debug_writeln("Keysym ", keysym_str, " not found.");
