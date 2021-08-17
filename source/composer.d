@@ -398,6 +398,8 @@ ComposeResult compose(NeoKey nk) nothrow {
                 sequenceChar = dchar(codepoints_by_keysym[nk.keysym]);
             } else if (nk.keysym > KEYSYM_CODEPOINT_OFFSET) {
                 sequenceChar = dchar(nk.keysym - KEYSYM_CODEPOINT_OFFSET);
+            } else if (nk.keytype == NeoKeyType.CHAR) {
+                sequenceChar = nk.char_code;
             }
             if (sequenceChar) {
                 debug_writeln("Added char to compose abort sequence: ", sequenceChar);
