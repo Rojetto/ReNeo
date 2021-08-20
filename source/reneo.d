@@ -57,6 +57,8 @@ uint[uint] keysyms_by_codepoint;
 uint[uint] codepoints_by_keysym;
 const KEYSYM_CODEPOINT_OFFSET = 0x01000000;
 
+// Initializes list of keysyms by a given keysymdef.h from X.org project,
+// see https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
 void initKeysyms(string exeDir) {
     auto keysymfile = buildPath(exeDir, "keysymdef.h");
     debug_writeln("Initializing keysyms from ", keysymfile);
@@ -93,8 +95,13 @@ void initKeysyms(string exeDir) {
 
 auto UNICODE_REGEX = regex(r"^U([0-9a-fA-F]+)$");
 
+// Parse a string by a lookup in the initialized keysym tables, either by name
+// or by codepoint. The latter works also for algorithmically defined strings
+// in the form "U00A0" to "U10FFFF" which represent any possible Unicode
+// character as hex value.
 uint parseKeysym(string keysym_str) {
     if (uint *keysym = keysym_str in keysyms_by_name) {
+        // The corresponding keysym is explicitly defined by the given name
         return *keysym;
     } else if (auto m = matchFirst(keysym_str, UNICODE_REGEX)) {
         uint codepoint = to!uint(m[1], 16);
@@ -102,10 +109,12 @@ uint parseKeysym(string keysym_str) {
         // Legacy keysyms for some Unicode values between 0x0100 and 0x30FF
         if (codepoint <= 0x30FF) {
             if (uint *keysym = codepoint in keysyms_by_codepoint) {
+                // If defined, return the legacy keysym value
                 return *keysym;
             }
         }
 
+        // Otherwise just return the keysym matching the codepoint with an offset
         return codepoint + KEYSYM_CODEPOINT_OFFSET;
     }
 

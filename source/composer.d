@@ -240,14 +240,15 @@ void initCompose(string exeDir) {
 
     debug_writeln("Loaded ", addedEntries, " compose sequences.");
 
+    const uint KEYSYM_MULTIKEY = parseKeysym("Multi_key");
     // Register unicode input special mode with prefix "♫uu"
-    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("u"), parseKeysym("u")], ""w, &composeUnicode), composeRoot);
+    addComposeEntry(ComposeFileLine([KEYSYM_MULTIKEY, parseKeysym("u"), parseKeysym("u")], ""w, &composeUnicode), composeRoot);
 
     // Register lower case roman numeral special mode with prefix "♫rn"
-    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("r"), parseKeysym("n")], ""w, &composeLowerRoman), composeRoot);
+    addComposeEntry(ComposeFileLine([KEYSYM_MULTIKEY, parseKeysym("r"), parseKeysym("n")], ""w, &composeLowerRoman), composeRoot);
     
     // Register upper case roman numeral special mode with prefix "♫RN"
-    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("R"), parseKeysym("N")], ""w, &composeUpperRoman), composeRoot);
+    addComposeEntry(ComposeFileLine([KEYSYM_MULTIKEY, parseKeysym("R"), parseKeysym("N")], ""w, &composeUpperRoman), composeRoot);
 
     // For unicode input
     KEYSYM_SPACE = parseKeysym("space");
