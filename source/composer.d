@@ -13,6 +13,7 @@ import std.format;
 import std.datetime.stopwatch;
 
 import reneo;
+import mapping : NeoKey;
 
 
 class ComposeParser {

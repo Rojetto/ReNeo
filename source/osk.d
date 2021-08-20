@@ -254,16 +254,25 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
                 }
 
                 label = layout.map[scan].layers[layerConsideringCapslock-1].label;
-            } else if (scan == layout.modifiers.shiftLeft || scan == layout.modifiers.shiftRight) {
-                label = "\u21e7";
-            } else if (scan == layout.modifiers.mod3Left || scan == layout.modifiers.mod3Right) {
-                label = "M3";
-            } else if (scan == layout.modifiers.mod4Left || scan == layout.modifiers.mod4Right) {
-                label = "M4";
             } else if (scan == Scancode(0x0E, false)) {
                 label = "\u232b"; // Backspace
             } else if (scan == Scancode(0x1C, true) || scan == Scancode(0x1C, false)) {
                 label = "\u21a9"; // Return or Numpad Return
+            } else if (scan in layout.modifiers) {
+                uint mod = layout.modifiers[scan] & 0xFFFE; // convert left and right variant to left variant
+                switch (mod) {
+                    case Modifier.LSHIFT: label = "\u21e7"; break;
+                    case Modifier.LCTRL: label = "Ctrl"; break;
+                    case Modifier.LALT: label = "Alt"; break;
+                    case Modifier.MOD3: label = "M3"; break;
+                    case Modifier.MOD4: label = "M4"; break;
+                    case Modifier.MOD5: label = "M5"; break;
+                    case Modifier.MOD6: label = "M6"; break;
+                    case Modifier.MOD7: label = "M7"; break;
+                    case Modifier.MOD8: label = "M8"; break;
+                    case Modifier.MOD9: label = "M9"; break;
+                    default: break;
+                }
             }
 
             cairo_set_source_rgba(cr, 0.95, 0.95, 0.95, 1.0);

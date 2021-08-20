@@ -6,11 +6,12 @@ import std.conv;
 import std.json;
 import std.algorithm;
 import std.array;
+import std.string;
 
 import reneo;
 
 const uint KEYSYM_VOID = 0xFFFFFF;
-const NeoKey VOID_KEY = NeoKey(KEYSYM_VOID, NeoKeyType.VKEY, VKEY.VK_VOID);
+NeoKey VOID_KEY = NeoKey(KEYSYM_VOID, NeoKeyType.VKEY, VKEY.VK_VOID);
 
 NeoLayout[] layouts;
 
@@ -210,29 +211,66 @@ enum VKEY {
     VK_VOID = 0xFF
 }
 
+enum Modifier {
+    SHIFT = 0xA0,
+    LSHIFT = 0xA0,  // values for native modifiers correspond to VKs
+    RSHIFT,
+    CTRL = 0xA2,
+    LCTRL = 0xA2,
+    RCTRL,
+    ALT = 0xA4,
+    LALT = 0xA4,
+    RALT,
+    MOD3 = 0x100,
+    LMOD3 = 0x100,
+    RMOD3,
+    MOD4 = 0x102,
+    LMOD4 = 0x102,
+    RMOD4,
+    // There is no left and right variant for MOD5+, because there is no Mod5 lock
+    // or a natural left and right position in the default layouts, so we don't need to differentiate
+    MOD5 = 0x104,
+    MOD6 = 0x106,
+    MOD7 = 0x108,
+    MOD8 = 0x10A,
+    MOD9 = 0x10C
+}
+
+// Contains state (true=down) for *some* modifiers.
+alias PartialModifierState = bool[Modifier];
+
 struct Scancode {
     uint scan;
     bool extended;  // whether the extended bit is set for this physical key
 }
 
+enum NeoKeyType {
+    VKEY,
+    CHAR
+}
+
+struct NeoKey {
+    uint keysym;
+    NeoKeyType keytype;
+    union {
+        VKEY vk_code;
+        wchar char_code;
+    }
+    PartialModifierState modifiers;
+    string label;
+}
+
 struct MapEntry {
-    NeoKey[6] layers;
+    NeoKey[] layers;
     bool capslockable; // is this key affected by capslock
 }
 
 struct NeoLayout {
     wstring name;
     wstring dllName;
-    struct Modifiers {
-        Scancode shiftLeft;
-        Scancode shiftRight;
-        Scancode mod3Left;
-        Scancode mod3Right;
-        Scancode mod4Left;
-        Scancode mod4Right;
-    }
-    Modifiers modifiers;
-    MapEntry[Scancode] map;  // map scancodes to a 6-array of keys for each layer and misc other info
+    Modifier[Scancode] modifiers;
+    PartialModifierState[] layers;  // required modifier state for each layer
+    MapEntry[Scancode] map;  // map scancodes to an array (usually 6 entries) of keys for each layer and misc other info
 }
 
 void initLayouts(JSONValue jsonLayoutArray) {
@@ -245,17 +283,27 @@ void initLayouts(JSONValue jsonLayoutArray) {
             // if there is no dllName this is a pure standalone layout
             layout.dllName = jsonLayout["dllName"].str.to!wstring;
         }
-        layout.modifiers.shiftLeft = parseScancode(jsonLayout["modifiers"]["shiftLeft"].str);
-        layout.modifiers.shiftRight = parseScancode(jsonLayout["modifiers"]["shiftRight"].str);
-        layout.modifiers.mod3Left = parseScancode(jsonLayout["modifiers"]["mod3Left"].str);
-        layout.modifiers.mod3Right = parseScancode(jsonLayout["modifiers"]["mod3Right"].str);
-        layout.modifiers.mod4Left = parseScancode(jsonLayout["modifiers"]["mod4Left"].str);
-        layout.modifiers.mod4Right = parseScancode(jsonLayout["modifiers"]["mod4Right"].str);
+
+        // Parse modifier mappings
+        foreach (string scancodeString, JSONValue jsonModifierName; jsonLayout["modifiers"]) {
+            layout.modifiers[parseScancode(scancodeString)] = parseModifier(jsonModifierName.str);
+        }
+
+        // Parse layer definitions
+        foreach (jsonPartialModifierState; jsonLayout["layers"].array) {
+            PartialModifierState pms;
+
+            foreach (string modifierName, JSONValue modifierState; jsonPartialModifierState) {
+                pms[parseModifier(modifierName)] = modifierState.boolean;
+            }
+
+            layout.layers ~= pms;
+        }
 
         foreach (string scancodeString, JSONValue jsonLayersArray; jsonLayout["map"]) {
             MapEntry entry;
-            for (int i = 0; i < 6; i++) {
-                entry.layers[i] = parseNeoKey(jsonLayersArray.array[i]);
+            for (int i = 0; i < layout.layers.length; i++) {
+                entry.layers ~= parseNeoKey(jsonLayersArray.array[i]);
             }
             layout.map[parseScancode(scancodeString)] = entry;
         }
@@ -282,6 +330,12 @@ NeoKey parseNeoKey(JSONValue jsonKey) {
     if ("vk" in jsonKey) {
         key.keytype = NeoKeyType.VKEY;
         key.vk_code = jsonKey["vk"].str.to!VKEY;
+
+        if ("mods" in jsonKey) {
+            foreach (string modifierName, JSONValue modifierState; jsonKey["mods"]) {
+                key.modifiers[parseModifier(modifierName)] = modifierState.boolean;
+            }
+        }
     } else if ("char" in jsonKey) {
         key.keytype = NeoKeyType.CHAR;
         key.char_code = jsonKey["char"].str.to!wstring[0];
@@ -301,4 +355,8 @@ Scancode parseScancode(string scancodeString) {
     bool extended = scancodeString.length == 3 && scancodeString[2] == '+';
     uint scan = scancodeString[0..2].to!uint(16);
     return Scancode(scan, extended);
+}
+
+Modifier parseModifier(string modifierName) {
+    return modifierName.toUpper.to!Modifier;
 }

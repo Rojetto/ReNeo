@@ -5,6 +5,47 @@
 - **Neo-Modifier**: Mod3, Mod4, ...
 - **NeoKey**: Ein Eintrag in der Keymap in `layouts.json`. Ordnet einer Taste auf einer bestimmten Ebene eine gewünschte Funktion zu. Das kann entweder ein bestimmtes Zeichen sein (**Char-Mapping**) oder eine Steuertaste (**VK-Mapping**).
 
+# Grundlegendes Prinzip
+Kern des Programms ist die Logik in der Funktion `keyboardHook`. Grob zusammengefasst werden nacheinander folgende Schritte abgearbeitet.
+
+## Ungewünschte Events filtern
+Wir ignorieren Unicode-Events (`VK_PACKET`), sowie alle Events, bei denen die `injected`-Flag ersetzt ist. Vermutlich kommen diese sowieso von uns und sollen nicht in einer Schleife landen.
+
+Außerdem filtern wir aktiv Fake-Events, die durch AltGr oder den Nummernblock vom Tastatur-Stack eingefügt werden.
+
+## Modifier-Zustände aktualisieren
+Durch das Senden von nativen Tastenkombinationen für Sonderzeichen, beliebig mappbare Modifier und VK-Mappings mit Modifiern auf beliebigen Ebenen ist deren Handhabung zunehmend kompliziert geworden. Die aktuelle Implementierung hat das Ziel, von einer komplexen Zustandsmaschine mit vielen einzelnen Flags und Sonderfällen wegzukommen und basiert auf folgendem gedanklichen Modell.
+
+Welche **Modifier** es gibt und wo diese auf der Tastatur verortet sind ist in `"modifiers"` im Layout definiert. Das deckt sowohl die **nativen Modifier** Shift, Strg und Alt (in linker und rechter Variante) als auch die **Neo-Modifier** Mod3, Mod4 (links und rechts) und höhere (ohne links/rechts) ab.
+
+Der **natürliche Modifier-Zustand** beschreibt, welche dieser Modifier gerade gedrückt sind. Dazu wird für jeden Modifier-Typ gespeichert, welche Scancodes gerade diesen Modifier drücken. Bei einem *Modifier-Down-Event*, wird der entsprechende Scancodes in dieser Datenstruktur ergänzt und das korrekte Modifier-Event durchgelassen oder gesendet. Grundsätzlich sollen Programme nur *native Modifier* sehen, *Neo-Modifier* werden gefiltert und deren Zustand nur intern behandelt. Beim *Modifier-Up-Event* wird der Scancode wieder aus der Datenstruktur entfernt. Nur wenn diese Taste die letzte war, die diesen Modifier gehalten hat, wird auch ein Up-Event für Programm̀e erzeugt (inklusive forcierter Modifier, siehe unten).
+
+## Aktuelle Ebene ermitteln
+
+Auf Basis des **natürlichen Modifier-Zustands** wird die aktuelle Ebene ermittelt. Die Ebenen in `"layers"` werden nacheinander getestet, und die erste passende wird übernommen.
+
+Dazu kommt die Logik für Capslock und Mod4-Lock. Aufgrund der vielen Spezialfälle ist diese Logik hardcoded und lässt sich nicht im Layout anpassen.
+
+Mit der aktuellen Ebene und dem gedrückten Scancode ergibt sich dann aus dem Mapping der NeoKey.
+
+## Compose
+
+Der Zugang zum Compose-Modul ist die Funktion `compose`, die bei jedem Tastendruck den aktuellen NeoKey übergeben bekommt. Kern des Moduls ist der **Compose-Baum**, dessen Verzweigungen dann während einer Compose-Sequenz geflogt werden. Je nach sich daraus ergebendem Compose-Zustand antwortet die Funktion mit einem Compose-Zustand. So wird der Tastendruck dann in der Hook-Funktion entweder unverändert durchgelassen, geschluckt (weil er Teil einer Compose-Sequenz ist) oder bei Abschluss einer Compose-Sequenz durch das Compose-Ergebnis ersetzt.
+
+## Tastenevents senden
+
+Je nach Mapping-Typ (VK oder Char) und Modus werden unterschiedliche Events erzeugt.
+
+VK-Mappings werden immer als VK-Events umgesetzt. Der Scancode ergibt sich aus einem Lookup im nativen Layout.
+
+Char-Mappings werden im Erweiterungsmodus als Unicode-Events realisiert. Im Standalone-Modus hingegen wird im nativen Layout nach einer Tastenkombination gesucht, die das gewünschte Zeichen erzeugt und dann diese Kombination gesendet. Falls das Zeichen nicht nativ existiert, wird auf ein Unicode-Event zurückgefallen.
+
+VK-Mappings können mit `"mods"` einige oder alle der *nativen Modifier* an oder aus forcieren. Der **forcierte Modifier-Zustand** beschreibt, welche Modifier gerade auf welchen Wert gezwungen werden. Die nicht spezifizierten Modifier werden nicht verändert. Über den gleichen Mechanismus funktionieren auch native Tastenkombinationen für Sonderzeichen bei Char-Mappings.
+
+Bei einem Down-Event einer solchen Taste wird der forcierte Modifier-Zustand entsprechend global gesetzt. Dann wird der natürliche Modifier-Zustand mit dem alten forcierten Modifier-Zustand kombiniert, um den alten **resultierenden Modifier-Zustand** zu ermitteln (der Zustand aus Sicht von Programmen). Äquivalent wird der natürliche Modifier-Zustand mit dem neuen forcierten Modifier-Zustand kombiniert, um den neuen resultierenden Modifier-Zustand zu erhalten. Dann senden wir die Modifier-Events, die sich aus der Differenz der beiden Zustände ergeben.
+
+Bei einem Up-Event wird überprüft, ob diese Taste die gleiche ist, die zuletzt gedrückt wurde und damit die aktuellen Modifier forciert wird. Falls ja, werden die forcierten Modifier zurückgesetzt, ansonsten werden sie beibehalten.
+
 
 # Erkenntnisse und Workarounds
 ## Numpad

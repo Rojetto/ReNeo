@@ -62,9 +62,6 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 - `"hotkeys"`: Hotkeys für verschiedene Funktionen. Beispiel: `"Ctrl+Alt+F5"` oder `"Shift+Alt+Key_A"`. Erlaubte Modifier sind `Shift`, `Ctrl`, `Alt`, `Win`. Die Haupttaste ist ein beliebiger VK aus [dieser Enum](https://github.com/Rojetto/ReNeo/blob/5bd304a7c42c768ed45813095ab5fbc69103773c/source/mapping.d#L17), die auf der [Win32-Doku](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) basiert. Ist ein Wert `null`, wird kein globaler Hotkey angelegt.
     - `"toggleActivation"`: ReNeo aktivieren/deaktivieren
     - `"toggleOSK"`: Bildschirmtastatur öffnen/schließen. Zusätzlich zu dem hier konfigurierten Hotkey funktioniert immer `M3+F1`.
-- `"sendKeyMode"`: *Experimentell*. 
-    - `fakeNative` (Standard): Buchstaben und Sonderzeichen, die im nativen Layout existieren, werden über entsprechende Tastenanschläge und -kombinationen simuliert. So sieht es für Anwendungen aus, als ob  das native Layout ganz normal verwendet wird.
-    - `honest`: Sonderzeichen werden grundsätzlich als Unicode-Pakete gesendet.
 - `"autoNumlock"`: Soll Numlock automatisch angeschaltet werden? Wenn die Tastatur einen echten Nummernblock besitzt, sollte diese Option für beste Kompatibilität immer auf `true` gesetzt sein. Bei Laptops mit nativer Numpad-Ebene auf dem Hauptfeld kann dieses Verhalten aber mit `false` deaktiviert werden.
 - `"filterNeoModifiers"`:
     - `true` (Standard): Die Tastenevents für M3 und M4 werden im Erweiterungsmodus von ReNeo weggefiltert, Anwendungen bekommen von diesen Tasten also nichts mit. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
@@ -76,13 +73,15 @@ In `layouts.json` können Layouts angepasst und hinzugefügt werden. Jeder Eintr
 
 - `"name"`: Name des Layouts, so wie er im Menü angezeigt wird.
 - `"dllName"` (Optional): Name der zugehörigen nativen Treiber-DLL. Existiert diese nicht, kann der Parameter weggelassen werden.
-- `"modifiers"`: Scancodes der Modifier Shift, Mod3 und Mod4 (links und rechts). Mit `+` am Ende wird das Extended-Bit gesetzt, zum Beispiel `36+` für die rechte Shift-Taste.
+- `"modifiers"`: Scancodes aller Modifier, auch alle nativen Modifier müssen hier gemappt werden. Mit `+` am Ende des Scancodes wird das Extended-Bit gesetzt, zum Beispiel `36+` für die rechte Shift-Taste. Mögliche Modifier sind `LShift`, `LCtrl`, `LAlt`, `LMod3`, `LMod4` (jeweils auch rechte Variante) sowie weitere Mod-Tasten `Mod5` bis `Mod9`.
+- `"layers"`: Modifier-Kombinationen für jede Ebene. Die Ebenen werden zur Laufzeit nacheinander getestet und die erste Ebene übernommen, deren Modifier die spezifizierten Werte haben.
 - `"capslockableKeys"`: Array von Scancodes, die von Capslock beeinflusst werden sollen. Typischerweise sind das alle Buchstaben, inklusive „äöüß“.
-- `"map"`: Das tatsächliche Layout in Form von Arrays mit 6 Elementen (für die 6 Ebenen) für jeden Scancode. Jeder Eintrag enthält dabei
+- `"map"`: Das tatsächliche Layout in Form von Arrays für jeden Scancode. Jeder Eintrag enthält so viele Einträge, wie Ebenen in `"layers"` definiert wurden, mit folgendem Inhalt:
     - `"keysym"`: X11-Keysym der Taste, entweder aus `keysymdef.h` oder in der Form `U1234` für Unicode-Zeichen. Wird für Compose benutzt.
     - **Entweder** `"vk"`: Windows Virtual Key aus dem Enum `VKEY` in `mapping.d`. Nur genutzt für Steuertasten.
     - **Oder** `"char"`: Unicode-Zeichen, das mit der Taste erzeugt werden soll.
     - `"label"`: (Optional) Beschriftung für Bildschirmtastatur. Als Fallback wird der Wert von `"char"` genutzt.
+    - `"mods"`: (Optional, nur für VK-Mappings) Modifier, die gedrückt (`true`) oder losgelassen (`false`) werden sollen. Beispiel: `"mods": {"LCtrl": true, "LAlt": true}`. Mögliche Modifier sind `LShift`, `RShift`, `LCtrl`, `RCtrl`, `LAlt`.
 
 Zum Erstellen neuer Layouts hat sich folgender Arbeitsablauf bewährt:
 

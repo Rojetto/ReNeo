@@ -6,12 +6,13 @@ import std.regex;
 import std.conv;
 import std.path;
 import std.format;
+import std.array;
 
 import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import app : configSendKeyMode, configAutoNumlock, configFilterNeoModifiers, updateOSKAsync, toggleOSK, lastInputLocale;
+import app : configAutoNumlock, configFilterNeoModifiers, updateOSKAsync, toggleOSK, lastInputLocale;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -26,30 +27,23 @@ Scancode scanLCtrl = Scancode(0x1D, false);
 Scancode scanRCtrl = Scancode(0x1D, true);
 Scancode scanNumlock = Scancode(0x45, true);
 
+Scancode[Modifier] SCANCODE_BY_MODIFIER;
+
+static this() {
+    SCANCODE_BY_MODIFIER = [
+        Modifier.LSHIFT: Scancode(0x2A, false),
+        Modifier.RSHIFT: Scancode(0x36, false),
+        Modifier.LCTRL: Scancode(0x1D, false),
+        Modifier.RCTRL: Scancode(0x1D, true),
+        Modifier.LALT: Scancode(0x38, false),
+        Modifier.RALT: Scancode(0x38, true)
+    ];
+}
+
 void debug_writeln(T...)(T args) {
     debug {
         writeln(args);
     }
-}
-
-enum SendKeyMode {
-    HONEST,      // send scancode of physically pressed keys and "char" entries as unicode
-    FAKE_NATIVE  // send scancode of equivalent key in native layout and replace "char" entries with native key combos if possible
-}
-
-enum NeoKeyType {
-    VKEY,
-    CHAR
-}
-
-struct NeoKey {
-    uint keysym;
-    NeoKeyType keytype;
-    union {
-        VKEY vk_code;
-        wchar char_code;
-    }
-    string label;
 }
 
 uint[string] keysyms_by_name;
@@ -109,25 +103,11 @@ uint parseKeysym(string keysym_str) {
 }
 
 void sendVK(uint vk, Scancode scan, bool down) nothrow {
-    INPUT[] inputs;
-
-    // check virtual modifier keys currently held down and release them if necessary
-    if (virtualShiftDown) {
-        appendInput(inputs, VKEY.VK_SHIFT, scanLShift, false);
-        virtualShiftDown = false;
-    }
-    if (virtualAltDown) {
-        // Release virtual AltGr key, which consists of RAlt and LCtrl.
-        appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
-        appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, false);
-        virtualAltDown = false;
-    }
-
     // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
     scan.extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
-    appendInput(inputs, vk, scan, down);
+    auto inputStruct = buildInputStruct(vk, scan, down);
 
-    SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
+    SendInput(1, &inputStruct, INPUT.sizeof);
 }
 
 void sendUTF16(wchar unicode_char, bool down) nothrow {
@@ -144,9 +124,81 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
     SendInput(1, &input_struct, INPUT.sizeof);
 }
 
-// Persistent state of virtually pressed standard modifiers
-bool virtualShiftDown;
-bool virtualAltDown;
+const REAL_MODIFIERS = [Modifier.LSHIFT, Modifier.RSHIFT, Modifier.LCTRL, Modifier.RCTRL, Modifier.LALT, Modifier.RALT];
+
+void sendVKWithModifiers(uint vk, Scancode scan, PartialModifierState mods, bool down) nothrow {
+    // Send VK and necessary modifiers, so that the forced modifiers ("mods") are in desired state.
+    // Also store forced modifier state globally so that we know the "resulting modifier state"
+    // and only need to send the minimal modifier difference for the next keypress.
+
+    // Determine the modifier states as they appear to applications before and after applying
+    // this VKs forced modifiers
+    PartialModifierState oldModifierStates;
+    PartialModifierState newModifierStates;
+
+    foreach (mod; REAL_MODIFIERS) {
+        bool modState = isModifierHeld(mod);
+
+        bool oldModState = modState;
+        if (mod in forcedModifiers) {
+            oldModState = forcedModifiers[mod];
+        }
+        oldModifierStates[mod] = oldModState;
+
+        bool newModState = modState;
+        if (mod in mods) {
+            newModState = mods[mod];
+        }
+        newModifierStates[mod] = newModState;
+    }
+
+    // Up and down separately, so that we can easily insert elements at the front and back
+    // of both lists. In the end we first send all up events, then all down events.
+    INPUT[] upInputs;
+    INPUT[] downInputs;
+
+    foreach (mod; oldModifierStates.byKey) {
+        bool oldModState = oldModifierStates[mod];
+        bool newModState = newModifierStates[mod];
+
+        if (oldModState && !newModState) {
+            // up event
+            auto inputStruct = buildInputStruct(mod, SCANCODE_BY_MODIFIER[mod], false);
+
+            if (mod == Modifier.RALT) {
+                // release RAlt first in case of LCtrl+RAlt combo
+                try { upInputs.insertInPlace(0, inputStruct); } catch (Exception e) {}
+            } else {
+                upInputs ~= inputStruct;
+            }
+        } else if (!oldModState && newModState) {
+            // down event
+            auto inputStruct = buildInputStruct(mod, SCANCODE_BY_MODIFIER[mod], true);
+
+            if (mod == Modifier.LCTRL) {
+                // press LCtrl first in case of LCtrl+RAlt combo
+                try { downInputs.insertInPlace(0, inputStruct); } catch (Exception e) {}
+            } else {
+                downInputs ~= inputStruct;
+            }
+        }
+    }
+
+    forcedModifiers = mods;
+
+    // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
+    scan.extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
+    auto mainKeyStruct = buildInputStruct(vk, scan, down);
+
+    if (down) {
+        downInputs ~= mainKeyStruct;
+    } else {
+        try { upInputs.insertInPlace(0, mainKeyStruct); } catch (Exception e) {}
+    }
+
+    upInputs ~= downInputs;
+    SendInput(cast(uint) upInputs.length, upInputs.ptr, INPUT.sizeof);
+}
 
 void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
@@ -211,19 +263,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
         return;
     }
 
-    INPUT[] inputs;
-
-    // For up events, release the main key before the modifiers
-    if (!down) {
-        appendInput(inputs, vk, Scancode(MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, lastInputLocale), false), down);
-    }
-
-    // There are three flags that affect the overall result of a current Shift state:
-    // (1) a Shift key is physically pressed
-    // (2) Capslock is active
-    // (3) the key is capslockable
-
-    // The latter can be queried indirectly by reversely generating the Unicode char with a given
+    // The native capslockable state can be queried indirectly by reversely generating the Unicode char with a given
     // keyboard state. If the result of toUnicode() is different from the expected char (and capslock
     // is active), the key is capslockable.
     // The other way round, if a key is not capslockable, the Capslock state must not be considered.
@@ -231,77 +271,31 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     // This flag is set to false if Capslock is not active. This is because the capslockable state
     // can only be checked when Capslock is active (and only then has any influence).
     bool nativeCapslockable = (buf[0] != unicode_char) && capslock;
-    // Is any Shift key pressed physically?
-    bool physicalShiftDown = leftShiftDown || rightShiftDown;
-    // Calculate the overall Shift state from the flags described
-    bool overallShift = (!nativeCapslockable && physicalShiftDown)
-                      || (nativeCapslockable && (physicalShiftDown ^ capslock));
-    bool releasedShift = false;
 
-    // Release virtually pressed modifiers, if they must not be used for the virtual key combination
+    if (nativeCapslockable) {
+        shift = !shift; // Don't press Shift if Capslock in on or temporarily disable Capslock by pressing Shift
+    }
+
+    auto scan = Scancode(MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, lastInputLocale));
+    
+    PartialModifierState mods;
+
     if (down) {
-        // If the required and the current Shift states are already matching, an additionally pressed
-        // virtual Shift key must be released then.
-        if (virtualShiftDown && (overallShift == shift)) {
-            appendInput(inputs, VK_SHIFT, scanLShift, false);
-            virtualShiftDown = false;
-        }
-        if (virtualAltDown && !alt) {
-            // Release virtual AltGr key, which consists of RAlt and LCtrl.
-            appendInput(inputs, VKEY.VK_MENU, scanAltGr, false);
-            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, false);
-            virtualAltDown = false;
+        mods[Modifier.LSHIFT] = shift;  // always force Shift to correct value
+        mods[Modifier.RSHIFT] = false;
+
+        // Alt is assumed to always be AltGr (RAlt+LCtrl)
+        // If character doesn't need AltGr, leave Alt and Ctrl in natural state (pressed or not)
+        // so that shortcuts like Ctrl+S work normally
+        if (alt) {
+            mods[Modifier.LALT] = false;
+            mods[Modifier.RALT] = true;
+            mods[Modifier.LCTRL] = true;
+            mods[Modifier.RCTRL] = false;
         }
     }
 
-    // If the required and the current Shift states differ, the current Shift state is changed
-    if (overallShift != shift) {
-        if (physicalShiftDown) {
-            // If any Shift key is already down, changing can only be done by releasing the pressed
-            // key. This is executed for key-down events only. For key-up it does not matter and saves
-            // two unnecessary key events.
-            if (down) {
-                if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, false); }
-                if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, false); }
-                releasedShift = true;
-            }
-        } else if (virtualShiftDown != down) {
-            // At this point an additional virtual Shift key is necessary to reach the correct Shift state.
-            // Only if the (virtual) key is still up it will be pressed down.
-            appendInput(inputs, VK_SHIFT, scanLShift, down);
-            virtualShiftDown = down;
-        }
-    }
-    // The Alt modifier is considered as AltGr, which is equivalent to LCtrl and RAlt. To prevent
-    // Windows from inserting a fake LCtrl event (no matter if injected or not), we get there first
-    // by injecting both LCtrl and RAlt events.
-    // Accordingly, Ctrl will not be handled separately, as it occurs always in combination with Alt.
-    if (alt && virtualAltDown != down) {
-        // Order matters: for up-events the RAlt key has to come first. Otherwise the LCtrl is not
-        // considering "matching" because it would still have LLKHF_ALTDOWN flag set, and a fake LCtrl
-        // is then generated.
-        if (down) {
-            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
-            appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
-        } else {
-            appendInput(inputs, VKEY.VK_MENU, scanAltGr, down);
-            appendInput(inputs, VKEY.VK_CONTROL, scanLCtrl, down);
-        }
-        virtualAltDown = down;
-    }
-
-    // For down events, set the main key after the modifiers
-    if (down) {
-        appendInput(inputs, vk, Scancode(MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, lastInputLocale), false), down);
-    }
-
-    // Re-press Shift key(s)
-    if (releasedShift) {
-        if (leftShiftDown) { appendInput(inputs, VK_LSHIFT, scanLShift, true); }
-        if (rightShiftDown) { appendInput(inputs, VK_RSHIFT, scanRShift, true); }
-    }
-
-    SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
+    sendVKWithModifiers(vk, scan, mods, down);
 }
 
 void sendString(wstring content) nothrow {
@@ -323,7 +317,7 @@ void sendString(wstring content) nothrow {
     SendInput(cast(uint) inputs.length, inputs.ptr, INPUT.sizeof);
 }
 
-void appendInput(ref INPUT[] inputs, uint vk, Scancode scan, bool down) nothrow {
+INPUT buildInputStruct(uint vk, Scancode scan, bool down) nothrow {
     INPUT input_struct;
     input_struct.type = INPUT_KEYBOARD;
     input_struct.ki.wVk = cast(ushort) vk;
@@ -334,44 +328,42 @@ void appendInput(ref INPUT[] inputs, uint vk, Scancode scan, bool down) nothrow 
     if (scan.extended) {
         input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     }
-    inputs ~= input_struct;
+    return input_struct;
 }
 
 void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
-    if (nk.keysym == KEYSYM_VOID) {
-        // Special cases for weird mappings
-        if (nk.vk_code == VKEY.VK_LBUTTON) {
-            sendMouseClick(down);
-        } else if (nk.vk_code == VKEY.VK_UNDO) {
-            if (down) {
-                sendVK(VK_CONTROL, scanLCtrl, true);
-                sendVK('Z', Scancode(MapVirtualKeyEx(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC, lastInputLocale), false), true);
-            } else {
-                sendVK('Z', Scancode(MapVirtualKeyEx(VKEY.VK_KEY_Z, MAPVK_VK_TO_VSC, lastInputLocale), false), false);
-                sendVK(VK_CONTROL, scanLCtrl, false);
-            }
-        } else {
-            return;
-        }
+    if (down) {
+        lastNeoKey = nk;
+    }
+
+    // Special cases for weird mappings
+    if (nk.keysym == KEYSYM_VOID && nk.vk_code == VKEY.VK_LBUTTON) {
+        sendMouseClick(down);
+        return;
     }
 
     if (nk.keytype == NeoKeyType.VKEY) {
         Scancode scan = realScan;
-        switch (configSendKeyMode) {
-            case SendKeyMode.HONEST: break; // leave the real scan code
-            case SendKeyMode.FAKE_NATIVE:
-            auto map_result = MapVirtualKeyEx(nk.vk_code, MAPVK_VK_TO_VSC, lastInputLocale);
-            if (map_result) {
-                // vk does exist in native layout, use the fake native scan code
-                scan.extended = false;
-                scan.scan = map_result;
-            }
-            break;
-            default: break;
+        auto map_result = MapVirtualKeyEx(nk.vk_code, MAPVK_VK_TO_VSC, lastInputLocale);
+        if (map_result) {
+            // vk does exist in native layout, use the fake native scan code
+            scan.extended = false;
+            scan.scan = map_result;
         }
-        sendVK(nk.vk_code, scan, down);
+
+        PartialModifierState mods;
+        if (down) {
+            mods = nk.modifiers;
+        } else if (nk != lastNeoKey) {
+            // this is a down event for a key other than the one that forced the current modifiers
+            // so we leave them as is
+            mods = forcedModifiers;
+            // if this *was* a down event for the key that forced the current modifiers, we would
+            // want to reset them (which happens with a zero-initialized value for "mods")
+        }
+        sendVKWithModifiers(nk.vk_code, scan, mods, down);
     } else {
-        if (configSendKeyMode == SendKeyMode.FAKE_NATIVE && standaloneModeActive) {
+        if (standaloneModeActive) {
             sendUTF16OrKeyCombo(nk.char_code, down);
         } else {
             sendUTF16(nk.char_code, down);
@@ -449,13 +441,13 @@ void setNumlockState(bool state) nothrow {
     }
 }
 
+// For each modifier store the scancodes that are currently holding it down. Because there is no
+// built-in set type, we use a void[0][Scancode] type. Add a scancode with a[scan] = []; remove it with a.remove(scan).
+// In contrast to bool[Scancode], void[0][Scancode] does not allocate space for the "values" of each element.
+void[0][Scancode][Modifier] naturalHeldModifiers;
 
-bool leftShiftDown;
-bool rightShiftDown;
-bool leftMod3Down;
-bool rightMod3Down;
-bool leftMod4Down;
-bool rightMod4Down;
+// Modifier states that are forced down or up by a currently held VK mapping or char mapping
+PartialModifierState forcedModifiers;
 
 bool capslock;
 bool mod4Lock;
@@ -465,6 +457,9 @@ uint activeLayer = 1;
 
 // when we press a VK, store what NeoKey we send so that we can release it correctly later
 NeoKey[Scancode] heldKeys;
+// last key that was pressed. we only want to release forced modifiers when the key that
+// forced them (the one pressed in the last down event) is released.
+NeoKey lastNeoKey;
 
 NeoLayout *activeLayout;
 
@@ -473,6 +468,12 @@ bool standaloneModeActive;
 
 // the last event was a dual state numpad key up with held shift key, eat the next shift down
 bool expectFakeShiftDown;
+
+
+bool isModifierHeld(Modifier mod) nothrow {
+    // refers to "natural modifier state"
+    return (mod in naturalHeldModifiers) && (naturalHeldModifiers[mod].length > 0);
+}
 
 
 bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
@@ -484,12 +485,7 @@ bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
 
 void resetHookStates() nothrow {
     // Reset all stored states that might lead to unwanted locks
-    leftShiftDown = false;
-    rightShiftDown = false;
-    leftMod3Down = false;
-    rightMod3Down = false;
-    leftMod4Down = false;
-    rightMod4Down = false;
+    naturalHeldModifiers.clear();
 
     capslock = false;
     mod4Lock = false;
@@ -560,7 +556,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         return true;
     }
 
-    if (isDualStateNumpadKey && !down && (leftShiftDown || rightShiftDown)) {
+    if (isDualStateNumpadKey && !down && (isModifierHeld(Modifier.LSHIFT) || isModifierHeld(Modifier.RSHIFT))) {
         expectFakeShiftDown = true;
     }
 
@@ -570,78 +566,96 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         return true;  // Eat event
     }
 
-    // was the pressed key a NEO modifier (M3 or M4)? Because we don't want to send those to applications.
-    bool isNeoModifier;
+    bool isModifier;
+    bool shouldEatModifier;
 
-    // update stored modifier key states
-    // GetAsyncKeyState didn't seem to work for multiple simultaneous keys
+    // update stored modifier key states and send modifier keys
+    if (scan in activeLayout.modifiers) {
+        auto mod = activeLayout.modifiers[scan];
+        isModifier = true;
+        bool isNeoModifier = mod >= 0x100;
 
-    // Do not recognize fake shift events.
-    // For more information see https://github.com/Lexikos/AutoHotkey_L/blob/master/source/keyboard_mouse.h#L139
-    if (scan == activeLayout.modifiers.shiftLeft && scan.scan != SC_FAKE_LSHIFT) {
-        // CAPSLOCK by pressing both Shift keys
-        // leftShiftDown contains previous state
-        if (!leftShiftDown && down && rightShiftDown) {
-            sendVK(VK_CAPITAL, scanCapslock, true);
-            sendVK(VK_CAPITAL, scanCapslock, false);
+        // handle capslock and mod4 lock
+        if (down) {
+            if (mod == Modifier.LSHIFT && !isModifierHeld(Modifier.LSHIFT) && isModifierHeld(Modifier.RSHIFT) ||
+                mod == Modifier.RSHIFT && !isModifierHeld(Modifier.RSHIFT) && isModifierHeld(Modifier.LSHIFT)) {
+                sendVK(VK_CAPITAL, scanCapslock, true);
+                sendVK(VK_CAPITAL, scanCapslock, false);
+            }
+
+            if (mod == Modifier.LMOD4 && !isModifierHeld(Modifier.LMOD4) && isModifierHeld(Modifier.RMOD4) ||
+                mod == Modifier.RMOD4 && !isModifierHeld(Modifier.RMOD4) && isModifierHeld(Modifier.LMOD4)) {
+                mod4Lock = !mod4Lock;
+            }
         }
 
-        leftShiftDown = down;
-    } else if (scan == activeLayout.modifiers.shiftRight && scan.scan != SC_FAKE_RSHIFT) {
-        if (!rightShiftDown && down && leftShiftDown) {
-            sendVK(VK_CAPITAL, scanCapslock, true);
-            sendVK(VK_CAPITAL, scanCapslock, false);
+        if (!(mod in naturalHeldModifiers)) {
+            naturalHeldModifiers[mod] = null;
         }
 
-        rightShiftDown = down;
-    } else if (scan == activeLayout.modifiers.mod3Left) {
-        leftMod3Down = down;
-        isNeoModifier = true;
-    } else if (scan == activeLayout.modifiers.mod3Right) {
-        rightMod3Down = down;
-        isNeoModifier = true;
-    } else if (scan == activeLayout.modifiers.mod4Left) {
-        leftMod4Down = down;
-        isNeoModifier = true;
+        shouldEatModifier = standaloneModeActive || (isNeoModifier && configFilterNeoModifiers);
+        bool shouldSendModifier = shouldEatModifier && !isNeoModifier;
+        
+        if (down) {
+            // Add scancode to set for this modifier
+            naturalHeldModifiers[mod][scan] = [];
 
-        if (down && rightMod4Down) {
-            mod4Lock = !mod4Lock;
-        }
-    } else if (scan == activeLayout.modifiers.mod4Right) {
-        rightMod4Down = down;
-        isNeoModifier = true;
+            if (shouldSendModifier) {
+                sendVK(mod, SCANCODE_BY_MODIFIER[mod], true);
+            }
+        } else {
+            // Remove scancode from set
+            naturalHeldModifiers[mod].remove(scan);
 
-        if (down && leftMod4Down) {
-            mod4Lock = !mod4Lock;
+            // Only send up event if this was the last key holding this modifier and the modifier isn't forced down by some mapping
+            if (shouldSendModifier && !(isModifierHeld(mod) || mod in forcedModifiers && forcedModifiers[mod])) {
+                sendVK(mod, SCANCODE_BY_MODIFIER[mod], false);
+            }
         }
     }
-
-    bool shiftDown = leftShiftDown || rightShiftDown;
-    bool mod3Down = leftMod3Down || rightMod3Down;
-    bool mod4Down = leftMod4Down || rightMod4Down;
 
     // is capslock active?
     bool newCapslock = getCapslockState();
     bool capslockChanged = capslock != newCapslock;
     capslock = newCapslock;
 
-    // determine the layer we are currently on
-    uint layer = 1;
 
-    if (mod3Down && mod4Down) {
-        layer = 6;
-    } else if (shiftDown && mod3Down) {
-        layer = 5;
-    }  else if (mod4Down) {
-        layer = 4;
-    }  else if (mod3Down) {
-        layer = 3;
-    }  else if (shiftDown != (capslock && isCapslockable(scan))) {
-        // Shift layer is set if EITHER Shift is pressed OR Capslock is enabled (and the char is capslockable).
-        // In other cases (no Shift pressed, or both Shift and Capslock) the layer remains at 1.
-        layer = 2;
+    // determine the layer we are currently on
+    uint layer = 1;  // first layer is 1!!
+
+    // test all defined layers and choose first matching
+    foreach (i, pms; activeLayout.layers) {
+        bool allMatch = true;
+
+        foreach (mod; pms.byKey) { // we can't do (mod, modState; pms) because _aaApply2 is not nothrow 🙄
+            bool modState = pms[mod];
+            // "mod ^ 1" converts left to right variant and vice versa
+            if (modState && !(isModifierHeld(mod) || isModifierHeld(cast(Modifier) (mod ^ 1))) ||
+                !modState && (isModifierHeld(mod) || isModifierHeld(cast(Modifier) (mod ^ 1)))) {
+                allMatch = false;
+                break;
+            }
+        }
+
+        if (allMatch) {
+            layer = cast(uint) i + 1;
+            break;
+        }
     }
 
+    bool shiftDown = isModifierHeld(Modifier.LSHIFT) || isModifierHeld(Modifier.RSHIFT);
+    bool mod4Down = isModifierHeld(Modifier.LMOD4) || isModifierHeld(Modifier.RMOD4);
+
+    // handle capslock
+    if (capslock && isCapslockable(scan)) {
+        if (shiftDown && layer == 2) {
+            layer = 1;
+        } else if (!shiftDown && layer == 1) {
+            layer = 2;
+        }
+    }
+
+    // handle mod4 lock
     if (mod4Lock) {
         // switch back to layer 1 while holding mod 4
         // EXCEPT if we are in extension mode and "filterNeoModifiers" is false
@@ -671,7 +685,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     }
 
     // Toggle OSK on M3+F1
-    if (vk == VK_F1 && down && mod3Down) {
+    if (vk == VK_F1 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
         toggleOSK();
         return true;  // Eat F1
     }
@@ -694,11 +708,8 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         heldKeys.clear();
     }
 
-    // immediately eat M3 and M4 keys
-    // the events are filtered if we are in standalone mode ore filterNeoModifiers is true
-    // if we are in extension mode and filterNeoModifiers is false, let these events pass through
-    if (isNeoModifier) {
-        return standaloneModeActive || configFilterNeoModifiers;
+    if (isModifier) {
+        return shouldEatModifier;
     }
 
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.

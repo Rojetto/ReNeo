@@ -1,7 +1,6 @@
 {
     "standaloneLayout": "Neo",
     "standaloneMode": true,
-    "sendKeyMode": "fakeNative",
     "filterNeoModifiers": true,
     "autoNumlock": true,
     "osk": {
