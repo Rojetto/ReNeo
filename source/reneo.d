@@ -99,7 +99,8 @@ uint parseKeysym(string keysym_str) {
     } else if (auto m = matchFirst(keysym_str, UNICODE_REGEX)) {
         uint codepoint = to!uint(m[1], 16);
 
-        if (codepoint <= 0xFFFF) {
+        // Legacy keysyms for some Unicode values between 0x0100 and 0x30FF
+        if (codepoint <= 0x30FF) {
             if (uint *keysym = codepoint in keysyms_by_codepoint) {
                 return *keysym;
             }
