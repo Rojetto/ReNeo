@@ -54,7 +54,11 @@ struct NeoKey {
 
 uint[string] keysyms_by_name;
 uint[uint] keysyms_by_codepoint;
+uint[uint] codepoints_by_keysym;
+const KEYSYM_CODEPOINT_OFFSET = 0x01000000;
 
+// Initializes list of keysyms by a given keysymdef.h from X.org project,
+// see https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
 void initKeysyms(string exeDir) {
     auto keysymfile = buildPath(exeDir, "keysymdef.h");
     debug_writeln("Initializing keysyms from ", keysymfile);
@@ -64,6 +68,7 @@ void initKeysyms(string exeDir) {
     auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
     keysyms_by_name.clear();
     keysyms_by_codepoint.clear();
+    codepoints_by_keysym.clear();
 
     File f = File(keysymfile, "r");
 	while(!f.eof()) {
@@ -75,6 +80,8 @@ void initKeysyms(string exeDir) {
                 uint codepoint = to!uint(m[3], 16);
                 keysyms_by_name[keysym_name] = key_code;
                 keysyms_by_codepoint[codepoint] = key_code;
+                // for quick reverse search
+                codepoints_by_keysym[key_code] = codepoint;
             } else if (auto m = matchFirst(l, no_unicode_pattern)) {
                 string keysym_name = m[1];
                 uint key_code = to!uint(m[2], 16);
@@ -88,19 +95,27 @@ void initKeysyms(string exeDir) {
 
 auto UNICODE_REGEX = regex(r"^U([0-9a-fA-F]+)$");
 
+// Parse a string by a lookup in the initialized keysym tables, either by name
+// or by codepoint. The latter works also for algorithmically defined strings
+// in the form "U00A0" to "U10FFFF" which represent any possible Unicode
+// character as hex value.
 uint parseKeysym(string keysym_str) {
     if (uint *keysym = keysym_str in keysyms_by_name) {
+        // The corresponding keysym is explicitly defined by the given name
         return *keysym;
     } else if (auto m = matchFirst(keysym_str, UNICODE_REGEX)) {
         uint codepoint = to!uint(m[1], 16);
 
-        if (codepoint <= 0xFFFF) {
+        // Legacy keysyms for some Unicode values between 0x0100 and 0x30FF
+        if (codepoint <= 0x30FF) {
             if (uint *keysym = codepoint in keysyms_by_codepoint) {
+                // If defined, return the legacy keysym value
                 return *keysym;
             }
         }
 
-        return codepoint + 0x01000000;
+        // Otherwise just return the keysym matching the codepoint with an offset
+        return codepoint + KEYSYM_CODEPOINT_OFFSET;
     }
 
     debug_writeln("Keysym ", keysym_str, " not found.");
