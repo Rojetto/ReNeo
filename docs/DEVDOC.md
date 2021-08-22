@@ -18,7 +18,9 @@ Durch das Senden von nativen Tastenkombinationen für Sonderzeichen, beliebig ma
 
 Welche **Modifier** es gibt und wo diese auf der Tastatur verortet sind ist in `"modifiers"` im Layout definiert. Das deckt sowohl die **nativen Modifier** Shift, Strg und Alt (in linker und rechter Variante) als auch die **Neo-Modifier** Mod3, Mod4 (links und rechts) und höhere (ohne links/rechts) ab.
 
-Der **natürliche Modifier-Zustand** beschreibt, welche dieser Modifier gerade gedrückt sind. Dazu wird für jeden Modifier-Typ gespeichert, welche Scancodes gerade diesen Modifier drücken. Bei einem *Modifier-Down-Event*, wird der entsprechende Scancodes in dieser Datenstruktur ergänzt und das korrekte Modifier-Event durchgelassen oder gesendet. Grundsätzlich sollen Programme nur *native Modifier* sehen, *Neo-Modifier* werden gefiltert und deren Zustand nur intern behandelt. Beim *Modifier-Up-Event* wird der Scancode wieder aus der Datenstruktur entfernt. Nur wenn diese Taste die letzte war, die diesen Modifier gehalten hat, wird auch ein Up-Event für Programm̀e erzeugt (inklusive forcierter Modifier, siehe unten).
+Der **natürliche Modifier-Zustand** beschreibt, welche dieser Modifier gerade durch physische Tasten gedrückt sind. Das wird ein wenig dadurch verkompliziert, dass prinzipiell mehrere physische Tasten den gleichen Modifier drücken können. Wenn mehrere Tasten den gleichen Modifier halten, wollen wir den Modifier erst "loslassen", wenn die letzte physische Taste losgelassen wird.
+
+Dazu wird für jeden Modifier-Typ gespeichert, welche Scancodes gerade diesen Modifier drücken. Bei einem *Modifier-Down-Event*, wird der entsprechende Scancodes in dieser Datenstruktur ergänzt und das korrekte Modifier-Event durchgelassen oder gesendet. Grundsätzlich sollen Programme nur *native Modifier* sehen, *Neo-Modifier* werden gefiltert und deren Zustand nur intern behandelt. Beim *Modifier-Up-Event* wird der Scancode wieder aus der Datenstruktur entfernt. Nur wenn diese Taste die letzte war, die diesen Modifier gehalten hat, wird auch ein Up-Event für Programm̀e erzeugt (inklusive forcierter Modifier, siehe unten).
 
 ## Aktuelle Ebene ermitteln
 
@@ -42,9 +44,36 @@ Char-Mappings werden im Erweiterungsmodus als Unicode-Events realisiert. Im Stan
 
 VK-Mappings können mit `"mods"` einige oder alle der *nativen Modifier* an oder aus forcieren. Der **forcierte Modifier-Zustand** beschreibt, welche Modifier gerade auf welchen Wert gezwungen werden. Die nicht spezifizierten Modifier werden nicht verändert. Über den gleichen Mechanismus funktionieren auch native Tastenkombinationen für Sonderzeichen bei Char-Mappings.
 
-Bei einem Down-Event einer solchen Taste wird der forcierte Modifier-Zustand entsprechend global gesetzt. Dann wird der natürliche Modifier-Zustand mit dem alten forcierten Modifier-Zustand kombiniert, um den alten **resultierenden Modifier-Zustand** zu ermitteln (der Zustand aus Sicht von Programmen). Äquivalent wird der natürliche Modifier-Zustand mit dem neuen forcierten Modifier-Zustand kombiniert, um den neuen resultierenden Modifier-Zustand zu erhalten. Dann senden wir die Modifier-Events, die sich aus der Differenz der beiden Zustände ergeben.
+Der forcierte Zustand wird in einer globalen Variable zwischen Tastendrücken gespeichert. Kommt jetzt ein Down-Event einer Taste, die möglicherweise neue Modifier-Zustände forciert, muss ermittelt werden, mit welcher minimalen Menge an Modifier-Events vom einen in den anderen Zustand überführt werden kann.
 
-Bei einem Up-Event wird überprüft, ob diese Taste die gleiche ist, die zuletzt gedrückt wurde und damit die aktuellen Modifier forciert wird. Falls ja, werden die forcierten Modifier zurückgesetzt, ansonsten werden sie beibehalten.
+Zuerst wird der natürliche Zustand mit dem bisherigen (alten) forcierten Zustand verrechnet, um den bisherigen **resultierenden Modifier-Zustand** zu erhalten. Das ist der Zustand aus Sicht von anderen Programmen.
+
+```
+                        LShift         LCtrl          LAlt
+  natürlicher           1              0              0
++ alter forcierter                                    1         (LShift und LCtrl waren egal)
+= alter resultierender  1              0              1
+```
+
+Äquivalent erhält man mit dem (neuen) forcierten Zustand der gerade gedrückten Taste den neuen resultierenden Zustand.
+
+```
+                        LShift         LCtrl          LAlt
+  natürlicher           1              0              0
++ neuer forcierter      1              1              0
+= neuer resultierender  1              1              0
+```
+
+Vergleicht man die beiden resultierenden Zustände (alt und neu) wird klar, welche Modifier-Events gesendet werden müssen um von alt nach neu zu kommen.
+
+```
+                        LShift         LCtrl          LAlt
+alter resultierender    1              0              1
+neuer resultierender    1              1              0
+-> Nötige Events                       Down           Up
+```
+
+Bei einem Up-Event wollen wir prinzipiell die forcierten Modifier wieder in den natürlichen Zustand zurücksetzen. Das gilt aber nur, wenn das Up-Event zu der Taste gehört, die der Urheber des aktuellen forcierten Zustands ist, ansonsten wird der Zustand beibehalten.
 
 
 # Erkenntnisse und Workarounds
