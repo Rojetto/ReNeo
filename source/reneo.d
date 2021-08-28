@@ -273,7 +273,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     bool nativeCapslockable = (buf[0] != unicode_char) && capslock;
 
     if (nativeCapslockable) {
-        shift = !shift; // Don't press Shift if Capslock in on or temporarily disable Capslock by pressing Shift
+        shift = !shift; // Don't press Shift if Capslock is on or temporarily disable Capslock by pressing Shift
     }
 
     auto scan = Scancode(MapVirtualKeyEx(vk, MAPVK_VK_TO_VSC, lastInputLocale));
@@ -355,10 +355,10 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
         if (down) {
             mods = nk.modifiers;
         } else if (nk != lastNeoKey) {
-            // this is a down event for a key other than the one that forced the current modifiers
+            // this is an up event for a key other than the one that forced the current modifiers
             // so we leave them as is
             mods = forcedModifiers;
-            // if this *was* a down event for the key that forced the current modifiers, we would
+            // if this *was* an up event for the key that forced the current modifiers, we would
             // want to reset them (which happens with a zero-initialized value for "mods")
         }
         sendVKWithModifiers(nk.vk_code, scan, mods, down);
@@ -566,7 +566,11 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         return true;  // Eat event
     }
 
+    // is this key mapped to a modifier?
     bool isModifier;
+    // should we eat this modifier key event? We don't return immediately here because we want to
+    // update the current layer for the OSK as well as handle Capslock and Mod4-Lock further down
+    // the line. Instead we return after all of that is done.
     bool shouldEatModifier;
 
     // update stored modifier key states and send modifier keys
@@ -593,7 +597,11 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             naturalHeldModifiers[mod] = null;
         }
 
+        // In standalone mode, fully replace every modifier event
+        // In extension mode, only eat neo modifiers (and only if "filterNeoModifiers" is enabled), let
+        // all other modifier events pass
         shouldEatModifier = standaloneModeActive || (isNeoModifier && configFilterNeoModifiers);
+        // We should only send our own event if we ate the original and this is a native modifier
         bool shouldSendModifier = shouldEatModifier && !isNeoModifier;
         
         if (down) {
