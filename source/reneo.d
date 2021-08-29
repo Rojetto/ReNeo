@@ -281,8 +281,20 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     PartialModifierState mods;
 
     if (down) {
-        mods[Modifier.LSHIFT] = shift;  // always force Shift to correct value
-        mods[Modifier.RSHIFT] = false;
+        // Always force Shift to correct value
+        if (shift) {
+            // If we already physically hold a shift key, use that one to prevent unnecessary key events.
+            // Default to left shift.
+
+            if (isModifierHeld(Modifier.RSHIFT)) {
+                mods[Modifier.RSHIFT] = true;
+            } else {
+                mods[Modifier.LSHIFT] = true;
+            }
+        } else {
+            mods[Modifier.LSHIFT] = false;
+            mods[Modifier.RSHIFT] = false;
+        }
 
         // Alt is assumed to always be AltGr (RAlt+LCtrl)
         // If character doesn't need AltGr, leave Alt and Ctrl in natural state (pressed or not)
