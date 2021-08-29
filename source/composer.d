@@ -13,7 +13,7 @@ import std.format;
 import std.datetime.stopwatch;
 
 import reneo;
-import mapping : NeoKey;
+import mapping : NeoKey, NeoKeyType;
 
 
 class ComposeParser {
@@ -153,6 +153,7 @@ ComposeNode removeComposeRoot;
 
 bool active;
 ComposeNode *currentNode;
+dstring currentSequence;
 // Function pointer if currently switched to special compose mode
 SpecialComposeFunction currentSpecialMode;
 uint addedEntries;
@@ -240,14 +241,15 @@ void initCompose(string exeDir) {
 
     debug_writeln("Loaded ", addedEntries, " compose sequences.");
 
+    const uint KEYSYM_MULTIKEY = parseKeysym("Multi_key");
     // Register unicode input special mode with prefix "♫uu"
-    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("u"), parseKeysym("u")], ""w, &composeUnicode), composeRoot);
+    addComposeEntry(ComposeFileLine([KEYSYM_MULTIKEY, parseKeysym("u"), parseKeysym("u")], ""w, &composeUnicode), composeRoot);
 
     // Register lower case roman numeral special mode with prefix "♫rn"
-    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("r"), parseKeysym("n")], ""w, &composeLowerRoman), composeRoot);
+    addComposeEntry(ComposeFileLine([KEYSYM_MULTIKEY, parseKeysym("r"), parseKeysym("n")], ""w, &composeLowerRoman), composeRoot);
     
     // Register upper case roman numeral special mode with prefix "♫RN"
-    addComposeEntry(ComposeFileLine([parseKeysym("Multi_key"), parseKeysym("R"), parseKeysym("N")], ""w, &composeUpperRoman), composeRoot);
+    addComposeEntry(ComposeFileLine([KEYSYM_MULTIKEY, parseKeysym("R"), parseKeysym("N")], ""w, &composeUpperRoman), composeRoot);
 
     // For unicode input
     KEYSYM_SPACE = parseKeysym("space");
@@ -364,6 +366,8 @@ ComposeResult compose(NeoKey nk) nothrow {
         foreach (startNode; composeRoot.next) {
             if (startNode.keysym == nk.keysym) {
                 active = true;
+                // Clear compose sequence at the beginning
+                currentSequence = "";
                 currentNode = &composeRoot;
                 break;
             }
@@ -389,6 +393,20 @@ ComposeResult compose(NeoKey nk) nothrow {
         } else {
             ComposeNode *next;
             bool foundNext;
+
+            // Add keysym to compose sequence, if it has a Unicode representation
+            dchar sequenceChar = 0;
+            if (nk.keysym in codepoints_by_keysym) {
+                sequenceChar = dchar(codepoints_by_keysym[nk.keysym]);
+            } else if (nk.keysym > KEYSYM_CODEPOINT_OFFSET) {
+                sequenceChar = dchar(nk.keysym - KEYSYM_CODEPOINT_OFFSET);
+            } else if (nk.keytype == NeoKeyType.CHAR) {
+                sequenceChar = nk.char_code;
+            }
+            if (sequenceChar) {
+                debug_writeln("Added char to compose abort sequence: ", sequenceChar);
+                currentSequence ~= sequenceChar;
+            }
 
             foreach (nextIter; currentNode.next) {
                 if (nextIter.keysym == nk.keysym) {
@@ -425,7 +443,12 @@ ComposeResult compose(NeoKey nk) nothrow {
             } else {
                 active = false;
                 debug_writeln("Compose aborted");
-                return ComposeResult(ComposeResultType.ABORT, ""w);
+                // Return and output typed compose sequence, except if the last pressed key is Escape
+                if (nk.keysym == keysyms_by_name["Escape"]) {
+                    return ComposeResult(ComposeResultType.ABORT, ""w);
+                } else {
+                    return ComposeResult(ComposeResultType.ABORT, toUTF16(currentSequence));
+                }
             }
         }
     }
