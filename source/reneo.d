@@ -126,30 +126,30 @@ void sendUTF16(wchar unicode_char, bool down) nothrow {
 
 const REAL_MODIFIERS = [Modifier.LSHIFT, Modifier.RSHIFT, Modifier.LCTRL, Modifier.RCTRL, Modifier.LALT, Modifier.RALT];
 
-void sendVKWithModifiers(uint vk, Scancode scan, PartialModifierState mods, bool down) nothrow {
-    // Send VK and necessary modifiers, so that the forced modifiers ("mods") are in desired state.
+void sendVKWithModifiers(uint vk, Scancode scan, PartialModifierState newForcedModifiers, bool down) nothrow {
+    // Send VK and necessary modifiers, so that the forced modifiers ("newForcedModifiers") are in desired state.
     // Also store forced modifier state globally so that we know the "resulting modifier state"
     // and only need to send the minimal modifier difference for the next keypress.
 
-    // Determine the modifier states as they appear to applications before and after applying
+    // Determine the "resulting" modifier states as they appear to applications before and after applying
     // this VKs forced modifiers
-    PartialModifierState oldModifierStates;
-    PartialModifierState newModifierStates;
+    PartialModifierState oldResultingModStates;
+    PartialModifierState newResultingModStates;
 
     foreach (mod; REAL_MODIFIERS) {
         bool modState = isModifierHeld(mod);
 
         bool oldModState = modState;
-        if (mod in forcedModifiers) {
-            oldModState = forcedModifiers[mod];
+        if (mod in currentForcedModifiers) {
+            oldModState = currentForcedModifiers[mod];
         }
-        oldModifierStates[mod] = oldModState;
+        oldResultingModStates[mod] = oldModState;
 
         bool newModState = modState;
-        if (mod in mods) {
-            newModState = mods[mod];
+        if (mod in newForcedModifiers) {
+            newModState = newForcedModifiers[mod];
         }
-        newModifierStates[mod] = newModState;
+        newResultingModStates[mod] = newModState;
     }
 
     // Up and down separately, so that we can easily insert elements at the front and back
@@ -157,9 +157,9 @@ void sendVKWithModifiers(uint vk, Scancode scan, PartialModifierState mods, bool
     INPUT[] upInputs;
     INPUT[] downInputs;
 
-    foreach (mod; oldModifierStates.byKey) {
-        bool oldModState = oldModifierStates[mod];
-        bool newModState = newModifierStates[mod];
+    foreach (mod; oldResultingModStates.byKey) {
+        bool oldModState = oldResultingModStates[mod];
+        bool newModState = newResultingModStates[mod];
 
         if (oldModState && !newModState) {
             // up event
@@ -184,7 +184,7 @@ void sendVKWithModifiers(uint vk, Scancode scan, PartialModifierState mods, bool
         }
     }
 
-    forcedModifiers = mods;
+    currentForcedModifiers = newForcedModifiers;
 
     // for some reason we must set the 'extended' flag for these keys, otherwise they won't work correctly in combination with Shift (?)
     scan.extended |= vk == VK_INSERT || vk == VK_DELETE || vk == VK_HOME || vk == VK_END || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_UP || vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT || vk == VK_DIVIDE;
@@ -351,17 +351,17 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
             scan.scan = map_result;
         }
 
-        PartialModifierState mods;
+        PartialModifierState newForcedModifiers;
         if (down) {
-            mods = nk.modifiers;
+            newForcedModifiers = nk.modifiers;
         } else if (nk != lastNeoKey) {
             // this is an up event for a key other than the one that forced the current modifiers
             // so we leave them as is
-            mods = forcedModifiers;
+            newForcedModifiers = currentForcedModifiers;
             // if this *was* an up event for the key that forced the current modifiers, we would
-            // want to reset them (which happens with a zero-initialized value for "mods")
+            // want to reset them (which happens with a zero-initialized value for "newForcedModifiers")
         }
-        sendVKWithModifiers(nk.vk_code, scan, mods, down);
+        sendVKWithModifiers(nk.vk_code, scan, newForcedModifiers, down);
     } else {
         if (standaloneModeActive) {
             sendUTF16OrKeyCombo(nk.char_code, down);
@@ -447,7 +447,7 @@ void setNumlockState(bool state) nothrow {
 void[0][Scancode][Modifier] naturalHeldModifiers;
 
 // Modifier states that are forced down or up by a currently held VK mapping or char mapping
-PartialModifierState forcedModifiers;
+PartialModifierState currentForcedModifiers;
 
 bool capslock;
 bool mod4Lock;
@@ -616,7 +616,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
             naturalHeldModifiers[mod].remove(scan);
 
             // Only send up event if this was the last key holding this modifier and the modifier isn't forced down by some mapping
-            if (shouldSendModifier && !(isModifierHeld(mod) || mod in forcedModifiers && forcedModifiers[mod])) {
+            if (shouldSendModifier && !(isModifierHeld(mod) || mod in currentForcedModifiers && currentForcedModifiers[mod])) {
                 sendVK(mod, SCANCODE_BY_MODIFIER[mod], false);
             }
         }
@@ -632,14 +632,14 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
     uint layer = 1;  // first layer is 1!!
 
     // test all defined layers and choose first matching
-    foreach (i, pms; activeLayout.layers) {
+    foreach (i, layerModState; activeLayout.layers) {
         bool allMatch = true;
 
-        foreach (mod; pms.byKey) { // we can't do (mod, modState; pms) because _aaApply2 is not nothrow 🙄
-            bool modState = pms[mod];
+        foreach (mod; layerModState.byKey) { // we can't do (mod, modState; layerModState) because _aaApply2 is not nothrow 🙄
+            bool requiredModState = layerModState[mod];
             // "mod ^ 1" converts left to right variant and vice versa
-            if (modState && !(isModifierHeld(mod) || isModifierHeld(cast(Modifier) (mod ^ 1))) ||
-                !modState && (isModifierHeld(mod) || isModifierHeld(cast(Modifier) (mod ^ 1)))) {
+            if (requiredModState && !(isModifierHeld(mod) || isModifierHeld(cast(Modifier) (mod ^ 1))) ||
+                !requiredModState && (isModifierHeld(mod) || isModifierHeld(cast(Modifier) (mod ^ 1)))) {
                 allMatch = false;
                 break;
             }
