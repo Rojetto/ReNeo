@@ -9,6 +9,8 @@ import mapping;
 import composer;
 import trayicon;
 import osk;
+import gen.packageVersion;
+
 import std.utf;
 import std.string;
 import std.conv;
@@ -50,6 +52,7 @@ const UINT ID_MYTRAYICON = 0x1000;
 const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
 const UINT ID_TRAY_RELOAD_CONTEXTMENU = 0x1101;
 const UINT ID_TRAY_OSK_CONTEXTMENU = 0x1102;
+const UINT ID_TRAY_VERSION = 0x110E;
 const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x110F;
 const UINT ID_LAYOUTMENU = 0x1200;
 
@@ -567,6 +570,9 @@ void main(string[] args) {
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
+    string versionMsg = "Version " ~ packageVersion;
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_VERSION, versionMsg.toUTF16z);
+    EnableMenuItem(contextMenu, ID_TRAY_VERSION, MF_BYCOMMAND | MF_GRAYED);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
     SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
 

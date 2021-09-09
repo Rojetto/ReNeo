@@ -8,6 +8,9 @@
 		"user32", "gdi32"
 	],
     "sourceFiles": ["res\\reneo.res"],
+    "dependencies": {
+        "gen-package-version": "~>1.0.6"
+    },
 	"license": "GPL-3.0",
     "name": "reneo",
     "versions": ["Windows10"],
@@ -24,5 +27,6 @@
         }
     },
     "libs-windows-x86_64": ["lib/x86_64/cairo"],
-    "copyFiles-windows-x86_64": ["lib/x86_64/*.dll"]
+    "copyFiles-windows-x86_64": ["lib/x86_64/*.dll"],
+    "preGenerateCommands": ["dub run gen-package-version -- gen --root=$PACKAGE_DIR --src=source --no-ignore-file"]
 }

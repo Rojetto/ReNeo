@@ -7,3 +7,4 @@
 *.zip
 /*.dll
 config.json
+/source/gen/packageVersion.d
