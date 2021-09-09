@@ -118,23 +118,11 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     return CallNextHookEx(hHook, nCode, wParam, lParam);
 }
 
-NeoLayout * getAppropriateNeoLayout() nothrow {
-    HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
-    
-    wstring dllName = inputLocaleToDllName(inputLocale);
-
-    for (int i = 0; i < layouts.length; i++) {
-        if (layouts[i].dllName == dllName) {
-            return &layouts[i];
-        }
-    }
-
-    return null;
-}
-
 wstring inputLocaleToDllName(HKL inputLocale) nothrow {
     // Getting the layout name (which we can then look up in the registry) is a little tricky
     // https://stackoverflow.com/a/19321020/1610421
+
+    // Assume that inputLocale is not null!
     ActivateKeyboardLayout(inputLocale, KLF_SETFORPROCESS);
     wchar[KL_NAMELENGTH] layoutName;
     GetKeyboardLayoutNameW(layoutName.ptr);
@@ -154,8 +142,19 @@ wstring inputLocaleToDllName(HKL inputLocale) nothrow {
 }
 
 void checkKeyboardLayout() nothrow {
+    // Function is called when we suspect that the native Windows layout may have changed.
+    // This happens
+    // - on launch and reload
+    // - when enabling the keyboard hook
+    // - when manually selecting a standalone layout from the tray menu
+    // - on the first key event after a foreground window change
+
+    // inputLocale may be null, e.g. in console windows!
     HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
-    wstring dllName = inputLocaleToDllName(inputLocale);
+    wstring dllName;
+    if (inputLocale) {  // only look up the inputLocale if it's not null, otherwise dllName is empty
+        dllName = inputLocaleToDllName(inputLocale);
+    }
 
     NeoLayout *layout;
 
@@ -166,7 +165,8 @@ void checkKeyboardLayout() nothrow {
         }
     }
 
-    if (inputLocale) {
+    if (inputLocale) {  // check if inputLocale is null
+        // We got a valid inputLocale, cache it for further use
         lastInputLocale = inputLocale;
 
         if (layout == null) {
