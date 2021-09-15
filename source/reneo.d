@@ -7,6 +7,7 @@ import std.conv;
 import std.path;
 import std.format;
 import std.array;
+import std.datetime.systime;
 
 import core.sys.windows.windows;
 
@@ -29,6 +30,10 @@ Scancode scanNumlock = Scancode(0x45, true);
 
 Scancode[Modifier] SCANCODE_BY_MODIFIER;
 
+version(FileLogging) {
+    File logFile;
+}
+
 static this() {
     SCANCODE_BY_MODIFIER = [
         Modifier.LSHIFT: Scancode(0x2A, false),
@@ -38,11 +43,24 @@ static this() {
         Modifier.LALT: Scancode(0x38, false),
         Modifier.RALT: Scancode(0x38, true)
     ];
+
+    version(FileLogging) {
+        logFile = File("reneo_log.txt", "a+");
+    }
 }
 
-void debug_writeln(T...)(T args) {
+void debug_writeln(T...)(T args) nothrow {
     debug {
         writeln(args);
+    }
+
+    version(FileLogging) {
+        try {
+        auto currTime = Clock.currTime();
+        string timeString = format("%04d-%02d-%02d %02d:%02d:%02d.%03d ", currTime.year(), currTime.month(), currTime.day(), currTime.hour(), currTime.minute(), currTime.second(), cast(int) currTime.fracSecs().total!"msecs");
+        logFile.writeln(timeString, args);
+        logFile.flush();  // flush immediately in case we crash
+        } catch (Exception e) {}
     }
 }
 
@@ -219,7 +237,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
     debug {
         try {
-            writeln(format("Trying to send %s (0x%04X) ...", unicode_char, to!int(unicode_char)));
+            debug_writeln(format("Trying to send %s (0x%04X) ...", unicode_char, to!int(unicode_char)));
         }
         catch (Exception e) {}
     }
@@ -547,7 +565,7 @@ bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
         auto extended_text = scan.extended ? "(Ext) " : "      ";
 
         try {
-            writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scan.scan, to!string(vk), vk));
+            debug_writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scan.scan, to!string(vk), vk));
         } catch(Exception e) {}
     }
 

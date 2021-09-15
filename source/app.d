@@ -528,6 +528,9 @@ JSONValue parseJSONFile(string jsonFilename) {
 
 void main(string[] args) {
     debug_writeln("Starting ReNeo...");
+    version(FileLogging) {
+        debug_writeln("WARNING: File logging enabled, make sure you know what you're doing!");
+    }
     executableDir = dirName(thisExePath());
 
     initialize();

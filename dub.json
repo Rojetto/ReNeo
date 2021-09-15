@@ -15,12 +15,14 @@
     "name": "reneo",
     "versions": ["Windows10"],
     "buildTypes": {
-        "plain": {
-            "buildOptions": ["debugMode", "debugInfo"]
-        },
         "debug": {
             "buildOptions": ["debugMode", "debugInfo"],
             "buildRequirements": ["allowWarnings"]
+        },
+        "debug-log": {
+            "buildOptions": ["debugMode", "debugInfo"],
+            "buildRequirements": ["allowWarnings"],
+            "versions": ["FileLogging"]
         },
         "release": {
             "lflags": ["/SUBSYSTEM:windows", "/ENTRY:mainCRTStartup"]

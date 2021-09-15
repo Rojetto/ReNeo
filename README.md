@@ -136,10 +136,11 @@ Es geht offenbar auch ReNeo im Standalone-Modus auf dem lokalen System mit QWERT
 # Für Entwickler
 ## Kompilieren
 ReNeo ist in D geschrieben und nutzt `dub` für Projektkonfiguration und Kompilation.
-Es gibt zwei wichtige Kompilationsvarianten:
+Es gibt drei wichtige Kompilationsvarianten:
 
 1. Debug mit `dub build`: Neben Debuggingsymbolen öffnet die generierte EXE eine Konsole um Informationen ausgeben zu können.
-2. Release mit `dub build --build=release`: Optimierungen sind aktiviert und es wird keine Konsole geöffnet.
+2. Debug und Log mit `dub build --build=debug-log`: Wie debug, nur dass zusätzlich in `reneo_log.txt` alle Konsolenausgaben abgespeichert werden. Achtung: Hier können potentiell sensible Daten landen.
+3. Release mit `dub build --build=release`: Optimierungen sind aktiviert und es wird keine Konsole geöffnet.
 
 Die Ressourcendatei `res/reneo.res` wird mit `rc.exe` aus dem Windows SDK erstellt (x86-Version, die generierte res-Datei funktioniert sonst nicht). Dazu reicht der Befehl `rc.exe reneo.rc`.
 
