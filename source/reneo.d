@@ -268,12 +268,21 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     if (alt) { kb[VK_MENU] |= 128; }
     if (capslock) { kb[VK_CAPITAL] = 1; } // Set toggle state of capslock
     
-    if (ToUnicodeEx(vk, 0, kb.ptr, buf.ptr, 4, 0, lastInputLocale) == -1) {
+    auto unicodeTranslationResult = ToUnicodeEx(vk, 0, kb.ptr, buf.ptr, 4, 0, lastInputLocale);
+    if (unicodeTranslationResult == -1) {
         debug_writeln("Standard key combination results in a dead key, sending VK packet instead.");
         // The same dead key needs to be queried again, because ToUnicode() inserts the dead key (state)
         // into the queue, while anothèr call consumes the dead key.
         // See https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2597
         ToUnicodeEx(vk, 0, kb.ptr, buf.ptr, 4, 0, lastInputLocale);
+        sendUTF16(unicode_char, down);
+        return;
+    } else if (unicodeTranslationResult == 0) {
+        debug_writeln("Key combination does not exist natively, sending VK packet instead.");
+        sendUTF16(unicode_char, down);
+        return;
+    } else if (buf[0] != unicode_char) {
+        debug_writeln("Key combination does not produce desired character, sending VK packet instead.");
         sendUTF16(unicode_char, down);
         return;
     }
