@@ -9,7 +9,6 @@ import mapping;
 import composer;
 import trayicon;
 import osk;
-import gen.packageVersion;
 
 import std.utf;
 import std.string;
@@ -576,7 +575,7 @@ void main(string[] args) {
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
-    string versionMsg = "Version " ~ packageVersion;
+    string versionMsg = "Version %VERSION%";   // text is replaced by GitHub release action
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_VERSION, versionMsg.toUTF16z);
     EnableMenuItem(contextMenu, ID_TRAY_VERSION, MF_BYCOMMAND | MF_GRAYED);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);

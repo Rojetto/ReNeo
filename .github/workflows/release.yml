@@ -17,6 +17,8 @@ jobs:
         run: pandoc --version
       - name: Compile Readme to HTML
         run: pandoc README.md -f markdown -t html -s --metadata pagetitle="ReNeo README" --css docs/gh-pandoc.css -o README.html
+      - name: Replace version string in source code
+        run: ((Get-Content -path source\app.d -Raw ) -replace '%VERSION%',$Env:GITHUB_REF.Substring(10)) | Set-Content -path source\app.d
       - name: Compile debug version with Dub
         run: dub build --build=debug-log
       - name: Rename debug version

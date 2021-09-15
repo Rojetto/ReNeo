@@ -1,4 +1,0 @@
-This directory is automatically populated by gen-package-version with packageVersion.d at compile time.
-To ensure Git creates this directory, this text file is needed.
-Ideally, we wouldn't need this directory at all and just generate the file in the /source directory.
-This doesn't work unfortunately because gen-package-version always assumes a package directory.
