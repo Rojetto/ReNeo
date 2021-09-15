@@ -149,12 +149,15 @@ void checkKeyboardLayout() nothrow {
     // - when manually selecting a standalone layout from the tray menu
     // - on the first key event after a foreground window change
 
+    debug_writeln("Updating keyboard layout");
     // inputLocale may be null, e.g. in console windows!
     HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
+    debug_writeln("Found input locale ", inputLocale);
     wstring dllName;
     if (inputLocale) {  // only look up the inputLocale if it's not null, otherwise dllName is empty
         dllName = inputLocaleToDllName(inputLocale);
     }
+    debug_writeln("Input locale corresponds to dll file name '", dllName, "'");
 
     NeoLayout *layout;
 
