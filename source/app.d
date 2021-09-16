@@ -134,10 +134,15 @@ wstring inputLocaleToDllName(HKL inputLocale) nothrow {
 
     wchar[256] layoutFile;
     uint bufferSize = layoutFile.length;
-    RegGetValueW(HKEY_LOCAL_MACHINE, regKey.ptr, valueName.ptr, RRF_RT_REG_SZ, NULL, layoutFile.ptr, &bufferSize);
-    // get characters until null terminator
-    wchar[] dllName = layoutFile[0 .. wcslen(layoutFile.ptr)];
-    return dllName.to!wstring;
+
+    if (RegGetValueW(HKEY_LOCAL_MACHINE, regKey.ptr, valueName.ptr, RRF_RT_REG_SZ, NULL, layoutFile.ptr, &bufferSize) == ERROR_SUCCESS) {
+        // read layout file name, get characters until null terminator
+        wchar[] dllName = layoutFile[0 .. wcslen(layoutFile.ptr)];
+        return dllName.to!wstring;
+    } else {
+        // something went wrong, return null
+        return null;
+    }
 }
 
 void checkKeyboardLayout() nothrow {
@@ -162,7 +167,7 @@ void checkKeyboardLayout() nothrow {
 
     // try to find a layout in the config that matches the currently active keyboard layout DLL
     for (int i = 0; i < layouts.length; i++) {
-        if (layouts[i].dllName == dllName) {
+        if (dllName && layouts[i].dllName == dllName) {
             layout = &layouts[i];
         }
     }
