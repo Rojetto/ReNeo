@@ -25,18 +25,22 @@ jobs:
         run: ren reneo.exe reneo_debug.exe
       - name: Compile release version with Dub
         run: dub build --build=release
+      - name: Create directory for ZIP file
+        run: mkdir ReNeo
+      - name: Move release files into directory (except default config)
+        run: Move-Item -Path compose,cairo.dll,COPYING,keysymdef.h,layouts.json,README.md,README.html,docs,reneo.exe,reneo_debug.exe -Destination ReNeo
       - name: Replace config.default.json with Neo config
-        run: mv -Force config.neo.json config.default.json
+        run: mv -Force config.neo.json ReNeo\config.default.json
       - name: Create Neo ZIP file
-        run: 7z a -tzip ReNeo_Neo.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html docs\ reneo.exe reneo_debug.exe
+        run: 7z a -tzip ReNeo_Neo.zip ReNeo\
       - name: Replace config.default.json with NeoQwertz config
-        run: mv -Force config.neoqwertz.json config.default.json
+        run: mv -Force config.neoqwertz.json ReNeo\config.default.json
       - name: Create NeoQwertz ZIP file
-        run: 7z a -tzip ReNeo_NeoQwertz.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html docs\ reneo.exe reneo_debug.exe
+        run: 7z a -tzip ReNeo_NeoQwertz.zip ReNeo\
       - name: Replace config.default.json with Bone config
-        run: mv -Force config.bone.json config.default.json
+        run: mv -Force config.bone.json ReNeo\config.default.json
       - name: Create Bone ZIP file
-        run: 7z a -tzip ReNeo_Bone.zip compose\ cairo.dll config.default.json COPYING keysymdef.h layouts.json README.md README.html docs\ reneo.exe reneo_debug.exe
+        run: 7z a -tzip ReNeo_Bone.zip ReNeo\
       - name: Create Release
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
