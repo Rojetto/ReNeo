@@ -68,6 +68,11 @@ string quitMenuMsg       = "ReNeo beenden";
 string openOskMenuMsg    = "Bildschirmtastatur öffnen";
 string closeOskMenuMsg   = "Bildschirmtastatur schließen";
 
+string openOskMenuWithHotkeyMsg;  // strings are combined with loaded hotkey on initialization
+string closeOskMenuWithHotkeyMsg;
+string disableAppMenuWithHotkeyMsg;
+string enableAppMenuWithHotkeyMsg;
+
 const APPNAME            = "ReNeo"w;
 string executableDir;
 
@@ -367,16 +372,16 @@ void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
 void updateContextMenu() {
     if (!keyboardHookActive) {
         trayIcon.setIcon(iconDisabled);
-        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, enableAppMenuMsg);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, enableAppMenuWithHotkeyMsg);
     } else {
         trayIcon.setIcon(iconEnabled);
-        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuWithHotkeyMsg);
     }
 
     if (oskOpen) {
-        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, closeOskMenuMsg);
+        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, closeOskMenuWithHotkeyMsg);
     } else {
-        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, openOskMenuMsg);
+        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, openOskMenuWithHotkeyMsg);
     }
 }
 
@@ -444,6 +449,27 @@ HotkeyConfig parseHotkey(string hotkeyString) {
     return config;
 }
 
+string hotkeyToString(HotkeyConfig hotkey) {
+    string hotkeyString = "";
+
+    if (hotkey.modFlags & core.sys.windows.winuser.MOD_WIN) {
+        hotkeyString ~= "Win+";
+    }
+    if (hotkey.modFlags & core.sys.windows.winuser.MOD_CONTROL) {
+        hotkeyString ~= "Strg+";
+    }
+    if (hotkey.modFlags & core.sys.windows.winuser.MOD_ALT) {
+        hotkeyString ~= "Alt+";
+    }
+    if (hotkey.modFlags & core.sys.windows.winuser.MOD_SHIFT) {
+        hotkeyString ~= "Shift+";
+    }
+
+    hotkeyString ~= hotkey.key.to!VKEY.to!string[3..$].capitalize;
+
+    return hotkeyString;
+}
+
 void initialize() {
     try {
         initKeysyms(executableDir);
@@ -505,10 +531,21 @@ void initialize() {
         configFilterNeoModifiers = configJson["filterNeoModifiers"].boolean;
 
         // Parse hotkeys (might be null -> user doesn't want to use hotkey)
-        if (configJson["hotkeys"]["toggleActivation"].type == JSONType.STRING)
+        if (configJson["hotkeys"]["toggleActivation"].type == JSONType.STRING) {
             configHotkeyToggleActivation = parseHotkey(configJson["hotkeys"]["toggleActivation"].str);
-        if (configJson["hotkeys"]["toggleOSK"].type == JSONType.STRING)
+            string hotkeyString = hotkeyToString(configHotkeyToggleActivation);
+            disableAppMenuWithHotkeyMsg = disableAppMenuMsg ~ "\t" ~ hotkeyString;
+            enableAppMenuWithHotkeyMsg = enableAppMenuMsg ~ "\t" ~ hotkeyString;
+        }
+        if (configJson["hotkeys"]["toggleOSK"].type == JSONType.STRING) {
             configHotkeyToggleOSK = parseHotkey(configJson["hotkeys"]["toggleOSK"].str);
+            string hotkeyString = hotkeyToString(configHotkeyToggleOSK);
+            openOskMenuWithHotkeyMsg = openOskMenuMsg ~ "\t" ~ hotkeyString;
+            closeOskMenuWithHotkeyMsg = closeOskMenuMsg ~ "\t" ~ hotkeyString;
+        } else {
+            openOskMenuWithHotkeyMsg = openOskMenuMsg ~ "\tMod3+F1";
+            closeOskMenuWithHotkeyMsg = closeOskMenuMsg ~ "\tMod3+F1";
+        }
     } catch (Exception e) {
         string text = "Beim Starten von ReNeo ist ein Fehler aufgetreten:\n" ~ e.msg;
         MessageBox(hwnd, text.toUTF16z, "Fehler beim Initialisieren".toUTF16z, MB_OK | MB_ICONERROR);
@@ -576,9 +613,9 @@ void main(string[] args) {
         AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, layoutMenuMsg.toUTF16z);
         AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     }
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, openOskMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, openOskMenuWithHotkeyMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuWithHotkeyMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     string versionMsg = "Version %VERSION%";   // text is replaced by GitHub release action
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_VERSION, versionMsg.toUTF16z);
