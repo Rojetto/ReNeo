@@ -60,11 +60,11 @@ const UINT ID_HOTKEY_OSK = 0x002;
 
 const UINT LAYOUTMENU_POSITION = 0;
 
-string disableAppMenuMsg = "ReNeo deaktivieren";
-string enableAppMenuMsg  = "ReNeo aktivieren";
+string disableAppMenuMsg = "Deaktivieren";
+string enableAppMenuMsg  = "Aktivieren";
 string reloadMenuMsg     = "Neu laden";
-string layoutMenuMsg     = "Tastaturlayout auswählen";
-string quitMenuMsg       = "ReNeo beenden";
+string layoutMenuMsg     = "Tastaturlayout";
+string quitMenuMsg       = "Beenden";
 string openOskMenuMsg    = "Bildschirmtastatur öffnen";
 string closeOskMenuMsg   = "Bildschirmtastatur schließen";
 
@@ -617,7 +617,7 @@ void main(string[] args) {
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuWithHotkeyMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
-    string versionMsg = "Version %VERSION%";   // text is replaced by GitHub release action
+    string versionMsg = "ReNeo %VERSION%";   // text is replaced by GitHub release action
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_VERSION, versionMsg.toUTF16z);
     EnableMenuItem(contextMenu, ID_TRAY_VERSION, MF_BYCOMMAND | MF_GRAYED);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
