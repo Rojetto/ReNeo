@@ -253,8 +253,8 @@ struct NeoKey {
     uint keysym;
     NeoKeyType keytype;
     union {
-        VKEY vk_code;
-        wchar char_code;
+        VKEY vkCode;
+        wchar charCode;
     }
     PartialModifierState modifiers;
     string label;
@@ -319,7 +319,7 @@ void initLayouts(JSONValue jsonLayoutArray) {
 
 NeoKey parseNeoKey(JSONValue jsonKey) {
     NeoKey key;
-    key.vk_code = VKEY.VK_VOID;
+    key.vkCode = VKEY.VK_VOID;
     
     if ("keysym" in jsonKey) {
         key.keysym = parseKeysym(jsonKey["keysym"].str);
@@ -329,7 +329,7 @@ NeoKey parseNeoKey(JSONValue jsonKey) {
 
     if ("vk" in jsonKey) {
         key.keytype = NeoKeyType.VKEY;
-        key.vk_code = jsonKey["vk"].str.to!VKEY;
+        key.vkCode = jsonKey["vk"].str.to!VKEY;
 
         if ("mods" in jsonKey) {
             foreach (string modifierName, JSONValue modifierState; jsonKey["mods"]) {
@@ -338,7 +338,7 @@ NeoKey parseNeoKey(JSONValue jsonKey) {
         }
     } else if ("char" in jsonKey) {
         key.keytype = NeoKeyType.CHAR;
-        key.char_code = jsonKey["char"].str.to!wstring[0];
+        key.charCode = jsonKey["char"].str.to!wstring[0];
     }
 
     if ("label" in jsonKey) {

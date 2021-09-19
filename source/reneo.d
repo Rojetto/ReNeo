@@ -49,7 +49,7 @@ static this() {
     }
 }
 
-void debug_writeln(T...)(T args) nothrow {
+void debugWriteln(T...)(T args) nothrow {
     debug {
         writeln(args);
     }
@@ -64,43 +64,43 @@ void debug_writeln(T...)(T args) nothrow {
     }
 }
 
-uint[string] keysyms_by_name;
-uint[uint] keysyms_by_codepoint;
-uint[uint] codepoints_by_keysym;
+uint[string] keysymsByName;
+uint[uint] keysymsByCodepoint;
+uint[uint] codepointsByKeysym;
 const KEYSYM_CODEPOINT_OFFSET = 0x01000000;
 
 // Initializes list of keysyms by a given keysymdef.h from X.org project,
 // see https://cgit.freedesktop.org/xorg/proto/x11proto/tree/keysymdef.h
 void initKeysyms(string exeDir) {
     auto keysymfile = buildPath(exeDir, "keysymdef.h");
-    debug_writeln("Initializing keysyms from ", keysymfile);
+    debugWriteln("Initializing keysyms from ", keysymfile);
     // group 1: name, group 2: hex, group 3: unicode codepoint
-    auto unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*\/\*[ \(]U\+([0-9a-fA-F]{4,6}) (.*)[ \)]\*\/\s*$";
+    auto unicodePattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*\/\*[ \(]U\+([0-9a-fA-F]{4,6}) (.*)[ \)]\*\/\s*$";
     // group 1: name, group 2: hex, group 3 and 4: comment stuff
-    auto no_unicode_pattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
-    keysyms_by_name.clear();
-    keysyms_by_codepoint.clear();
-    codepoints_by_keysym.clear();
+    auto noUnicodePattern = r"^\#define XK_([a-zA-Z_0-9]+)\s+0x([0-9a-fA-F]+)\s*(\/\*\s*(.*)\s*\*\/)?\s*$";
+    keysymsByName.clear();
+    keysymsByCodepoint.clear();
+    codepointsByKeysym.clear();
 
     File f = File(keysymfile, "r");
 	while(!f.eof()) {
 		string l = f.readln();
         try {
-            if (auto m = matchFirst(l, unicode_pattern)) {
-                string keysym_name = m[1];
-                uint key_code = to!uint(m[2], 16);
+            if (auto m = matchFirst(l, unicodePattern)) {
+                string keysymName = m[1];
+                uint keyCode = to!uint(m[2], 16);
                 uint codepoint = to!uint(m[3], 16);
-                keysyms_by_name[keysym_name] = key_code;
-                keysyms_by_codepoint[codepoint] = key_code;
+                keysymsByName[keysymName] = keyCode;
+                keysymsByCodepoint[codepoint] = keyCode;
                 // for quick reverse search
-                codepoints_by_keysym[key_code] = codepoint;
-            } else if (auto m = matchFirst(l, no_unicode_pattern)) {
-                string keysym_name = m[1];
-                uint key_code = to!uint(m[2], 16);
-                keysyms_by_name[keysym_name] = key_code;
+                codepointsByKeysym[keyCode] = codepoint;
+            } else if (auto m = matchFirst(l, noUnicodePattern)) {
+                string keysymName = m[1];
+                uint keyCode = to!uint(m[2], 16);
+                keysymsByName[keysymName] = keyCode;
             }
         } catch (Exception e) {
-            debug_writeln("Could not parse line '", l, "', skipping. Error: ", e.msg);
+            debugWriteln("Could not parse line '", l, "', skipping. Error: ", e.msg);
         }
 	}
 }
@@ -111,16 +111,16 @@ auto UNICODE_REGEX = regex(r"^U([0-9a-fA-F]+)$");
 // or by codepoint. The latter works also for algorithmically defined strings
 // in the form "U00A0" to "U10FFFF" which represent any possible Unicode
 // character as hex value.
-uint parseKeysym(string keysym_str) {
-    if (uint *keysym = keysym_str in keysyms_by_name) {
+uint parseKeysym(string keysymStr) {
+    if (uint *keysym = keysymStr in keysymsByName) {
         // The corresponding keysym is explicitly defined by the given name
         return *keysym;
-    } else if (auto m = matchFirst(keysym_str, UNICODE_REGEX)) {
+    } else if (auto m = matchFirst(keysymStr, UNICODE_REGEX)) {
         uint codepoint = to!uint(m[1], 16);
 
         // Legacy keysyms for some Unicode values between 0x0100 and 0x30FF
         if (codepoint <= 0x30FF) {
-            if (uint *keysym = codepoint in keysyms_by_codepoint) {
+            if (uint *keysym = codepoint in keysymsByCodepoint) {
                 // If defined, return the legacy keysym value
                 return *keysym;
             }
@@ -130,7 +130,7 @@ uint parseKeysym(string keysym_str) {
         return codepoint + KEYSYM_CODEPOINT_OFFSET;
     }
 
-    debug_writeln("Keysym ", keysym_str, " not found.");
+    debugWriteln("Keysym ", keysymStr, " not found.");
 
     return KEYSYM_VOID;
 }
@@ -143,18 +143,18 @@ void sendVK(uint vk, Scancode scan, bool down) nothrow {
     SendInput(1, &inputStruct, INPUT.sizeof);
 }
 
-void sendUTF16(wchar unicode_char, bool down) nothrow {
-    INPUT input_struct;
-    input_struct.type = INPUT_KEYBOARD;
-    input_struct.ki.wVk = 0;
-    input_struct.ki.wScan = unicode_char;
+void sendUTF16(wchar unicodeChar, bool down) nothrow {
+    INPUT inputStruct;
+    inputStruct.type = INPUT_KEYBOARD;
+    inputStruct.ki.wVk = 0;
+    inputStruct.ki.wScan = unicodeChar;
     if (down) {
-        input_struct.ki.dwFlags = KEYEVENTF_UNICODE;
+        inputStruct.ki.dwFlags = KEYEVENTF_UNICODE;
     } else {
-        input_struct.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+        inputStruct.ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
     }
 
-    SendInput(1, &input_struct, INPUT.sizeof);
+    SendInput(1, &inputStruct, INPUT.sizeof);
 }
 
 const REAL_MODIFIERS = [Modifier.LSHIFT, Modifier.RSHIFT, Modifier.LCTRL, Modifier.RCTRL, Modifier.LALT, Modifier.RALT];
@@ -233,16 +233,16 @@ void sendVKWithModifiers(uint vk, Scancode scan, PartialModifierState newForcedM
     SendInput(cast(uint) upInputs.length, upInputs.ptr, INPUT.sizeof);
 }
 
-void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
+void sendUTF16OrKeyCombo(wchar unicodeChar, bool down) nothrow {
     /// Send a native key combo if there is one in the current layout, otherwise send unicode directly
     debug {
         try {
-            debug_writeln(format("Trying to send %s (0x%04X) ...", unicode_char, to!int(unicode_char)));
+            debugWriteln(format("Trying to send %s (0x%04X) ...", unicodeChar, to!int(unicodeChar)));
         }
         catch (Exception e) {}
     }
 
-    short result = VkKeyScanEx(unicode_char, lastInputLocale);
+    short result = VkKeyScanEx(unicodeChar, lastInputLocale);
     ubyte low = cast(ubyte) result;
     ubyte high = cast(ubyte) (result >> 8);
 
@@ -256,21 +256,21 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     if (low == 0xFF || kana || mod5 || mod6) {
         // char does not exist in native layout or requires exotic modifiers
-        debug_writeln("No standard key combination found, sending VK packet instead.");
-        sendUTF16(unicode_char, down);
+        debugWriteln("No standard key combination found, sending VK packet instead.");
+        sendUTF16(unicodeChar, down);
         return;
     }
 
     debug {
         try {
-            auto shift_text = shift ? "(Shift) " : "        ";
-            auto ctrl_text  = ctrl  ? "(Ctrl)  " : "        ";
-            auto alt_text   = alt   ? "(Alt)   " : "        ";
-            auto kana_text  = kana  ? "(Kana)  " : "        ";
-            auto mod5_text  = mod5  ? "(Mod5)  " : "        ";
-            auto mod6_text  = mod6  ? "(Mod6)  " : "        ";
-            debug_writeln("Key combination is " ~ to!string(cast(VKEY) vk) ~ " "
-                ~ shift_text ~ ctrl_text ~ alt_text ~ kana_text ~ mod5_text ~ mod6_text);
+            auto shiftText = shift ? "(Shift) " : "        ";
+            auto ctrlText  = ctrl  ? "(Ctrl)  " : "        ";
+            auto altText   = alt   ? "(Alt)   " : "        ";
+            auto kanaText  = kana  ? "(Kana)  " : "        ";
+            auto mod5Text  = mod5  ? "(Mod5)  " : "        ";
+            auto mod6Text  = mod6  ? "(Mod6)  " : "        ";
+            debugWriteln("Key combination is " ~ to!string(cast(VKEY) vk) ~ " "
+                ~ shiftText ~ ctrlText ~ altText ~ kanaText ~ mod5Text ~ mod6Text);
         } catch (Exception ex) {}
     }
 
@@ -288,20 +288,20 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
     
     auto unicodeTranslationResult = ToUnicodeEx(vk, 0, kb.ptr, buf.ptr, 4, 0, lastInputLocale);
     if (unicodeTranslationResult == -1) {
-        debug_writeln("Standard key combination results in a dead key, sending VK packet instead.");
+        debugWriteln("Standard key combination results in a dead key, sending VK packet instead.");
         // The same dead key needs to be queried again, because ToUnicode() inserts the dead key (state)
         // into the queue, while anothèr call consumes the dead key.
         // See https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2597
         ToUnicodeEx(vk, 0, kb.ptr, buf.ptr, 4, 0, lastInputLocale);
-        sendUTF16(unicode_char, down);
+        sendUTF16(unicodeChar, down);
         return;
     } else if (unicodeTranslationResult == 0) {
-        debug_writeln("Key combination does not exist natively, sending VK packet instead.");
-        sendUTF16(unicode_char, down);
+        debugWriteln("Key combination does not exist natively, sending VK packet instead.");
+        sendUTF16(unicodeChar, down);
         return;
-    } else if (buf[0] != unicode_char) {
-        debug_writeln("Key combination does not produce desired character, sending VK packet instead.");
-        sendUTF16(unicode_char, down);
+    } else if (buf[0] != unicodeChar) {
+        debugWriteln("Key combination does not produce desired character, sending VK packet instead.");
+        sendUTF16(unicodeChar, down);
         return;
     }
 
@@ -312,7 +312,7 @@ void sendUTF16OrKeyCombo(wchar unicode_char, bool down) nothrow {
 
     // This flag is set to false if Capslock is not active. This is because the capslockable state
     // can only be checked when Capslock is active (and only then has any influence).
-    bool nativeCapslockable = (buf[0] != unicode_char) && capslock;
+    bool nativeCapslockable = (buf[0] != unicodeChar) && capslock;
 
     if (nativeCapslockable) {
         shift = !shift; // Don't press Shift if Capslock is on or temporarily disable Capslock by pressing Shift
@@ -372,17 +372,17 @@ void sendString(wstring content) nothrow {
 }
 
 INPUT buildInputStruct(uint vk, Scancode scan, bool down) nothrow {
-    INPUT input_struct;
-    input_struct.type = INPUT_KEYBOARD;
-    input_struct.ki.wVk = cast(ushort) vk;
-    input_struct.ki.wScan = cast(ushort) scan.scan;
+    INPUT inputStruct;
+    inputStruct.type = INPUT_KEYBOARD;
+    inputStruct.ki.wVk = cast(ushort) vk;
+    inputStruct.ki.wScan = cast(ushort) scan.scan;
     if (!down) {
-        input_struct.ki.dwFlags = KEYEVENTF_KEYUP;
+        inputStruct.ki.dwFlags = KEYEVENTF_KEYUP;
     }
     if (scan.extended) {
-        input_struct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
+        inputStruct.ki.dwFlags |= KEYEVENTF_EXTENDEDKEY;
     }
-    return input_struct;
+    return inputStruct;
 }
 
 void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
@@ -391,18 +391,18 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
     }
 
     // Special cases for weird mappings
-    if (nk.keysym == KEYSYM_VOID && nk.vk_code == VKEY.VK_LBUTTON) {
+    if (nk.keysym == KEYSYM_VOID && nk.vkCode == VKEY.VK_LBUTTON) {
         sendMouseClick(down);
         return;
     }
 
     if (nk.keytype == NeoKeyType.VKEY) {
         Scancode scan = realScan;
-        auto map_result = MapVirtualKeyEx(nk.vk_code, MAPVK_VK_TO_VSC, lastInputLocale);
-        if (map_result) {
+        auto mapResult = MapVirtualKeyEx(nk.vkCode, MAPVK_VK_TO_VSC, lastInputLocale);
+        if (mapResult) {
             // vk does exist in native layout, use the fake native scan code
             scan.extended = false;
-            scan.scan = map_result;
+            scan.scan = mapResult;
         }
 
         PartialModifierState newForcedModifiers;
@@ -415,12 +415,12 @@ void sendNeoKey(NeoKey nk, Scancode realScan, bool down) nothrow {
             // if this *was* an up event for the key that forced the current modifiers, we would
             // want to reset them (which happens with a zero-initialized value for "newForcedModifiers")
         }
-        sendVKWithModifiers(nk.vk_code, scan, newForcedModifiers, down);
+        sendVKWithModifiers(nk.vkCode, scan, newForcedModifiers, down);
     } else {
         if (standaloneModeActive) {
-            sendUTF16OrKeyCombo(nk.char_code, down);
+            sendUTF16OrKeyCombo(nk.charCode, down);
         } else {
-            sendUTF16(nk.char_code, down);
+            sendUTF16(nk.charCode, down);
         }
     }
 }
@@ -446,17 +446,17 @@ void sendMouseClick(bool down) nothrow {
     bool mousedown = (GetKeyState(VK_LBUTTON) >> 16) != 0;
     if (mousedown == down) return;
 
-    INPUT input_struct;
-    input_struct.type = INPUT_MOUSE;
-    input_struct.mi.dx = 0;
-    input_struct.mi.dy = 0;
+    INPUT inputStruct;
+    inputStruct.type = INPUT_MOUSE;
+    inputStruct.mi.dx = 0;
+    inputStruct.mi.dy = 0;
     // If primary mouse button is swapped, use rightdown/rightup flags.
     DWORD dwFlags = down ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP;
     if (GetSystemMetrics(SM_SWAPBUTTON)) {
         dwFlags = dwFlags << 2;
     }
-    input_struct.mi.dwFlags = dwFlags;
-    SendInput(1, &input_struct, INPUT.sizeof);
+    inputStruct.mi.dwFlags = dwFlags;
+    SendInput(1, &inputStruct, INPUT.sizeof);
 }
 
 bool getCapslockState() nothrow {
@@ -549,23 +549,23 @@ void resetHookStates() nothrow {
 }
 
 
-bool keyboardHook(WPARAM msg_type, KBDLLHOOKSTRUCT msg_struct) nothrow {
-    auto vk = cast(VKEY) msg_struct.vkCode;
-    bool down = msg_type == WM_KEYDOWN || msg_type == WM_SYSKEYDOWN;
+bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
+    auto vk = cast(VKEY) msgStruct.vkCode;
+    bool down = msgType == WM_KEYDOWN || msgType == WM_SYSKEYDOWN;
     // TODO: do we need to use this somewhere?
-    bool sys = msg_type == WM_SYSKEYDOWN || msg_type == WM_SYSKEYUP;
-    auto scan = Scancode(cast(uint) msg_struct.scanCode, (msg_struct.flags & LLKHF_EXTENDED) > 0);
-    bool altdown = (msg_struct.flags & LLKHF_ALTDOWN) > 0;
-    bool injected = (msg_struct.flags & LLKHF_INJECTED) > 0;
+    bool sys = msgType == WM_SYSKEYDOWN || msgType == WM_SYSKEYUP;
+    auto scan = Scancode(cast(uint) msgStruct.scanCode, (msgStruct.flags & LLKHF_EXTENDED) > 0);
+    bool altdown = (msgStruct.flags & LLKHF_ALTDOWN) > 0;
+    bool injected = (msgStruct.flags & LLKHF_INJECTED) > 0;
 
     debug {
-        auto injected_text = injected      ? "(injected) " : "           ";
-        auto down_text     = down          ? "(down) " : " (up)  ";
-        auto alt_text      = altdown       ? "(Alt) " : "      ";
-        auto extended_text = scan.extended ? "(Ext) " : "      ";
+        auto injectedText = injected      ? "(injected) " : "           ";
+        auto downText     = down          ? "(down) " : " (up)  ";
+        auto altText      = altdown       ? "(Alt) " : "      ";
+        auto extendedText = scan.extended ? "(Ext) " : "      ";
 
         try {
-            debug_writeln(injected_text ~ down_text ~ alt_text ~ extended_text ~ format("| Scan 0x%04X | %s (0x%02X)", scan.scan, to!string(vk), vk));
+            debugWriteln(injectedText ~ downText ~ altText ~ extendedText ~ format("| Scan 0x%04X | %s (0x%02X)", scan.scan, to!string(vk), vk));
         } catch(Exception e) {}
     }
 

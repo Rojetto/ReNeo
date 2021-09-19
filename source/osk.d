@@ -150,17 +150,17 @@ void initOsk(JSONValue oskJson) {
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Segoe UI Symbol".toUTF16z);
     
-    foreach (HFONT win_font; WIN_FONTS) {
-        CAIRO_FONTS ~= cairo_win32_font_face_create_for_hfont(win_font);
+    foreach (HFONT winFont; WIN_FONTS) {
+        CAIRO_FONTS ~= cairo_win32_font_face_create_for_hfont(winFont);
     }
 }
 
 cairo_font_face_t* get_font_face_for_char(HDC hdc, string c) {
     for (int i = 0; i < WIN_FONTS.length - 1; i++) {
         SelectObject(hdc, WIN_FONTS[i]);
-        WORD glyph_index;
-        GetGlyphIndices(hdc, c.toUTF16z, 1, &glyph_index, GGI_MARK_NONEXISTING_GLYPHS);
-        if (glyph_index != 0xffff) {
+        WORD glyphIndex;
+        GetGlyphIndices(hdc, c.toUTF16z, 1, &glyphIndex, GGI_MARK_NONEXISTING_GLYPHS);
+        if (glyphIndex != 0xffff) {
             return CAIRO_FONTS[i];
         }
     }
@@ -169,14 +169,14 @@ cairo_font_face_t* get_font_face_for_char(HDC hdc, string c) {
     return CAIRO_FONTS[CAIRO_FONTS.length - 1];
 }
 
-void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
-    RECT win_rect;
-    GetWindowRect(hwnd, &win_rect);
-    const uint win_width = win_rect.right - win_rect.left;
-    const uint win_height = win_rect.bottom - win_rect.top;
+void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
+    RECT winRect;
+    GetWindowRect(hwnd, &winRect);
+    const uint winWidth = winRect.right - winRect.left;
+    const uint winHeight = winRect.bottom - winRect.top;
 
     // window is unsuitable for drawing
-    if (win_width == 0 || win_height == 0) {
+    if (winWidth == 0 || winHeight == 0) {
         return;
     }
     
@@ -184,7 +184,7 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
 
     // Offscreen hdc for painting
     HDC hdcMem = CreateCompatibleDC(hdcScreen);
-    HBITMAP hbmMem = CreateCompatibleBitmap(hdcScreen, win_width, win_height);
+    HBITMAP hbmMem = CreateCompatibleBitmap(hdcScreen, winWidth, winHeight);
     auto hOld = SelectObject(hdcMem, hbmMem);
 
     // Draw using offscreen hdc
@@ -203,20 +203,20 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     // Move coordinate system to keyboard coords
     // normal keys are 1 unit wide and high, (0, 0) is upper left,
     // with whole keyboard proportionally centered in window
-    float keyboard_width_px, keyboard_height_px;
+    float keyboardWidthPx, keyboardHeightPx;
     const float KEYBOARD_WIDTH = configOskNumpad ? KEYBOARD_WIDTH_WITH_NUMPAD : KEYBOARD_WIDTH_NO_NUMPAD;
     // should we letterbox left and right or on top and bottom?
-    if (win_width / win_height > KEYBOARD_WIDTH / KEYBOARD_HEIGHT) {
+    if (winWidth / winHeight > KEYBOARD_WIDTH / KEYBOARD_HEIGHT) {
         // letterbox left and right
-        keyboard_height_px = win_height;
-        keyboard_width_px = keyboard_height_px * KEYBOARD_WIDTH / KEYBOARD_HEIGHT;
+        keyboardHeightPx = winHeight;
+        keyboardWidthPx = keyboardHeightPx * KEYBOARD_WIDTH / KEYBOARD_HEIGHT;
     } else {
         // letterbox top and bottom
-        keyboard_width_px = win_width;
-        keyboard_height_px = keyboard_width_px * KEYBOARD_HEIGHT / KEYBOARD_WIDTH;
+        keyboardWidthPx = winWidth;
+        keyboardHeightPx = keyboardWidthPx * KEYBOARD_HEIGHT / KEYBOARD_WIDTH;
     }
-    cairo_translate(cr, (win_width - keyboard_width_px) / 2, (win_height - keyboard_height_px) / 2);
-    cairo_scale(cr, keyboard_width_px / KEYBOARD_WIDTH, keyboard_height_px / KEYBOARD_HEIGHT);
+    cairo_translate(cr, (winWidth - keyboardWidthPx) / 2, (winHeight - keyboardHeightPx) / 2);
+    cairo_scale(cr, keyboardWidthPx / KEYBOARD_WIDTH, keyboardHeightPx / KEYBOARD_HEIGHT);
 
     // Draw keys
     const float PADDING = 0.05;
@@ -238,7 +238,7 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
 
     cairo_set_font_size(cr, FONT_SIZE);
 
-    void show_key_label_centered(Scancode scan, float key_x, float key_width, float baseline) {
+    void showKeyLabelCentered(Scancode scan, float keyX, float keyWidth, float baseline) {
         if (layout != null) {
             string label;
             if (scan in layout.map) {    
@@ -280,38 +280,38 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
             auto labelz = label.toStringz;
             cairo_text_extents_t extents;
             cairo_text_extents(cr, labelz, &extents);
-            cairo_move_to(cr, key_x + (key_width - extents.width) / 2, baseline);
+            cairo_move_to(cr, keyX + (keyWidth - extents.width) / 2, baseline);
             cairo_show_text(cr, labelz);
         }
     }
 
     // Draw “regular” keys, i.e. keys with height 1
     foreach (key; configOskNumpad ? KEY_POSITIONS ~ KEY_POSITIONS_NUMPAD : KEY_POSITIONS) {    
-        round_rectangle(cr, key.x + PADDING, key.y + PADDING, key.width - 2*PADDING, 1 - 2*PADDING, CORNER_RADIUS);
+        roundRectangle(cr, key.x + PADDING, key.y + PADDING, key.width - 2*PADDING, 1 - 2*PADDING, CORNER_RADIUS);
         cairo_set_source(cr, KEY_COLOR);
         cairo_fill(cr);
 
-        show_key_label_centered(key.scan, key.x, key.width, key.y + BASE_LINE);
+        showKeyLabelCentered(key.scan, key.x, key.width, key.y + BASE_LINE);
     }
 
     // Draw special keys with height ≠ 1
     if (configOskNumpad) {
         // Numpad Add
-        round_rectangle(cr, 19 + PADDING, 1 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
+        roundRectangle(cr, 19 + PADDING, 1 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
         cairo_set_source(cr, KEY_COLOR);
         cairo_fill(cr);
-        show_key_label_centered(Scancode(0x4E, false), 19, 1, 1.5 + BASE_LINE);
+        showKeyLabelCentered(Scancode(0x4E, false), 19, 1, 1.5 + BASE_LINE);
         // Numpad Return
-        round_rectangle(cr, 19 + PADDING, 3 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
+        roundRectangle(cr, 19 + PADDING, 3 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
         cairo_set_source(cr, KEY_COLOR);
         cairo_fill(cr);
-        show_key_label_centered(Scancode(0x1C, true), 19, 1, 3.5 + BASE_LINE);
+        showKeyLabelCentered(Scancode(0x1C, true), 19, 1, 3.5 + BASE_LINE);
     }
     // Return
-    return_key(cr, 13.5 + PADDING, 1 + PADDING, 1.5 - 2*PADDING, 1.25 - 2*PADDING, 1 - 2*PADDING, 1, CORNER_RADIUS);
+    returnKey(cr, 13.5 + PADDING, 1 + PADDING, 1.5 - 2*PADDING, 1.25 - 2*PADDING, 1 - 2*PADDING, 1, CORNER_RADIUS);
     cairo_set_source(cr, KEY_COLOR);
     cairo_fill(cr);
-    show_key_label_centered(Scancode(0x1C, false), 13.75, 1.25, 1.5 + BASE_LINE);
+    showKeyLabelCentered(Scancode(0x1C, false), 13.75, 1.25, 1.5 + BASE_LINE);
 
     // Cairo cleanup    
     cairo_destroy(cr);
@@ -324,10 +324,10 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     blend.AlphaFormat = AC_SRC_ALPHA;
 
     POINT ptZero = POINT(0, 0);
-    POINT win_pos = POINT(win_rect.left, win_rect.top);
-    SIZE win_dims = SIZE(win_width, win_height);
+    POINT winPos = POINT(winRect.left, winRect.top);
+    SIZE winDims = SIZE(winWidth, winHeight);
 
-    UpdateLayeredWindow(hwnd, hdcScreen, &win_pos, &win_dims, hdcMem, &ptZero, RGB(0, 0, 0), &blend, ULW_ALPHA);
+    UpdateLayeredWindow(hwnd, hdcScreen, &winPos, &winDims, hdcMem, &ptZero, RGB(0, 0, 0), &blend, ULW_ALPHA);
 
     // Reset offscreen hdc to default bitmap
     SelectObject(hdcMem, hOld);
@@ -338,7 +338,7 @@ void draw_osk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     ReleaseDC(NULL, hdcScreen);
 }
 
-void round_rectangle(cairo_t *cr, float x, float y, float w, float h, float r) {
+void roundRectangle(cairo_t *cr, float x, float y, float w, float h, float r) {
     const float QR = M_PI / 2;
 
     cairo_save(cr);
@@ -355,7 +355,7 @@ void round_rectangle(cairo_t *cr, float x, float y, float w, float h, float r) {
     cairo_restore(cr);
 }
 
-void return_key(cairo_t *cr, float x, float y, float w_u, float w_l, float h_u, float h_l, float r) {
+void returnKey(cairo_t *cr, float x, float y, float wU, float wL, float hU, float hL, float r) {
     const float QR = M_PI / 2;
 
     cairo_save(cr);
@@ -363,20 +363,20 @@ void return_key(cairo_t *cr, float x, float y, float w_u, float w_l, float h_u, 
     cairo_translate(cr, x, y);
 
     cairo_new_sub_path(cr);
-    cairo_arc(cr, w_u - r, h_u + h_l - r, r, 0*QR, 1*QR);
-    cairo_arc(cr, w_u - w_l + r, h_u + h_l - r, r, 1*QR, 2*QR);
-    cairo_arc_negative(cr, w_u - w_l - r, h_u + r, r, 0*QR, -1*QR);
-    cairo_arc(cr, r, h_u - r, r, 1*QR, 2*QR);
+    cairo_arc(cr, wU - r, hU + hL - r, r, 0*QR, 1*QR);
+    cairo_arc(cr, wU - wL + r, hU + hL - r, r, 1*QR, 2*QR);
+    cairo_arc_negative(cr, wU - wL - r, hU + r, r, 0*QR, -1*QR);
+    cairo_arc(cr, r, hU - r, r, 1*QR, 2*QR);
     cairo_arc(cr, r, r, r, 2*QR, 3*QR);
-    cairo_arc(cr, w_u - r, r, r, 3*QR, 4*QR);
+    cairo_arc(cr, wU - r, r, r, 3*QR, 4*QR);
     cairo_close_path(cr);
 
     cairo_restore(cr);
 }
 
 LRESULT oskWndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) {
-    RECT win_rect;
-    GetWindowRect(hwnd, &win_rect);
+    RECT winRect;
+    GetWindowRect(hwnd, &winRect);
 
     uint calculateHeightWithAspectRatio(uint width) {
         return width * OSK_HEIGHT_96DPI / (configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI);
@@ -390,9 +390,9 @@ LRESULT oskWndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) {
 
         const GRAB_WIDTH = 20;
         
-        if (x < win_rect.left + GRAB_WIDTH) {
+        if (x < winRect.left + GRAB_WIDTH) {
             return HTLEFT;
-        } else if (x > win_rect.right - GRAB_WIDTH) {
+        } else if (x > winRect.right - GRAB_WIDTH) {
             return HTRIGHT;
         } else {
             return HTCAPTION;
@@ -400,15 +400,15 @@ LRESULT oskWndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) {
 
         case WM_WINDOWPOSCHANGING:
         // Preserve aspect ratio when resizing
-        WINDOWPOS *new_window_pos = cast(WINDOWPOS*) lParam;
-        new_window_pos.cy = calculateHeightWithAspectRatio(new_window_pos.cx);
+        WINDOWPOS *newWindowPos = cast(WINDOWPOS*) lParam;
+        newWindowPos.cy = calculateHeightWithAspectRatio(newWindowPos.cx);
         break;
 
         case WM_GETMINMAXINFO:
         // // Preserve a minimal OSK width
-        uint osk_min_width = (OSK_MIN_WIDTH_96DPI * dpi) / 96;
+        uint oskMinWidth = (OSK_MIN_WIDTH_96DPI * dpi) / 96;
         MINMAXINFO *minmaxinfo = cast(MINMAXINFO*) lParam;
-        minmaxinfo.ptMinTrackSize = POINT(osk_min_width, calculateHeightWithAspectRatio(osk_min_width));
+        minmaxinfo.ptMinTrackSize = POINT(oskMinWidth, calculateHeightWithAspectRatio(oskMinWidth));
         break;
 
         case WM_SIZE:
@@ -444,19 +444,19 @@ void centerOskOnScreen(HWND hwnd) {
     auto ptrGetDpiForWindow = cast(UINT function(HWND)) GetProcAddress(user32Lib, "GetDpiForWindow".toStringz);
     if (ptrGetDpiForWindow) {
         dpi = ptrGetDpiForWindow(hwnd);  // Only available for Win 10 1607 and up
-        debug_writeln("Running with PerMonitorV2 DPI scaling");
+        debugWriteln("Running with PerMonitorV2 DPI scaling");
     } else {
         HDC screen = GetDC(NULL);  // Get system DPI on older versions of windows
         dpi = GetDeviceCaps(screen, LOGPIXELSX);
         ReleaseDC(NULL, screen);
-        debug_writeln("Running with system DPI scaling");
+        debugWriteln("Running with system DPI scaling");
     }
 
-    uint win_width = ((configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI) * dpi) / 96;
-    uint win_height = (OSK_HEIGHT_96DPI * dpi) / 96;
-    uint win_bottom_offset = (OSK_BOTTOM_OFFSET_96DPI * dpi) / 96;
+    uint winWidth = ((configOskNumpad ? OSK_WIDTH_WITH_NUMPAD_96DPI : OSK_WIDTH_NO_NUMPAD_96DPI) * dpi) / 96;
+    uint winHeight = (OSK_HEIGHT_96DPI * dpi) / 96;
+    uint winBottomOffset = (OSK_BOTTOM_OFFSET_96DPI * dpi) / 96;
     SetWindowPos(hwnd, cast(HWND) 0,
-        workArea.left + (workArea.right - workArea.left - win_width) / 2,
-        workArea.bottom - win_height - win_bottom_offset,
-        win_width, win_height, SWP_NOZORDER);
+        workArea.left + (workArea.right - workArea.left - winWidth) / 2,
+        workArea.bottom - winHeight - winBottomOffset,
+        winWidth, winHeight, SWP_NOZORDER);
 }

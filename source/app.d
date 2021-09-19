@@ -95,10 +95,10 @@ LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
         return CallNextHookEx(hHook, nCode, wParam, lParam);
     }
 
-    auto msg_ptr = cast(LPKBDLLHOOKSTRUCT) lParam;
-    auto msg_struct = *msg_ptr;
+    auto msgPtr = cast(LPKBDLLHOOKSTRUCT) lParam;
+    auto msgStruct = *msgPtr;
 
-    bool eat = keyboardHook(wParam, msg_struct);
+    bool eat = keyboardHook(wParam, msgStruct);
 
     /*
     If nCode is less than zero, the hook procedure must return the value returned by CallNextHookEx.
@@ -158,15 +158,15 @@ void checkKeyboardLayout() nothrow {
     // - when manually selecting a standalone layout from the tray menu
     // - on the first key event after a foreground window change
 
-    debug_writeln("Updating keyboard layout");
+    debugWriteln("Updating keyboard layout");
     // inputLocale may be null, e.g. in console windows!
     HKL inputLocale = GetKeyboardLayout(GetWindowThreadProcessId(GetForegroundWindow(), NULL));
-    debug_writeln("Found input locale ", inputLocale);
+    debugWriteln("Found input locale ", inputLocale);
     wstring dllName;
     if (inputLocale) {  // only look up the inputLocale if it's not null, otherwise dllName is empty
         dllName = inputLocaleToDllName(inputLocale);
     }
-    debug_writeln("Input locale corresponds to dll file name '", dllName, "'");
+    debugWriteln("Input locale corresponds to dll file name '", dllName, "'");
 
     NeoLayout *layout;
 
@@ -216,18 +216,18 @@ void checkKeyboardLayout() nothrow {
 
     if (layout != null) {
         if (bypassMode) {
-            debug_writeln("No bypassing keyboard input");
+            debugWriteln("No bypassing keyboard input");
             bypassMode = false;
             previousNumlockState = getNumlockState();
             resetHookStates();  // Reset potential locks when activating hook
         }
 
         if (setActiveLayout(layout)) {
-            debug_writeln("Changing keyboard layout to ", layout.name);
+            debugWriteln("Changing keyboard layout to ", layout.name);
         }
     } else {
         if (!bypassMode) {
-            debug_writeln("Starting bypass mode");
+            debugWriteln("Starting bypass mode");
             bypassMode = true;
             setNumlockState(previousNumlockState);
         }
@@ -283,7 +283,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             break;
 
             case ID_TRAY_RELOAD_CONTEXTMENU:
-            debug_writeln("Re-initialize...");
+            debugWriteln("Re-initialize...");
             initialize();
             break;
 
@@ -337,7 +337,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
 // Redraw OSK. WARNING: This function blocks and shouldn't be called from the key event handler
 void updateOSK() nothrow {
     try {
-        draw_osk(hwnd, activeLayout, activeLayer, capslock);
+        drawOsk(hwnd, activeLayout, activeLayer, capslock);
     } catch (Exception e) {}
 }
 
@@ -399,7 +399,7 @@ void switchKeyboardHook() {
 
         HINSTANCE hInstance = GetModuleHandle(NULL);
         hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
-        debug_writeln("Keyboard hook active!");
+        debugWriteln("Keyboard hook active!");
 
         // Activating keyboard hook must start without bypass mode, so that checkKeyboardLayout() does not store
         // the already active Numlock state.
@@ -410,7 +410,7 @@ void switchKeyboardHook() {
         UnhookWindowsHookEx(hHook);
         // Only reset Numlock state if we were active before
         if (!bypassMode) { setNumlockState(previousNumlockState); }
-        debug_writeln("Keyboard hook inactive!");
+        debugWriteln("Keyboard hook inactive!");
     }
 
     keyboardHookActive = !keyboardHookActive;
@@ -523,7 +523,7 @@ void initialize() {
             }
 
             if (configStandaloneLayout == null) {
-                debug_writeln("Standalone layout '", standaloneLayoutName, "' not found!");
+                debugWriteln("Standalone layout '", standaloneLayoutName, "' not found!");
             }
         }
 
@@ -552,7 +552,7 @@ void initialize() {
         exit(0);
     }
 
-    debug_writeln("Initialization complete!");
+    debugWriteln("Initialization complete!");
 }
 
 JSONValue parseJSONFile(string jsonFilename) {
@@ -568,9 +568,9 @@ JSONValue parseJSONFile(string jsonFilename) {
 }
 
 void main(string[] args) {
-    debug_writeln("Starting ReNeo...");
+    debugWriteln("Starting ReNeo...");
     version(FileLogging) {
-        debug_writeln("WARNING: File logging enabled, make sure you know what you're doing!");
+        debugWriteln("WARNING: File logging enabled, make sure you know what you're doing!");
     }
     executableDir = dirName(thisExePath());
 
@@ -581,9 +581,9 @@ void main(string[] args) {
     // (which also fire when the language bar is activated) and then recheck the keyboard layout on the next keypress.
     foregroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
     if (foregroundHook) {
-        debug_writeln("Foreground window hook active!");
+        debugWriteln("Foreground window hook active!");
     } else {
-        debug_writeln("Could not install foreground window hook!");
+        debugWriteln("Could not install foreground window hook!");
     }
 
     // Create window for on-screen keyboard

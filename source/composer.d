@@ -78,9 +78,9 @@ class ComposeParser {
         while (!check('>')) {
             advance();
         }
-        string keysym_str = endChunk();
+        string keysymStr = endChunk();
         match('>');
-        return parseKeysym(keysym_str);
+        return parseKeysym(keysymStr);
     }
 
     string quotedString() {
@@ -202,7 +202,7 @@ struct ComposeFileLine {
 
 
 void initCompose(string exeDir) {
-    debug_writeln("Initializing compose");
+    debugWriteln("Initializing compose");
 
     debug {
         auto sw = StopWatch();
@@ -220,7 +220,7 @@ void initCompose(string exeDir) {
     foreach (dirEntry; dirEntries(composeDir, "*.remove", SpanMode.shallow)) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
-            debug_writeln("Removing compose module ", fname);
+            debugWriteln("Removing compose module ", fname);
             loadRemoveModule(fname);
         }
     }
@@ -229,17 +229,17 @@ void initCompose(string exeDir) {
     foreach (dirEntry; dirEntries(composeDir, "*.module", SpanMode.shallow)) {
         if (dirEntry.isFile) {
             string fname = dirEntry.name;
-            debug_writeln("Loading compose module ", fname);
+            debugWriteln("Loading compose module ", fname);
             loadModule(fname);
         }
     }
 
     debug {
-        debug_writeln("Time spent reading and parsing module files: ", sw.peek().total!"msecs", " ms");
+        debugWriteln("Time spent reading and parsing module files: ", sw.peek().total!"msecs", " ms");
         sw.reset();
     }
 
-    debug_writeln("Loaded ", addedEntries, " compose sequences.");
+    debugWriteln("Loaded ", addedEntries, " compose sequences.");
 
     const uint KEYSYM_MULTIKEY = parseKeysym("Multi_key");
     // Register unicode input special mode with prefix "♫uu"
@@ -310,7 +310,7 @@ void addComposeEntry(ComposeFileLine entry, ref ComposeNode nodeRoot) {
         if (!foundNext) {
             if (currentNode.result != ""w || currentNode.specialMode) {
                 // We are creating a compose sequence that is a continuation of an existing one
-                debug_writeln("Conflict in compose sequence ", entry.keysyms.map!(k => format("0x%X", k)).join("->"));
+                debugWriteln("Conflict in compose sequence ", entry.keysyms.map!(k => format("0x%X", k)).join("->"));
                 return;
             }
 
@@ -323,7 +323,7 @@ void addComposeEntry(ComposeFileLine entry, ref ComposeNode nodeRoot) {
 
     if (currentNode.next.length > 0) {
         // This sequence is a premature end for an already existing one and will be skipped
-        debug_writeln("Conflict in compose sequence ", entry.keysyms.map!(k => format("0x%X", k)).join("->"));
+        debugWriteln("Conflict in compose sequence ", entry.keysyms.map!(k => format("0x%X", k)).join("->"));
         return;
     } 
     currentNode.result = entry.result;
@@ -376,7 +376,7 @@ ComposeResult compose(NeoKey nk) nothrow {
         if (!active) {
             return ComposeResult(ComposeResultType.PASS, ""w);
         } else {
-            debug_writeln("Starting compose sequence");
+            debugWriteln("Starting compose sequence");
         }
     }
 
@@ -387,7 +387,7 @@ ComposeResult compose(NeoKey nk) nothrow {
                 // Special mode has finished, reset compose to normal state
                 active = false;
                 currentSpecialMode = null;
-                debug_writeln("Special compose sequence finished");
+                debugWriteln("Special compose sequence finished");
             }
             return specialResult;
         } else {
@@ -396,15 +396,15 @@ ComposeResult compose(NeoKey nk) nothrow {
 
             // Add keysym to compose sequence, if it has a Unicode representation
             dchar sequenceChar = 0;
-            if (nk.keysym in codepoints_by_keysym) {
-                sequenceChar = dchar(codepoints_by_keysym[nk.keysym]);
+            if (nk.keysym in codepointsByKeysym) {
+                sequenceChar = dchar(codepointsByKeysym[nk.keysym]);
             } else if (nk.keysym > KEYSYM_CODEPOINT_OFFSET) {
                 sequenceChar = dchar(nk.keysym - KEYSYM_CODEPOINT_OFFSET);
             } else if (nk.keytype == NeoKeyType.CHAR) {
-                sequenceChar = nk.char_code;
+                sequenceChar = nk.charCode;
             }
             if (sequenceChar) {
-                debug_writeln("Added char to compose abort sequence: ", sequenceChar);
+                debugWriteln("Added char to compose abort sequence: ", sequenceChar);
                 currentSequence ~= sequenceChar;
             }
 
@@ -422,19 +422,19 @@ ComposeResult compose(NeoKey nk) nothrow {
                     if (next.specialMode) {
                         // user entered the leader sequence for a special mode
                         // the following key presses will be handled by the associated special mode function
-                        debug_writeln("Starting special compose sequence");
+                        debugWriteln("Starting special compose sequence");
                         currentSpecialMode = next.specialMode;
                         return ComposeResult(ComposeResultType.EAT, ""w);
                     } else {
                         // normal compose sequence end
                         active = false;
-                        debug_writeln("Compose finished");
+                        debugWriteln("Compose finished");
                         return ComposeResult(ComposeResultType.FINISH, next.result);
                     }
                 } else {
                     currentNode = next;
                     try {
-                        debug_writeln("Next: ", currentNode.next.map!(n => format("0x%X", n.keysym)).join(", "));
+                        debugWriteln("Next: ", currentNode.next.map!(n => format("0x%X", n.keysym)).join(", "));
                     } catch (Exception e) {
                         // Doesn't matter
                     }
@@ -442,9 +442,9 @@ ComposeResult compose(NeoKey nk) nothrow {
                 }
             } else {
                 active = false;
-                debug_writeln("Compose aborted");
+                debugWriteln("Compose aborted");
                 // Return and output typed compose sequence, except if the last pressed key is Escape
-                if (nk.keysym == keysyms_by_name["Escape"]) {
+                if (nk.keysym == keysymsByName["Escape"]) {
                     return ComposeResult(ComposeResultType.ABORT, ""w);
                 } else {
                     return ComposeResult(ComposeResultType.ABORT, toUTF16(currentSequence));
