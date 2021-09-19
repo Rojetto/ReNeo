@@ -549,76 +549,12 @@ void resetHookStates() nothrow {
 }
 
 
-bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
-    auto vk = cast(VKEY) msgStruct.vkCode;
-    bool down = msgType == WM_KEYDOWN || msgType == WM_SYSKEYDOWN;
-    // TODO: do we need to use this somewhere?
-    bool sys = msgType == WM_SYSKEYDOWN || msgType == WM_SYSKEYUP;
-    auto scan = Scancode(cast(uint) msgStruct.scanCode, (msgStruct.flags & LLKHF_EXTENDED) > 0);
-    bool altdown = (msgStruct.flags & LLKHF_ALTDOWN) > 0;
-    bool injected = (msgStruct.flags & LLKHF_INJECTED) > 0;
+bool handleKeyEvent(Scancode scan, bool down) nothrow {
+    // Called from the main keyboard hook. Sends key events depending on the current mode, layer and compose state,
+    // updates modifier and layer states, and returns whether the original event should be eaten.
 
-    debug {
-        auto injectedText = injected      ? "(injected) " : "           ";
-        auto downText     = down          ? "(down) " : " (up)  ";
-        auto altText      = altdown       ? "(Alt) " : "      ";
-        auto extendedText = scan.extended ? "(Ext) " : "      ";
-
-        try {
-            debugWriteln(injectedText ~ downText ~ altText ~ extendedText ~ format("| Scan 0x%04X | %s (0x%02X)", scan.scan, to!string(vk), vk));
-        } catch(Exception e) {}
-    }
-
-    // ignore all simulated keypresses
-    if (vk == VKEY.VK_PACKET || injected) {
-        return false;
-    }
-
-    // Numpad 0-9 and separator are dual-state Numpad keys:
-    // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
-    bool isDualStateNumpadKey = (!scan.extended && scan.scan >= 0x47 && scan.scan <= 0x53 && scan.scan != 0x4A && scan.scan != 0x4E);
     // All Numpad keys including KP_Enter
-    bool isNumpadKey = isDualStateNumpadKey || vk == VKEY.VK_NUMLOCK || (scan.extended && vk == VKEY.VK_RETURN) || 
-                       vk == VKEY.VK_ADD || vk == VKEY.VK_SUBTRACT || vk == VKEY.VK_MULTIPLY || vk == VKEY.VK_DIVIDE;
-                       
-    // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
-    setKanaState(false);
-
-    // We want Numlock to be always on, because some apps (built on WinUI, see #32) misinterpret VK_NUMPADx events if Numlock is disabled
-    // However, this means we have to deal with fake shift events on Numpad layer 2 (#15)
-    // On some notebooks with a native Numpad layer on the main keyboard we shouldn't do this, because they
-    // then always get numbers instead of letters.
-    if (configAutoNumlock) {
-        setNumlockState(true);
-    }
-
-    // When Numlock is enabled, pressing Shift and a "dual state" numpad key generates fake key events to temporarily lift
-    // and repress the active shift key. Fake Shift key ups are always marked as such with a special scancode, the
-    // corresponding down events sometimes are and sometimes are not (seems to have something to do with whether
-    // multiple numpad keys are pressed simultaneously). Here's the strategy:
-    // - eat all shift key events marked with the fake scancode
-    // - on dual state numpad key up with real held shift key, prime the hook to expect a shift key down as the next event
-    // - if we are primed for a shift key down and get one, eat that. otherwise release the primed state
-    if (expectFakeShiftDown) {
-        if (down && (vk == VKEY.VK_LSHIFT || vk == VKEY.VK_RSHIFT)) {
-            return true;
-        }
-        expectFakeShiftDown = false;
-    }
-
-    if (scan.scan == SC_FAKE_LSHIFT || scan.scan == SC_FAKE_RSHIFT) {
-        return true;
-    }
-
-    if (isDualStateNumpadKey && !down && (isModifierHeld(Modifier.LSHIFT) || isModifierHeld(Modifier.RSHIFT))) {
-        expectFakeShiftDown = true;
-    }
-
-    // Disable fake LCtrl on physical AltGr key, as we use that for Mod4.
-    // In case of an injected AltGr, the fake LCtrl is also marked as injected and passed through further above
-    if (scan.scan == SC_FAKE_LCTRL) {
-        return true;  // Eat event
-    }
+    bool isNumpadKey = (!scan.extended && scan.scan >= 0x47 && scan.scan <= 0x53) || scan == Scancode(0x35, true) || scan == Scancode(0x37, false) || scan == Scancode(0x1C, true);
 
     // is this key mapped to a modifier?
     bool isModifier;
@@ -746,12 +682,6 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
         updateOSKAsync();
     }
 
-    // Toggle OSK on M3+F1
-    if (vk == VK_F1 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
-        toggleOSK();
-        return true;  // Eat F1
-    }
-
     // We want to treat layers 1 and 2 the same in terms of checking whether we switched
     // This is because pressing or releasing shift should not send a keyup for all held keys
     // (where as it should for keys from all other layers)
@@ -772,15 +702,6 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
 
     if (isModifier) {
         return shouldEatModifier;
-    }
-
-    // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
-    // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
-    if (vk == VKEY.VK_NUMLOCK && down) {
-        sendVK(VK_NUMLOCK, scanNumlock, false);
-        sendVK(VK_NUMLOCK, scanNumlock, true);
-        sendVK(VK_NUMLOCK, scanNumlock, false);
-        sendVK(VK_NUMLOCK, scanNumlock, true);
     }
 
     // early exit if key is not in map
@@ -852,4 +773,89 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
     }
 
     return eat;
+}
+
+
+bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
+    auto vk = cast(VKEY) msgStruct.vkCode;
+    bool down = msgType == WM_KEYDOWN || msgType == WM_SYSKEYDOWN;
+    auto scan = Scancode(cast(uint) msgStruct.scanCode, (msgStruct.flags & LLKHF_EXTENDED) > 0);
+    bool altdown = (msgStruct.flags & LLKHF_ALTDOWN) > 0;
+    bool injected = (msgStruct.flags & LLKHF_INJECTED) > 0;
+
+    debug {
+        auto injectedText = injected      ? "(injected) " : "           ";
+        auto downText     = down          ? "(down) " : " (up)  ";
+        auto altText      = altdown       ? "(Alt) " : "      ";
+        auto extendedText = scan.extended ? "(Ext) " : "      ";
+
+        try {
+            debugWriteln(injectedText ~ downText ~ altText ~ extendedText ~ format("| Scan 0x%04X | %s (0x%02X)", scan.scan, to!string(vk), vk));
+        } catch(Exception e) {}
+    }
+
+    // ignore all simulated keypresses
+    if (vk == VKEY.VK_PACKET || injected) {
+        return false;
+    }
+
+    // Numpad 0-9 and separator are dual-state Numpad keys:
+    // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
+    bool isDualStateNumpadKey = (!scan.extended && scan.scan >= 0x47 && scan.scan <= 0x53 && scan.scan != 0x4A && scan.scan != 0x4E);
+                       
+    // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
+    setKanaState(false);
+
+    // We want Numlock to be always on, because some apps (built on WinUI, see #32) misinterpret VK_NUMPADx events if Numlock is disabled
+    // However, this means we have to deal with fake shift events on Numpad layer 2 (#15)
+    // On some notebooks with a native Numpad layer on the main keyboard we shouldn't do this, because they
+    // then always get numbers instead of letters.
+    if (configAutoNumlock) {
+        setNumlockState(true);
+    }
+
+    // When Numlock is enabled, pressing Shift and a "dual state" numpad key generates fake key events to temporarily lift
+    // and repress the active shift key. Fake Shift key ups are always marked as such with a special scancode, the
+    // corresponding down events sometimes are and sometimes are not (seems to have something to do with whether
+    // multiple numpad keys are pressed simultaneously). Here's the strategy:
+    // - eat all shift key events marked with the fake scancode
+    // - on dual state numpad key up with real held shift key, prime the hook to expect a shift key down as the next event
+    // - if we are primed for a shift key down and get one, eat that. otherwise release the primed state
+    if (expectFakeShiftDown) {
+        if (down && (vk == VKEY.VK_LSHIFT || vk == VKEY.VK_RSHIFT)) {
+            return true;
+        }
+        expectFakeShiftDown = false;
+    }
+
+    if (scan.scan == SC_FAKE_LSHIFT || scan.scan == SC_FAKE_RSHIFT) {
+        return true;
+    }
+
+    if (isDualStateNumpadKey && !down && (isModifierHeld(Modifier.LSHIFT) || isModifierHeld(Modifier.RSHIFT))) {
+        expectFakeShiftDown = true;
+    }
+
+    // Disable fake LCtrl on physical AltGr key, as we use that for Mod4.
+    // In case of an injected AltGr, the fake LCtrl is also marked as injected and passed through further above
+    if (scan.scan == SC_FAKE_LCTRL) {
+        return true;  // Eat event
+    }
+
+    // Toggle OSK on M3+F1
+    if (vk == VK_F1 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
+        toggleOSK();
+        return true;  // Eat F1
+    }
+
+    // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
+    // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
+    if (vk == VKEY.VK_NUMLOCK && down) {
+        sendVK(VK_NUMLOCK, scanNumlock, false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
+        sendVK(VK_NUMLOCK, scanNumlock, false);
+        sendVK(VK_NUMLOCK, scanNumlock, true);
+    }
+
+    return handleKeyEvent(scan, down);
 }
