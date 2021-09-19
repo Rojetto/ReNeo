@@ -65,11 +65,9 @@ string enableAppMenuMsg  = "Aktivieren";
 string reloadMenuMsg     = "Neu laden";
 string layoutMenuMsg     = "Tastaturlayout";
 string quitMenuMsg       = "Beenden";
-string openOskMenuMsg    = "Bildschirmtastatur öffnen";
-string closeOskMenuMsg   = "Bildschirmtastatur schließen";
+string oskMenuMsg    = "Bildschirmtastatur";
 
-string openOskMenuWithHotkeyMsg;  // strings are combined with loaded hotkey on initialization
-string closeOskMenuWithHotkeyMsg;
+string oskMenuWithHotkeyMsg;  // strings are combined with loaded hotkey on initialization
 string disableAppMenuWithHotkeyMsg;
 string enableAppMenuWithHotkeyMsg;
 
@@ -379,9 +377,9 @@ void updateContextMenu() {
     }
 
     if (oskOpen) {
-        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, closeOskMenuWithHotkeyMsg);
+        CheckMenuItem(contextMenu, ID_TRAY_OSK_CONTEXTMENU, MF_BYCOMMAND | MF_CHECKED);
     } else {
-        modifyMenuItemString(contextMenu, ID_TRAY_OSK_CONTEXTMENU, openOskMenuWithHotkeyMsg);
+        CheckMenuItem(contextMenu, ID_TRAY_OSK_CONTEXTMENU, MF_BYCOMMAND | MF_UNCHECKED);
     }
 }
 
@@ -540,11 +538,9 @@ void initialize() {
         if (configJson["hotkeys"]["toggleOSK"].type == JSONType.STRING) {
             configHotkeyToggleOSK = parseHotkey(configJson["hotkeys"]["toggleOSK"].str);
             string hotkeyString = hotkeyToString(configHotkeyToggleOSK);
-            openOskMenuWithHotkeyMsg = openOskMenuMsg ~ "\t" ~ hotkeyString;
-            closeOskMenuWithHotkeyMsg = closeOskMenuMsg ~ "\t" ~ hotkeyString;
+            oskMenuWithHotkeyMsg = oskMenuMsg ~ "\t" ~ hotkeyString;
         } else {
-            openOskMenuWithHotkeyMsg = openOskMenuMsg ~ "\tMod3+F1";
-            closeOskMenuWithHotkeyMsg = closeOskMenuMsg ~ "\tMod3+F1";
+            oskMenuWithHotkeyMsg = oskMenuMsg ~ "\tMod3+F1";
         }
     } catch (Exception e) {
         string text = "Beim Starten von ReNeo ist ein Fehler aufgetreten:\n" ~ e.msg;
@@ -613,7 +609,7 @@ void main(string[] args) {
         AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, layoutMenuMsg.toUTF16z);
         AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     }
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, openOskMenuWithHotkeyMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, oskMenuWithHotkeyMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuWithHotkeyMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
