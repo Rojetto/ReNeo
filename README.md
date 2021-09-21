@@ -35,6 +35,7 @@ Allgemein:
     - Unicode-Eingabe: `♫uu[codepoint hex]<space>` fügt Unicode-Zeichen ein. Beispiel: `♫uu1f574<space>` → 🕴
     - Römische Zahlen: `♫rn[zahl]<space>` für kleine Zahlen, `♫RN[zahl]<space>` für große Zahlen zwischen 1 und 3999. Beispiel: `♫rn1970<space>` → ⅿⅽⅿⅼⅹⅹ, `♫RN1970<space>` → ⅯⅭⅯⅬⅩⅩ
 - `Shift+Pause` (de)aktiviert die Anwendung
+- Einhandmodus: Wenn Modus aktiv ist und Leertaste (Standard) gehalten wird, wird die gesamte Tastatur „gespiegelt“. Umschalten über Tray-Menü oder per Shortcut `M3+F10`.
 - Weitere Layouts können in `layouts.json` hinzugefügt und angepasst werden
 
 Als Erweiterung zum nativen Treiber:
@@ -62,10 +63,14 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 - `"hotkeys"`: Hotkeys für verschiedene Funktionen. Beispiel: `"Ctrl+Alt+F5"` oder `"Shift+Alt+Key_A"`. Erlaubte Modifier sind `Shift`, `Ctrl`, `Alt`, `Win`. Die Haupttaste ist ein beliebiger VK aus [dieser Enum](https://github.com/Rojetto/ReNeo/blob/5bd304a7c42c768ed45813095ab5fbc69103773c/source/mapping.d#L17), die auf der [Win32-Doku](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) basiert. Ist ein Wert `null`, wird kein globaler Hotkey angelegt.
     - `"toggleActivation"`: ReNeo aktivieren/deaktivieren
     - `"toggleOSK"`: Bildschirmtastatur öffnen/schließen. Zusätzlich zu dem hier konfigurierten Hotkey funktioniert immer `M3+F1`.
+    - `"toggleOneHandedMode"`: Einhandmodus (de)aktivieren. Zusätzlich funktioniert immer `M3+F10`.
 - `"autoNumlock"`: Soll Numlock automatisch angeschaltet werden? Wenn die Tastatur einen echten Nummernblock besitzt, sollte diese Option für beste Kompatibilität immer auf `true` gesetzt sein. Bei Laptops mit nativer Numpad-Ebene auf dem Hauptfeld kann dieses Verhalten aber mit `false` deaktiviert werden.
 - `"filterNeoModifiers"`:
     - `true` (Standard): Die Tastenevents für M3 und M4 werden im Erweiterungsmodus von ReNeo weggefiltert, Anwendungen bekommen von diesen Tasten also nichts mit. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
     - `false`: Anwendungen sehen M3/M4. Notwendig, wenn man in den Anwendungen mit diesen Tasten Optionen verknüpfen will.
+- `"oneHandedMode"`:
+    - "`mirrorKey"`: Scancode der Taste zum Spiegeln, standardmäßig ist die Leertaste (`44`) eingestellt.
+    - "`mirrorMap"`: Zuordnung der gespiegelten Tasten nach Scancode in der Form `"[Originaltaste]": "[Spiegeltaste]"`. Muss für ergonomische oder Matrixtastaturen evtl. angepasst werden.
 
 ### Layouts anpassen
 
@@ -104,14 +109,14 @@ So bleiben Ebenen 3 und 4 an der richtigen Stelle, und die anderen Ebenen werden
 | Anmeldebildschirm & Admin-Anwendungen | 🟡                  | 🟢            | 🟢          | 🟡       |
 | Kompatibilität                        | 🟢                  | 🟢            | 🟡 4        | 🟡 5     |
 | Bildschirmtastatur                    | 🟢                  | 🟢            | 🟡          | 🟡       |
-| Extra-Features                        | 🟠                  | 🟠            | 🟠          | 🟢 6     |
+| Extra-Features                        | 🟡                  | 🟡            | 🟠          | 🟢 6     |
 
 1. Buchstabenanordnung kann zwar vertauscht werden, sonst ist Anpassung aber schwer
 2. Verträgt sich mit den meisten Layouts (QWERTZ, QWERTY, QWERTZ-CH), inklusive IMEs wie Chinesisch/Japanisch (eingeschränkt). Umschalten ist in Windows ganz normal möglich.
 3. QWERTZ muss aktiv sein und in der Liste an erster Stelle stehen
 4. siehe o.g. Bugs
 5. Key-Events „klappern“ bei Sonderzeichen, Steuertasten gehen nicht überall
-6. Einhandmodus, ſ-Modus, Taschenrechner, ...
+6. ſ-Modus, Taschenrechner, ...
 
 # Virtuelle Maschinen und Remote Desktop
 Sobald mehrere „ineinander“ laufende Betriebssysteme ins Spiel kommen, wird es mit alternativen Tastaturlayouts fast immer haarig.

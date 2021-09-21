@@ -8,12 +8,13 @@ import std.path;
 import std.format;
 import std.array;
 import std.datetime.systime;
+import std.algorithm.mutation : remove;
 
 import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import app : configAutoNumlock, configFilterNeoModifiers, updateOSKAsync, toggleOSK, lastInputLocale;
+import app : configAutoNumlock, configFilterNeoModifiers, configOneHandedModeMirrorKey, configOneHandedModeMirrorMap, updateOSKAsync, toggleOSK, toggleOneHandedMode, lastInputLocale;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -520,6 +521,15 @@ NeoLayout *activeLayout;
 // should we take over all layers? activated when standaloneMode is true in the config file and the currently selected native layout is not Neo related
 bool standaloneModeActive;
 
+// is one handed mode enabled?
+bool oneHandedModeActive;
+// is the mirror key (typically spacebar) currently being held?
+bool mirrorKeyHeld;
+// were any keys mirrored (pressed *and* released) while the mirror key was held?
+bool eatMirrorKey;
+// list of *original* scancodes of keys pressed while mirror key was held
+Scancode[] primedOneHandedKeys;
+
 // the last event was a dual state numpad key up with held shift key, eat the next shift down
 bool expectFakeShiftDown;
 
@@ -587,10 +597,10 @@ bool handleKeyEvent(Scancode scan, bool down) nothrow {
             naturalHeldModifiers[mod] = null;
         }
 
-        // In standalone mode, fully replace every modifier event
+        // In standalone mode or one handed mode, fully replace every modifier event
         // In extension mode, only eat neo modifiers (and only if "filterNeoModifiers" is enabled), let
         // all other modifier events pass
-        shouldEatModifier = standaloneModeActive || (isNeoModifier && configFilterNeoModifiers);
+        shouldEatModifier = standaloneModeActive || oneHandedModeActive || (isNeoModifier && configFilterNeoModifiers);
         // We should only send our own event if we ate the original and this is a native modifier
         bool shouldSendModifier = shouldEatModifier && !isNeoModifier;
         
@@ -733,14 +743,14 @@ bool handleKeyEvent(Scancode scan, bool down) nothrow {
             heldKeys[scan] = nk;
 
             // We eat and replace keys under the following conditions:
-            // - Eat every key in standalone mode
+            // - Eat every key in standalone mode and one handed mode
             // - Eat every numpad key (because they are not mapped according to spec in kbdneo)
             // - For the extension mode, it depends on the config option "filterNeoModifiers"
             //   - if true, eat every key on layers 3 and above
             //   - if false, don't eat keys and instead leave the translation of those layers to kbdneo
             //     except the navigation keys on layer 4 that are missing in kbdneo
             //   - also eat every key if mod 4 lock is active, because that isn't handled in kbdneo
-            if (standaloneModeActive || isNumpadKey || (configFilterNeoModifiers && layer >= 3) || isLayer4NavKey || (mod4Lock && !mod4Down)) {
+            if (standaloneModeActive || oneHandedModeActive || isNumpadKey || (configFilterNeoModifiers && layer >= 3) || isLayer4NavKey || (mod4Lock && !mod4Down)) {
                 eat = true;
                 sendNeoKey(nk, scan, true);
             }
@@ -752,7 +762,7 @@ bool handleKeyEvent(Scancode scan, bool down) nothrow {
             }
         }
     } else {
-        if (standaloneModeActive || isNumpadKey || (configFilterNeoModifiers && layer >= 3) || isLayer4NavKey || (mod4Lock && !mod4Down)) {
+        if (standaloneModeActive || oneHandedModeActive || isNumpadKey || (configFilterNeoModifiers && layer >= 3) || isLayer4NavKey || (mod4Lock && !mod4Down)) {
             eat = true;
 
             // release the key that is held for this vk
@@ -848,6 +858,12 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
         return true;  // Eat F1
     }
 
+    // Toggle one handed mode on M3+F10
+    if (vk == VK_F10 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
+        toggleOneHandedMode();
+        return true;  // Eat F10
+    }
+
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
     // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
     if (vk == VKEY.VK_NUMLOCK && down) {
@@ -855,6 +871,78 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
         sendVK(VK_NUMLOCK, scanNumlock, true);
         sendVK(VK_NUMLOCK, scanNumlock, false);
         sendVK(VK_NUMLOCK, scanNumlock, true);
+    }
+
+    // ---- One handed mode ----
+    // The point of this whole state machine is to produce the following behaviour:
+    // M - mirror key | A, B, ... - other keys | A' - key A mirrored | U - up | D - down
+    
+    // Case 1:   MD         MU                               ("unused" mirror key creates events on up)
+    // Result 1:            MD MU
+
+    // Case 2:   AD     MD     AU     MU                     (keys pressed before mirror key don't get mirrored)
+    // Result 2: AD            AU     MD MU
+
+    // Case 3:   MD    AD    AU         MU                   (keys pressed *and released* while mirror key is held are mirrored)
+    // Result 3:             A'D A'U                         (also, mirror key does not create its own event)
+
+    // Case 4:   MD    AD   BD    MU              AU   BU    (keys pressed but not released while mirror key is held create down 
+    // Result 4:                  MD MU AD BD     AU   BU     events in correct order after mirror key up)
+    
+    if (oneHandedModeActive) {
+        if (scan == configOneHandedModeMirrorKey) {
+            mirrorKeyHeld = down;
+
+            if (!down) {  // on mirror key up
+                if (!eatMirrorKey) {
+                    // mirror key wasn't "used" to mirror keys, so send its normal up and down events
+                    handleKeyEvent(scan, true);
+                    handleKeyEvent(scan, false);
+                }
+
+                eatMirrorKey = false;
+
+                if (primedOneHandedKeys) {
+                    // Some keys are still held, send those as unmirrored down events now (in order)
+                    foreach (Scancode heldKey; primedOneHandedKeys) {
+                        handleKeyEvent(heldKey, true);
+                    }
+
+                    primedOneHandedKeys = [];
+                }
+            }
+
+            return true;
+        } else if (mirrorKeyHeld && scan in configOneHandedModeMirrorMap) {
+            int primedKeyIndex = -1;  // default: key not in primed list
+            foreach (i, primedKey; primedOneHandedKeys) {  // find key in primed list
+                if (primedKey == scan) {
+                    primedKeyIndex = cast(int) i;
+                    break;
+                }
+            }
+
+            if (down) {
+                if (primedKeyIndex == -1) {  // key not primed yet
+                    primedOneHandedKeys ~= scan; // on down, only prime this key but don't send any events yet
+                }
+
+                return true;
+            } else {
+                if (primedKeyIndex >= 0) {  // key was primed
+                    primedOneHandedKeys = primedOneHandedKeys.remove(primedKeyIndex);
+                    // on up, send the mirrored down and up event
+                    auto mirroredScan = configOneHandedModeMirrorMap[scan];
+                    handleKeyEvent(mirroredScan, true);
+                    handleKeyEvent(mirroredScan, false);
+
+                    // mirror key was "used" while held, so don't send its original key later when it's released
+                    eatMirrorKey = true;
+
+                    return true;
+                }
+            }
+        }
     }
 
     return handleKeyEvent(scan, down);

@@ -34,6 +34,9 @@ bool configAutoNumlock;
 bool configFilterNeoModifiers;
 HotkeyConfig configHotkeyToggleActivation;
 HotkeyConfig configHotkeyToggleOSK;
+HotkeyConfig configHotkeyToggleOneHandedMode;
+Scancode configOneHandedModeMirrorKey;
+Scancode[Scancode] configOneHandedModeMirrorMap;
 
 HWND hwnd;
 
@@ -51,23 +54,27 @@ const UINT ID_MYTRAYICON = 0x1000;
 const UINT ID_TRAY_ACTIVATE_CONTEXTMENU = 0x1100;
 const UINT ID_TRAY_RELOAD_CONTEXTMENU = 0x1101;
 const UINT ID_TRAY_OSK_CONTEXTMENU = 0x1102;
+const UINT ID_TRAY_ONE_HANDED_MODE_CONTEXTMENU = 0x1103;
 const UINT ID_TRAY_VERSION = 0x110E;
 const UINT ID_TRAY_QUIT_CONTEXTMENU = 0x110F;
 const UINT ID_LAYOUTMENU = 0x1200;
 
 const UINT ID_HOTKEY_DEACTIVATE = 0x001;
 const UINT ID_HOTKEY_OSK = 0x002;
+const UINT ID_HOTKEY_ONE_HANDED_MODE = 0x003;
 
 const UINT LAYOUTMENU_POSITION = 0;
 
-string disableAppMenuMsg = "Deaktivieren";
-string enableAppMenuMsg  = "Aktivieren";
-string reloadMenuMsg     = "Neu laden";
-string layoutMenuMsg     = "Tastaturlayout";
-string quitMenuMsg       = "Beenden";
-string oskMenuMsg    = "Bildschirmtastatur";
+string disableAppMenuMsg    = "Deaktivieren";
+string enableAppMenuMsg     = "Aktivieren";
+string reloadMenuMsg        = "Neu laden";
+string layoutMenuMsg        = "Tastaturlayout";
+string quitMenuMsg          = "Beenden";
+string oskMenuMsg           = "Bildschirmtastatur";
+string oneHandedModeMenuMsg = "Einhandmodus";
 
 string oskMenuWithHotkeyMsg;  // strings are combined with loaded hotkey on initialization
+string oneHandedModeMenuWithHotkeyMsg;
 string disableAppMenuWithHotkeyMsg;
 string enableAppMenuWithHotkeyMsg;
 
@@ -280,6 +287,10 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             toggleOSK();
             break;
 
+            case ID_TRAY_ONE_HANDED_MODE_CONTEXTMENU:
+            toggleOneHandedMode();
+            break;
+
             case ID_TRAY_RELOAD_CONTEXTMENU:
             debugWriteln("Re-initialize...");
             initialize();
@@ -316,6 +327,9 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             break;
             case ID_HOTKEY_OSK:
             toggleOSK();
+            break;
+            case ID_HOTKEY_ONE_HANDED_MODE:
+            toggleOneHandedMode();
             break;
             default: break;
         }
@@ -358,6 +372,14 @@ void toggleOSK() nothrow {
     }
 }
 
+void toggleOneHandedMode() nothrow {
+    oneHandedModeActive = !oneHandedModeActive;
+    try {
+        updateContextMenu();
+    } catch (Exception e) {
+    }
+}
+
 void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
     // Changing a menu entry is cumbersome by hand (or foot)
     MENUITEMINFO mii;
@@ -380,6 +402,12 @@ void updateContextMenu() {
         CheckMenuItem(contextMenu, ID_TRAY_OSK_CONTEXTMENU, MF_BYCOMMAND | MF_CHECKED);
     } else {
         CheckMenuItem(contextMenu, ID_TRAY_OSK_CONTEXTMENU, MF_BYCOMMAND | MF_UNCHECKED);
+    }
+
+    if (oneHandedModeActive) {
+        CheckMenuItem(contextMenu, ID_TRAY_ONE_HANDED_MODE_CONTEXTMENU, MF_BYCOMMAND | MF_CHECKED);
+    } else {
+        CheckMenuItem(contextMenu, ID_TRAY_ONE_HANDED_MODE_CONTEXTMENU, MF_BYCOMMAND | MF_UNCHECKED);
     }
 }
 
@@ -542,6 +570,18 @@ void initialize() {
         } else {
             oskMenuWithHotkeyMsg = oskMenuMsg ~ "\tMod3+F1";
         }
+        if (configJson["hotkeys"]["toggleOneHandedMode"].type == JSONType.STRING) {
+            configHotkeyToggleOneHandedMode = parseHotkey(configJson["hotkeys"]["toggleOneHandedMode"].str);
+            string hotkeyString = hotkeyToString(configHotkeyToggleOneHandedMode);
+            oneHandedModeMenuWithHotkeyMsg = oneHandedModeMenuMsg ~ "\t" ~ hotkeyString;
+        } else {
+            oneHandedModeMenuWithHotkeyMsg = oneHandedModeMenuMsg ~ "\tMod3+F10";
+        }
+
+        configOneHandedModeMirrorKey = parseScancode(configJson["oneHandedMode"]["mirrorKey"].str);
+        foreach (string key, JSONValue value; configJson["oneHandedMode"]["mirrorMap"]) {
+            configOneHandedModeMirrorMap[parseScancode(key)] = parseScancode(value.str);
+        }
     } catch (Exception e) {
         string text = "Beim Starten von ReNeo ist ein Fehler aufgetreten:\n" ~ e.msg;
         MessageBox(hwnd, text.toUTF16z, "Fehler beim Initialisieren".toUTF16z, MB_OK | MB_ICONERROR);
@@ -610,6 +650,7 @@ void main(string[] args) {
         AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     }
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, oskMenuWithHotkeyMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ONE_HANDED_MODE_CONTEXTMENU, oneHandedModeMenuWithHotkeyMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuWithHotkeyMsg.toUTF16z);
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
@@ -629,6 +670,9 @@ void main(string[] args) {
     // Register alternate OSK hotkey (M3+F1 always works)
     if (configHotkeyToggleOSK.key)
         RegisterHotKey(hwnd, ID_HOTKEY_OSK, configHotkeyToggleOSK.modFlags, configHotkeyToggleOSK.key);
+    // Register alternate one handed mode hotkey (M3+F10 always works)
+    if (configHotkeyToggleOneHandedMode.key)
+        RegisterHotKey(hwnd, ID_HOTKEY_ONE_HANDED_MODE, configHotkeyToggleOneHandedMode.modFlags, configHotkeyToggleOneHandedMode.key);
 
     MSG msg;
     while(GetMessage(&msg, NULL, 0, 0)) {
@@ -636,6 +680,7 @@ void main(string[] args) {
         DispatchMessage(&msg);
     }
 
+    UnregisterHotKey(hwnd, ID_HOTKEY_ONE_HANDED_MODE);
     UnregisterHotKey(hwnd, ID_HOTKEY_OSK);
     UnregisterHotKey(hwnd, ID_HOTKEY_DEACTIVATE);
 
