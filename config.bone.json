@@ -12,6 +12,7 @@
         "toggleOSK": null,
         "toggleOneHandedMode": null
     },
+    "blacklist": [],
     "oneHandedMode": {
         "mirrorKey": "39",
         "mirrorMap": {

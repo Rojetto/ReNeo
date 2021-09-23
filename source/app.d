@@ -17,13 +17,56 @@ import std.file;
 import std.path;
 import std.stdio;
 import std.json;
+import std.regex : matchFirst;
 
 HHOOK hHook;
 HWINEVENTHOOK foregroundHook;
 
-bool bypassMode;
+// The following three flags contain the hook activation state.
+// Any time any of them are changed, onHookStateUpdate is called!
+
+// Is the keyboard hook registered and called? Corresponds to
+// enable/disable function in tray menu, state shown via tray icon.
+// This is *always set by the user*.
+bool _keyboardHookActive;
+@property bool keyboardHookActive() nothrow {
+    return _keyboardHookActive;
+}
+@property void keyboardHookActive(bool val) nothrow {
+    _keyboardHookActive = val;
+    onHookStateUpdate();
+}
+// There are multiple ways the hook can still get bypassed. In that case,
+// the tray icon is blue, but the tooltip shows "(inaktiv)". This
+// *always happens automatically*.
+// 1. Standalone mode is disabled and the native layout is not set
+//    to a Neo layout
+bool _bypassBecauseNoMatchingLayout;
+@property bool bypassBecauseNoMatchingLayout() nothrow {
+    return _bypassBecauseNoMatchingLayout;
+}
+@property void bypassBecauseNoMatchingLayout(bool val) nothrow {
+    _bypassBecauseNoMatchingLayout = val;
+    onHookStateUpdate();
+}
+// 2. The current window is on the configured blacklist
+bool _bypassBecauseWindowInBlacklist;
+@property bool bypassBecauseWindowInBlacklist() nothrow {
+    return _bypassBecauseWindowInBlacklist;
+}
+@property void bypassBecauseWindowInBlacklist(bool val) nothrow {
+    _bypassBecauseWindowInBlacklist = val;
+    onHookStateUpdate();
+}
+
+@property bool resultingHookState() nothrow {
+    return keyboardHookActive && !(bypassBecauseNoMatchingLayout || bypassBecauseWindowInBlacklist);
+}
+
+// Cache the last resulting hook state to detect changes
+bool previousResultingHookState;
+
 bool foregroundWindowChanged;
-bool keyboardHookActive;
 bool previousNumlockState;
 
 bool oskOpen;
@@ -37,6 +80,7 @@ HotkeyConfig configHotkeyToggleOSK;
 HotkeyConfig configHotkeyToggleOneHandedMode;
 Scancode configOneHandedModeMirrorKey;
 Scancode[Scancode] configOneHandedModeMirrorMap;
+BlacklistEntry[] configBlacklist;
 
 HWND hwnd;
 
@@ -88,15 +132,18 @@ struct HotkeyConfig {
     uint key;  // main key vk
 }
 
+struct BlacklistEntry {
+    string windowTitleRegex;
+}
+
 extern (Windows)
 LRESULT LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) nothrow {
     if (foregroundWindowChanged) {
         checkKeyboardLayout();
-        updateTrayTooltip();
         foregroundWindowChanged = false;
     }
 
-    if (bypassMode) {
+    if (!resultingHookState) {
         return CallNextHookEx(hHook, nCode, wParam, lParam);
     }
 
@@ -202,7 +249,7 @@ void checkKeyboardLayout() nothrow {
     } else {
         // GetKeyboardLayout returns null in Windows terminal, see #11
         // In that case, we want to just keep the current layout settings if there are any, otherwise deactivate
-        if (!bypassMode && activeLayout) {
+        if (resultingHookState && activeLayout) {
             layout = activeLayout;
         } else {
             layout = null;  // "dllName" and therefore "layout" might be an actual (but wrong) layout if inputLocale == null
@@ -220,21 +267,15 @@ void checkKeyboardLayout() nothrow {
     }
 
     if (layout != null) {
-        if (bypassMode) {
-            debugWriteln("No bypassing keyboard input");
-            bypassMode = false;
-            previousNumlockState = getNumlockState();
-            resetHookStates();  // Reset potential locks when activating hook
-        }
+        bypassBecauseNoMatchingLayout = false;
 
         if (setActiveLayout(layout)) {
             debugWriteln("Changing keyboard layout to ", layout.name);
         }
     } else {
-        if (!bypassMode) {
-            debugWriteln("Starting bypass mode");
-            bypassMode = true;
-            setNumlockState(previousNumlockState);
+        if (!bypassBecauseNoMatchingLayout) {
+            debugWriteln("No matching layout found, bypassing keyboard hook");
+            bypassBecauseNoMatchingLayout = true;
         }
     }
 }
@@ -278,9 +319,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         case WM_COMMAND:
         switch (wParam) {
             case ID_TRAY_ACTIVATE_CONTEXTMENU:
-            switchKeyboardHook();
-            updateContextMenu();
-            updateTrayTooltip();
+            toggleKeyboardHook();
             break;
 
             case ID_TRAY_OSK_CONTEXTMENU:
@@ -306,7 +345,6 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             if (newLayoutIdx >= 0 && newLayoutIdx < layouts.length) {
                 configStandaloneLayout = &layouts[newLayoutIdx];
                 checkKeyboardLayout();
-                updateTrayTooltip();
                 CheckMenuRadioItem(layoutMenu, 0, GetMenuItemCount(layoutMenu) - 1, newLayoutIdx, MF_BYPOSITION);
                 // Persist new selected layout
                 auto configJson = parseJSONFile("config.json");
@@ -322,8 +360,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         switch (wParam) {
             case ID_HOTKEY_DEACTIVATE:
             // De(activation) hotkey
-            switchKeyboardHook();
-            updateContextMenu();
+            toggleKeyboardHook();
             break;
             case ID_HOTKEY_OSK:
             toggleOSK();
@@ -413,39 +450,83 @@ void updateContextMenu() {
 
 void updateTrayTooltip() nothrow {
     wstring layoutName = "inaktiv"w;
-    if (keyboardHookActive && !bypassMode) {
+    if (resultingHookState && activeLayout) {
         layoutName = (standaloneModeActive ? ""w : "+"w) ~ activeLayout.name;
     }
     trayIcon.setTip((APPNAME ~ " (" ~ layoutName ~ ")").to!(wchar[]));
 }
 
-void switchKeyboardHook() {
-    if (!keyboardHookActive) {
+void onHookStateUpdate() nothrow {
+    // Called every time any of the three hook state flags are set
+
+    if (!previousResultingHookState && resultingHookState) {  // on activation
+        debugWriteln("Keyboard hook active");
+        // store original numlock state so that we can reset it later when deactivating
         previousNumlockState = getNumlockState();
 
-        HINSTANCE hInstance = GetModuleHandle(NULL);
-        hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
-        debugWriteln("Keyboard hook active!");
+        // We want Numlock to be always on, because some apps (built on WinUI, see #32) misinterpret VK_NUMPADx events if Numlock is disabled
+        // However, this means we have to deal with fake shift events on Numpad layer 2 (#15)
+        // On some notebooks with a native Numpad layer on the main keyboard we shouldn't do this, because they
+        // then always get numbers instead of letters.
+        if (configAutoNumlock) {
+            setNumlockState(true);
+        }
 
-        // Activating keyboard hook must start without bypass mode, so that checkKeyboardLayout() does not store
-        // the already active Numlock state.
-        bypassMode = false;
-        checkKeyboardLayout();
+        // Deactivate Kana lock because Kana permanently activates layer 4 in kbdneo
+        setKanaState(false);
+
         resetHookStates();  // Reset potential locks when activating hook
-    } else {
-        UnhookWindowsHookEx(hHook);
-        // Only reset Numlock state if we were active before
-        if (!bypassMode) { setNumlockState(previousNumlockState); }
-        debugWriteln("Keyboard hook inactive!");
+    } else if (previousResultingHookState && !resultingHookState) {  // on deactivation
+        debugWriteln("Keyboard hook inactive");
+        setNumlockState(previousNumlockState);
     }
 
+    updateTrayTooltip();
+
+    previousResultingHookState = resultingHookState;
+}
+
+void toggleKeyboardHook() {
     keyboardHookActive = !keyboardHookActive;
+
+    if (keyboardHookActive) {  // on activation
+        HINSTANCE hInstance = GetModuleHandle(NULL);
+        hHook = SetWindowsHookEx(WH_KEYBOARD_LL, &LowLevelKeyboardProc, hInstance, 0);
+        debugWriteln("Keyboard hook registered!");
+
+        checkKeyboardLayout();
+    } else {  // on deactivation
+        UnhookWindowsHookEx(hHook);
+        // Only reset Numlock state if we were active before
+        debugWriteln("Keyboard hook unregistered!");
+    }
+
+    updateContextMenu();
 }
 
 
 extern (Windows)
-void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow @nogc {
+void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow {
     foregroundWindowChanged = true;
+    char[256] titleBuffer;
+    uint titleLen = GetWindowTextA(hwnd, titleBuffer.ptr, 256);
+    char[] windowTitle = titleBuffer[0..titleLen];
+    debugWriteln("Changed to window with title '", windowTitle, "'");
+    try {
+        bool windowInBlacklist;
+
+        foreach (blacklistEntry; configBlacklist) {
+            if (matchFirst(windowTitle, blacklistEntry.windowTitleRegex)) {
+                windowInBlacklist = true;
+                break;
+            }
+        }
+
+        if (windowInBlacklist) {
+            debugWriteln("Current window is in blacklist");
+        }
+        bypassBecauseWindowInBlacklist = windowInBlacklist;
+    } catch(Exception e) {}
 }
 
 HotkeyConfig parseHotkey(string hotkeyString) {
@@ -582,6 +663,16 @@ void initialize() {
         foreach (string key, JSONValue value; configJson["oneHandedMode"]["mirrorMap"]) {
             configOneHandedModeMirrorMap[parseScancode(key)] = parseScancode(value.str);
         }
+
+        configBlacklist = [];
+        foreach (blacklistEntryJson; configJson["blacklist"].array) {
+            BlacklistEntry blacklistEntry;
+            if (!("windowTitle" in blacklistEntryJson)) {
+                throw new Exception("Blacklist-Einträge müssen \"windowTitle\" enthalten.");
+            }
+            blacklistEntry.windowTitleRegex = blacklistEntryJson["windowTitle"].str;
+            configBlacklist ~= blacklistEntry;
+        }
     } catch (Exception e) {
         string text = "Beim Starten von ReNeo ist ein Fehler aufgetreten:\n" ~ e.msg;
         MessageBox(hwnd, text.toUTF16z, "Fehler beim Initialisieren".toUTF16z, MB_OK | MB_ICONERROR);
@@ -615,7 +706,9 @@ void main(string[] args) {
     // We want to detect when the selected keyboard layout changes so that we can activate or deactivate ReNeo as necessary.
     // Listening to input locale events directly is difficult and not very robust. So we listen to the foreground window changes
     // (which also fire when the language bar is activated) and then recheck the keyboard layout on the next keypress.
-    foregroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
+    // For some reason (probably by mistake) WINEVENTPROCs must be @nogc. That's annoying, so we just cast our function pointer
+    // and use the GC anyway.
+    foregroundHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, cast(WINEVENTPROC) &WinEventProc, 0, 0, WINEVENT_OUTOFCONTEXT);
     if (foregroundHook) {
         debugWriteln("Foreground window hook active!");
     } else {
@@ -661,8 +754,7 @@ void main(string[] args) {
     SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
 
     keyboardHookActive = false;
-    switchKeyboardHook();
-    updateTrayTooltip();
+    toggleKeyboardHook();
 
     // Register global (de)activation hotkey
     if (configHotkeyToggleActivation.key)
@@ -684,5 +776,5 @@ void main(string[] args) {
     UnregisterHotKey(hwnd, ID_HOTKEY_OSK);
     UnregisterHotKey(hwnd, ID_HOTKEY_DEACTIVATE);
 
-    if (keyboardHookActive) { switchKeyboardHook(); }
+    if (keyboardHookActive) { toggleKeyboardHook(); }
 }

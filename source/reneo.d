@@ -550,12 +550,16 @@ bool setActiveLayout(NeoLayout *newLayout) nothrow @nogc {
 void resetHookStates() nothrow {
     // Reset all stored states that might lead to unwanted locks
     naturalHeldModifiers.clear();
+    heldKeys.clear();
+    currentForcedModifiers.clear();
 
     capslock = false;
     mod4Lock = false;
 
     setCapslockState(false);
     setKanaState(false);
+
+    mirrorKeyHeld = false;
 }
 
 
@@ -812,17 +816,6 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
     // Numpad 0-9 and separator are dual-state Numpad keys:
     // scancode range 0x47–0x53 (without 0x4A and 0x4E), no extended scancode
     bool isDualStateNumpadKey = (!scan.extended && scan.scan >= 0x47 && scan.scan <= 0x53 && scan.scan != 0x4A && scan.scan != 0x4E);
-                       
-    // Deactivate Kana lock if necessary because Kana permanently activates layer 4 in kbdneo
-    setKanaState(false);
-
-    // We want Numlock to be always on, because some apps (built on WinUI, see #32) misinterpret VK_NUMPADx events if Numlock is disabled
-    // However, this means we have to deal with fake shift events on Numpad layer 2 (#15)
-    // On some notebooks with a native Numpad layer on the main keyboard we shouldn't do this, because they
-    // then always get numbers instead of letters.
-    if (configAutoNumlock) {
-        setNumlockState(true);
-    }
 
     // When Numlock is enabled, pressing Shift and a "dual state" numpad key generates fake key events to temporarily lift
     // and repress the active shift key. Fake Shift key ups are always marked as such with a special scancode, the

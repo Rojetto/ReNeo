@@ -64,6 +64,17 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
     - `"toggleActivation"`: ReNeo aktivieren/deaktivieren
     - `"toggleOSK"`: Bildschirmtastatur öffnen/schließen. Zusätzlich zu dem hier konfigurierten Hotkey funktioniert immer `M3+F1`.
     - `"toggleOneHandedMode"`: Einhandmodus (de)aktivieren. Zusätzlich funktioniert immer `M3+F10`.
+- `"blacklist"`: Liste von Programmen, für die ReNeo automatisch deaktiviert werden soll (zum Beispiel X-Server, Remote-Clients oder Spiele, bei denen es sonst Konflikte gibt). Momentan wird nach dem Fenstertitel entschieden, für den man eine *RegEx* definieren kann. *Beispiel*: Für Fenster, die "emacs" oder "Virtual Machine Manager" im Titel enthalten, soll ReNeo sich deaktivieren. Die Config enthält dann
+```
+"blacklist": [
+    {
+        "windowTitle": "emacs"
+    },
+    {
+        "windowTitle": "Virtual Machine Manager"
+    }
+]
+```
 - `"autoNumlock"`: Soll Numlock automatisch angeschaltet werden? Wenn die Tastatur einen echten Nummernblock besitzt, sollte diese Option für beste Kompatibilität immer auf `true` gesetzt sein. Bei Laptops mit nativer Numpad-Ebene auf dem Hauptfeld kann dieses Verhalten aber mit `false` deaktiviert werden.
 - `"filterNeoModifiers"`:
     - `true` (Standard): Die Tastenevents für M3 und M4 werden im Erweiterungsmodus von ReNeo weggefiltert, Anwendungen bekommen von diesen Tasten also nichts mit. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
@@ -125,6 +136,8 @@ Da sich die verschiedenen VM-Programme und Remote Desktop Clients unterschiedlic
 Für beste Kompatibilität sollte im Allgemeinen das *innerste* System das Alternativlayout übernehmen, und in allen äußeren Systeme QWERTZ eingestellt sein.
 Bei VMs bedeutet das QWERTZ im Wirt und den passenden Neo-Treiber im Gast.
 Im Fall von Remote-Desktop-Verbindungen heißt es QWERTZ lokal und einen Neo-Treiber im Remote-System.
+
+Wenn sich herausstellt, dass es ohne ReNeo besser funktioniert, können die entsprechenden Programme auch auf die *Blacklist* gesetzt werden, sodass sich ReNeo automatisch deaktiviert. Siehe dazu [Konfiguration](#allgemeine-konfiguration).
 
 ## WSL mit VcXsrv als X-Server
 
