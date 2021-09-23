@@ -591,7 +591,9 @@ void initialize() {
             // Overwrite values from default config with user config settings
             void copyJsonObjectOverOther(ref JSONValue source, ref JSONValue destination) {
                 foreach (string key, JSONValue value; source) {
-                    if (value.type == JSONType.OBJECT && key in destination) {
+                    // The "mirrorMap" thing is a hack to not fill the user config.json with mirror map
+                    // entries for scancodes that they have removed but that exist in config.default.json
+                    if (value.type == JSONType.OBJECT && key in destination && key != "mirrorMap") {
                         copyJsonObjectOverOther(value, destination[key]);
                     } else {
                         destination[key] = value;
