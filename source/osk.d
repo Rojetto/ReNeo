@@ -155,7 +155,7 @@ void initOsk(JSONValue oskJson) {
     }
 }
 
-cairo_font_face_t* get_font_face_for_char(HDC hdc, string c) {
+cairo_font_face_t* getFontFaceForChar(HDC hdc, string c) {
     for (int i = 0; i < WIN_FONTS.length - 1; i++) {
         SelectObject(hdc, WIN_FONTS[i]);
         WORD glyphIndex;
@@ -276,7 +276,7 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
             }
 
             cairo_set_source_rgba(cr, 0.95, 0.95, 0.95, 1.0);
-            cairo_set_font_face(cr, get_font_face_for_char(hdcMem, label));
+            cairo_set_font_face(cr, getFontFaceForChar(hdcMem, label));
             auto labelz = label.toStringz;
             cairo_text_extents_t extents;
             cairo_text_extents(cr, labelz, &extents);
