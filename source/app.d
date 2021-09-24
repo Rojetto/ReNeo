@@ -9,6 +9,7 @@ import mapping;
 import composer;
 import trayicon;
 import osk;
+import localization : initLocalization, appString, appStringwz, Language, AppString, hotkeyString;
 
 import std.utf;
 import std.string;
@@ -82,6 +83,11 @@ Scancode configOneHandedModeMirrorKey;
 Scancode[Scancode] configOneHandedModeMirrorMap;
 BlacklistEntry[] configBlacklist;
 
+// Default values, are overwritten if hotkeys are set in user config
+string hotkeyToggleActivationStr;
+string hotkeyToggleOSKStr = "Mod3+F1";
+string hotkeyToggleOneHandedModeStr = "Mod3+F10";
+
 HWND hwnd;
 
 HMENU contextMenu;
@@ -108,19 +114,6 @@ const UINT ID_HOTKEY_OSK = 0x002;
 const UINT ID_HOTKEY_ONE_HANDED_MODE = 0x003;
 
 const UINT LAYOUTMENU_POSITION = 0;
-
-string disableAppMenuMsg    = "Deaktivieren";
-string enableAppMenuMsg     = "Aktivieren";
-string reloadMenuMsg        = "Neu laden";
-string layoutMenuMsg        = "Tastaturlayout";
-string quitMenuMsg          = "Beenden";
-string oskMenuMsg           = "Bildschirmtastatur";
-string oneHandedModeMenuMsg = "Einhandmodus";
-
-string oskMenuWithHotkeyMsg;  // strings are combined with loaded hotkey on initialization
-string oneHandedModeMenuWithHotkeyMsg;
-string disableAppMenuWithHotkeyMsg;
-string enableAppMenuWithHotkeyMsg;
 
 const APPNAME            = "ReNeo"w;
 string executableDir;
@@ -429,10 +422,10 @@ void modifyMenuItemString(HMENU hMenu, UINT id, string text) {
 void updateContextMenu() {
     if (!keyboardHookActive) {
         trayIcon.setIcon(iconDisabled);
-        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, enableAppMenuWithHotkeyMsg);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, appString(AppString.MENU_ENABLE, hotkeyToggleActivationStr));
     } else {
         trayIcon.setIcon(iconEnabled);
-        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuWithHotkeyMsg);
+        modifyMenuItemString(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, appString(AppString.MENU_DISABLE, hotkeyToggleActivationStr));
     }
 
     if (oskOpen) {
@@ -547,34 +540,13 @@ HotkeyConfig parseHotkey(string hotkeyString) {
             if (i == keyStrings.length - 1) {
                 config.key = ("VK_" ~ normalizedKey).to!VKEY;
             } else {
-                throw new Exception("Nicht existierender Hotkey-Modifier '" ~ keyString ~ "'. Mögliche Werte sind Shift, Ctrl, Alt, Win.");
+                throw new Exception(appString(AppString.ERROR_INVALID_HOTKEY_MODIFIER, keyString));
             }
             break;
         }
     }
 
     return config;
-}
-
-string hotkeyToString(HotkeyConfig hotkey) {
-    string hotkeyString = "";
-
-    if (hotkey.modFlags & core.sys.windows.winuser.MOD_WIN) {
-        hotkeyString ~= "Win+";
-    }
-    if (hotkey.modFlags & core.sys.windows.winuser.MOD_CONTROL) {
-        hotkeyString ~= "Strg+";
-    }
-    if (hotkey.modFlags & core.sys.windows.winuser.MOD_ALT) {
-        hotkeyString ~= "Alt+";
-    }
-    if (hotkey.modFlags & core.sys.windows.winuser.MOD_SHIFT) {
-        hotkeyString ~= "Shift+";
-    }
-
-    hotkeyString ~= hotkey.key.to!VKEY.to!string[3..$].capitalize;
-
-    return hotkeyString;
 }
 
 void initialize() {
@@ -606,6 +578,9 @@ void initialize() {
 
         // Write combined config (default values + user settings) to user config file
         std.file.write(buildPath(executableDir, "config.json"), toJSON(configJson, true));
+
+        // First of all, set the langage so that subsequent stuff is localized correctly
+        initLocalization(configJson["language"].str.toUpper.to!Language);
 
 
         auto layoutsJson = parseJSONFile("layouts.json");
@@ -642,23 +617,15 @@ void initialize() {
         // Parse hotkeys (might be null -> user doesn't want to use hotkey)
         if (configJson["hotkeys"]["toggleActivation"].type == JSONType.STRING) {
             configHotkeyToggleActivation = parseHotkey(configJson["hotkeys"]["toggleActivation"].str);
-            string hotkeyString = hotkeyToString(configHotkeyToggleActivation);
-            disableAppMenuWithHotkeyMsg = disableAppMenuMsg ~ "\t" ~ hotkeyString;
-            enableAppMenuWithHotkeyMsg = enableAppMenuMsg ~ "\t" ~ hotkeyString;
+            hotkeyToggleActivationStr = hotkeyString(configHotkeyToggleActivation);
         }
         if (configJson["hotkeys"]["toggleOSK"].type == JSONType.STRING) {
             configHotkeyToggleOSK = parseHotkey(configJson["hotkeys"]["toggleOSK"].str);
-            string hotkeyString = hotkeyToString(configHotkeyToggleOSK);
-            oskMenuWithHotkeyMsg = oskMenuMsg ~ "\t" ~ hotkeyString;
-        } else {
-            oskMenuWithHotkeyMsg = oskMenuMsg ~ "\tMod3+F1";
+            hotkeyToggleOSKStr = hotkeyString(configHotkeyToggleOSK);
         }
         if (configJson["hotkeys"]["toggleOneHandedMode"].type == JSONType.STRING) {
             configHotkeyToggleOneHandedMode = parseHotkey(configJson["hotkeys"]["toggleOneHandedMode"].str);
-            string hotkeyString = hotkeyToString(configHotkeyToggleOneHandedMode);
-            oneHandedModeMenuWithHotkeyMsg = oneHandedModeMenuMsg ~ "\t" ~ hotkeyString;
-        } else {
-            oneHandedModeMenuWithHotkeyMsg = oneHandedModeMenuMsg ~ "\tMod3+F10";
+            hotkeyToggleOneHandedModeStr = hotkeyString(configHotkeyToggleOneHandedMode);
         }
 
         configOneHandedModeMirrorKey = parseScancode(configJson["oneHandedMode"]["mirrorKey"].str);
@@ -670,14 +637,13 @@ void initialize() {
         foreach (blacklistEntryJson; configJson["blacklist"].array) {
             BlacklistEntry blacklistEntry;
             if (!("windowTitle" in blacklistEntryJson)) {
-                throw new Exception("Blacklist-Einträge müssen \"windowTitle\" enthalten.");
+                throw new Exception(appString(AppString.ERROR_BLACKLIST_MUST_CONTAIN_WINDOW_TITLE));
             }
             blacklistEntry.windowTitleRegex = blacklistEntryJson["windowTitle"].str;
             configBlacklist ~= blacklistEntry;
         }
     } catch (Exception e) {
-        string text = "Beim Starten von ReNeo ist ein Fehler aufgetreten:\n" ~ e.msg;
-        MessageBox(hwnd, text.toUTF16z, "Fehler beim Initialisieren".toUTF16z, MB_OK | MB_ICONERROR);
+        MessageBox(hwnd, appStringwz(AppString.ERROR_ERROR_OCCURRED_WHILE_STARTING, e.msg), appStringwz(AppString.ERROR_WHILE_INITIALIZING), MB_OK | MB_ICONERROR);
         exit(0);
     }
 
@@ -687,12 +653,12 @@ void initialize() {
 JSONValue parseJSONFile(string jsonFilename) {
     string jsonFilePath = buildPath(executableDir, jsonFilename);
     if (!exists(jsonFilePath))
-        throw new Exception(jsonFilePath ~ " existiert nicht.");
+        throw new Exception(appString(AppString.ERROR_PATH_DOES_NOT_EXIST, jsonFilePath));
     string jsonString = readText(jsonFilePath);
     try {
         return parseJSON(jsonString);
     } catch (Exception e) {
-        throw new Exception("Fehler beim Parsen von " ~ jsonFilename ~ ".\n" ~ e.msg);
+        throw new Exception(appString(AppString.ERROR_WHILE_PARSING, jsonFilename, e.msg));
     }
 }
 
@@ -741,18 +707,18 @@ void main(string[] args) {
     // Define context menu
     contextMenu = CreatePopupMenu();
     if (configStandaloneMode) {
-        AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, layoutMenuMsg.toUTF16z);
+        AppendMenu(contextMenu, MF_POPUP, cast(UINT_PTR) layoutMenu, appStringwz(AppString.MENU_CHOOSE_LAYOUT));
         AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     }
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, oskMenuWithHotkeyMsg.toUTF16z);
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ONE_HANDED_MODE_CONTEXTMENU, oneHandedModeMenuWithHotkeyMsg.toUTF16z);
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, reloadMenuMsg.toUTF16z);
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, disableAppMenuWithHotkeyMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_OSK_CONTEXTMENU, appStringwz(AppString.MENU_OSK, hotkeyToggleOSKStr));
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ONE_HANDED_MODE_CONTEXTMENU, appStringwz(AppString.MENU_ONE_HANDED_MODE, hotkeyToggleOneHandedModeStr));
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_RELOAD_CONTEXTMENU, appStringwz(AppString.MENU_RELOAD));
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_ACTIVATE_CONTEXTMENU, appStringwz(AppString.MENU_DISABLE, hotkeyToggleActivationStr));
     AppendMenu(contextMenu, MF_SEPARATOR, 0, NULL);
     string versionMsg = "ReNeo %VERSION%";   // text is replaced by GitHub release action
     AppendMenu(contextMenu, MF_STRING, ID_TRAY_VERSION, versionMsg.toUTF16z);
     EnableMenuItem(contextMenu, ID_TRAY_VERSION, MF_BYCOMMAND | MF_GRAYED);
-    AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, quitMenuMsg.toUTF16z);
+    AppendMenu(contextMenu, MF_STRING, ID_TRAY_QUIT_CONTEXTMENU, appStringwz(AppString.MENU_QUIT));
     SetMenuDefaultItem(contextMenu, ID_TRAY_ACTIVATE_CONTEXTMENU, 0);
 
     keyboardHookActive = false;

@@ -1,6 +1,7 @@
 {
     "standaloneLayout": "NeoQwertz",
     "standaloneMode": true,
+    "language": "german",
     "filterNeoModifiers": true,
     "autoNumlock": true,
     "osk": {
