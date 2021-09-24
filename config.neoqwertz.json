@@ -6,7 +6,8 @@
     "autoNumlock": true,
     "osk": {
         "numpad": true,
-        "theme": "Grey"
+        "theme": "Grey",
+        "layout": "iso"
     },
     "hotkeys": {
         "toggleActivation": "Shift+Pause",

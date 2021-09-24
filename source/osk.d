@@ -28,6 +28,7 @@ uint dpi = 96;
 
 bool configOskNumpad;
 OSKTheme configOskTheme;
+OSKLayout configOskLayout;
 
 
 enum OSKTheme {
@@ -35,99 +36,10 @@ enum OSKTheme {
     NeoBlue
 }
 
-
-struct OSKKeyInfo {
-    float x;
-    float y;
-    float width;
-    Scancode scan;
+enum OSKLayout {
+    ISO,
+    ANSI
 }
-
-auto KEY_POSITIONS = [
-    // First row
-    OSKKeyInfo(0, 0, 1, Scancode(0x29, false)),
-    OSKKeyInfo(1, 0, 1, Scancode(0x02, false)),
-    OSKKeyInfo(2, 0, 1, Scancode(0x03, false)),
-    OSKKeyInfo(3, 0, 1, Scancode(0x04, false)),
-    OSKKeyInfo(4, 0, 1, Scancode(0x05, false)),
-    OSKKeyInfo(5, 0, 1, Scancode(0x06, false)),
-    OSKKeyInfo(6, 0, 1, Scancode(0x07, false)),
-    OSKKeyInfo(7, 0, 1, Scancode(0x08, false)),
-    OSKKeyInfo(8, 0, 1, Scancode(0x09, false)),
-    OSKKeyInfo(9, 0, 1, Scancode(0x0A, false)),
-    OSKKeyInfo(10, 0, 1, Scancode(0x0B, false)),
-    OSKKeyInfo(11, 0, 1, Scancode(0x0C, false)),
-    OSKKeyInfo(12, 0, 1, Scancode(0x0D, false)),
-    OSKKeyInfo(13, 0, 2, Scancode(0x0E, false)), // Backspace
-    // Second row
-    OSKKeyInfo(0, 1, 1.5, Scancode(0x0F, false)), // Tab
-    OSKKeyInfo(1.5, 1, 1, Scancode(0x10, false)),
-    OSKKeyInfo(2.5, 1, 1, Scancode(0x11, false)),
-    OSKKeyInfo(3.5, 1, 1, Scancode(0x12, false)),
-    OSKKeyInfo(4.5, 1, 1, Scancode(0x13, false)),
-    OSKKeyInfo(5.5, 1, 1, Scancode(0x14, false)),
-    OSKKeyInfo(6.5, 1, 1, Scancode(0x15, false)),
-    OSKKeyInfo(7.5, 1, 1, Scancode(0x16, false)),
-    OSKKeyInfo(8.5, 1, 1, Scancode(0x17, false)),
-    OSKKeyInfo(9.5, 1, 1, Scancode(0x18, false)),
-    OSKKeyInfo(10.5, 1, 1, Scancode(0x19, false)),
-    OSKKeyInfo(11.5, 1, 1, Scancode(0x1A, false)),
-    OSKKeyInfo(12.5, 1, 1, Scancode(0x1B, false)),
-    // Third row
-    OSKKeyInfo(0, 2, 1.75, Scancode(0x3A, false)), // Capslock
-    OSKKeyInfo(1.75, 2, 1, Scancode(0x1E, false)),
-    OSKKeyInfo(2.75, 2, 1, Scancode(0x1F, false)),
-    OSKKeyInfo(3.75, 2, 1, Scancode(0x20, false)),
-    OSKKeyInfo(4.75, 2, 1, Scancode(0x21, false)),
-    OSKKeyInfo(5.75, 2, 1, Scancode(0x22, false)),
-    OSKKeyInfo(6.75, 2, 1, Scancode(0x23, false)),
-    OSKKeyInfo(7.75, 2, 1, Scancode(0x24, false)),
-    OSKKeyInfo(8.75, 2, 1, Scancode(0x25, false)),
-    OSKKeyInfo(9.75, 2, 1, Scancode(0x26, false)),
-    OSKKeyInfo(10.75, 2, 1, Scancode(0x27, false)),
-    OSKKeyInfo(11.75, 2, 1, Scancode(0x28, false)),
-    OSKKeyInfo(12.75, 2, 1, Scancode(0x2B, false)),
-    // Fourth row
-    OSKKeyInfo(0, 3, 1.25, Scancode(0x2A, false)), // Shift
-    OSKKeyInfo(1.25, 3, 1, Scancode(0x56, false)),
-    OSKKeyInfo(2.25, 3, 1, Scancode(0x2C, false)),
-    OSKKeyInfo(3.25, 3, 1, Scancode(0x2D, false)),
-    OSKKeyInfo(4.25, 3, 1, Scancode(0x2E, false)),
-    OSKKeyInfo(5.25, 3, 1, Scancode(0x2F, false)),
-    OSKKeyInfo(6.25, 3, 1, Scancode(0x30, false)),
-    OSKKeyInfo(7.25, 3, 1, Scancode(0x31, false)),
-    OSKKeyInfo(8.25, 3, 1, Scancode(0x32, false)),
-    OSKKeyInfo(9.25, 3, 1, Scancode(0x33, false)),
-    OSKKeyInfo(10.25, 3, 1, Scancode(0x34, false)),
-    OSKKeyInfo(11.25, 3, 1, Scancode(0x35, false)),
-    OSKKeyInfo(12.25, 3, 2.75, Scancode(0x36, true)), // Shift
-    // Fifth row
-    OSKKeyInfo(3.75, 4, 6.25, Scancode(0x39, false)), // Space
-    OSKKeyInfo(10, 4, 1.25, Scancode(0x38, true)), // AltGr
-];
-
-auto KEY_POSITIONS_NUMPAD = [
-    // First row
-    OSKKeyInfo(16, 0, 1, Scancode(0x45, true)),
-    OSKKeyInfo(17, 0, 1, Scancode(0x35, true)),
-    OSKKeyInfo(18, 0, 1, Scancode(0x37, false)),
-    OSKKeyInfo(19, 0, 1, Scancode(0x4A, false)),
-    // Second row
-    OSKKeyInfo(16, 1, 1, Scancode(0x47, false)),
-    OSKKeyInfo(17, 1, 1, Scancode(0x48, false)),
-    OSKKeyInfo(18, 1, 1, Scancode(0x49, false)),
-    // Third row
-    OSKKeyInfo(16, 2, 1, Scancode(0x4B, false)),
-    OSKKeyInfo(17, 2, 1, Scancode(0x4C, false)),
-    OSKKeyInfo(18, 2, 1, Scancode(0x4D, false)),
-    // Fourth row
-    OSKKeyInfo(16, 3, 1, Scancode(0x4F, false)),
-    OSKKeyInfo(17, 3, 1, Scancode(0x50, false)),
-    OSKKeyInfo(18, 3, 1, Scancode(0x51, false)),
-    // Fifth row
-    OSKKeyInfo(16, 4, 2, Scancode(0x52, false)),
-    OSKKeyInfo(18, 4, 1, Scancode(0x53, false)),
-];
 
 const float KEYBOARD_WIDTH_WITH_NUMPAD = 20;
 const float KEYBOARD_WIDTH_NO_NUMPAD = 15;
@@ -143,6 +55,7 @@ void initOsk(JSONValue oskJson) {
     // Read config
     configOskNumpad = oskJson["numpad"].boolean;
     configOskTheme = oskJson["theme"].str.to!OSKTheme;
+    configOskLayout = oskJson["layout"].str.toUpper.to!OSKLayout;
 
     // Load fonts
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -285,17 +198,117 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
         }
     }
 
-    // Draw “regular” keys, i.e. keys with height 1
-    foreach (key; configOskNumpad ? KEY_POSITIONS ~ KEY_POSITIONS_NUMPAD : KEY_POSITIONS) {    
-        roundRectangle(cr, key.x + PADDING, key.y + PADDING, key.width - 2*PADDING, 1 - 2*PADDING, CORNER_RADIUS);
+    void rectangularKey(float x, float y, float width, Scancode scan) {
+        roundRectangle(cr, x + PADDING, y + PADDING, width - 2*PADDING, 1 - 2*PADDING, CORNER_RADIUS);
         cairo_set_source(cr, KEY_COLOR);
         cairo_fill(cr);
 
-        showKeyLabelCentered(key.scan, key.x, key.width, key.y + BASE_LINE);
+        showKeyLabelCentered(scan, x, width, y + BASE_LINE);
     }
 
-    // Draw special keys with height ≠ 1
+    // Draw “regular” keys, i.e. keys with height 1
+    // First row
+    rectangularKey(0, 0, 1, Scancode(0x29, false));
+    rectangularKey(1, 0, 1, Scancode(0x02, false));
+    rectangularKey(2, 0, 1, Scancode(0x03, false));
+    rectangularKey(3, 0, 1, Scancode(0x04, false));
+    rectangularKey(4, 0, 1, Scancode(0x05, false));
+    rectangularKey(5, 0, 1, Scancode(0x06, false));
+    rectangularKey(6, 0, 1, Scancode(0x07, false));
+    rectangularKey(7, 0, 1, Scancode(0x08, false));
+    rectangularKey(8, 0, 1, Scancode(0x09, false));
+    rectangularKey(9, 0, 1, Scancode(0x0A, false));
+    rectangularKey(10, 0, 1, Scancode(0x0B, false));
+    rectangularKey(11, 0, 1, Scancode(0x0C, false));
+    rectangularKey(12, 0, 1, Scancode(0x0D, false));
+    rectangularKey(13, 0, 2, Scancode(0x0E, false)); // Backspace
+    // Second row
+    rectangularKey(0, 1, 1.5, Scancode(0x0F, false)); // Tab
+    rectangularKey(1.5, 1, 1, Scancode(0x10, false));
+    rectangularKey(2.5, 1, 1, Scancode(0x11, false));
+    rectangularKey(3.5, 1, 1, Scancode(0x12, false));
+    rectangularKey(4.5, 1, 1, Scancode(0x13, false));
+    rectangularKey(5.5, 1, 1, Scancode(0x14, false));
+    rectangularKey(6.5, 1, 1, Scancode(0x15, false));
+    rectangularKey(7.5, 1, 1, Scancode(0x16, false));
+    rectangularKey(8.5, 1, 1, Scancode(0x17, false));
+    rectangularKey(9.5, 1, 1, Scancode(0x18, false));
+    rectangularKey(10.5, 1, 1, Scancode(0x19, false));
+    rectangularKey(11.5, 1, 1, Scancode(0x1A, false));
+    rectangularKey(12.5, 1, 1, Scancode(0x1B, false));
+    if (configOskLayout == OSKLayout.ISO) {
+        // OEM key on third row
+        rectangularKey(12.75, 2, 1, Scancode(0x2B, false));
+
+        // Big return key
+        returnKey(cr, 13.5 + PADDING, 1 + PADDING, 1.5 - 2*PADDING, 1.25 - 2*PADDING, 1 - 2*PADDING, 1, CORNER_RADIUS);
+        cairo_set_source(cr, KEY_COLOR);
+        cairo_fill(cr);
+        showKeyLabelCentered(Scancode(0x1C, false), 13.75, 1.25, 1.5 + BASE_LINE);
+    } else if (configOskLayout == OSKLayout.ANSI) {
+        // OEM key
+        rectangularKey(13.5, 1, 1.5, Scancode(0x2B, false));
+
+        // Third row return key
+        rectangularKey(12.75, 2, 2.25, Scancode(0x1C, false));
+    }
+    // Third row
+    rectangularKey(0, 2, 1.75, Scancode(0x3A, false)); // Capslock
+    rectangularKey(1.75, 2, 1, Scancode(0x1E, false));
+    rectangularKey(2.75, 2, 1, Scancode(0x1F, false));
+    rectangularKey(3.75, 2, 1, Scancode(0x20, false));
+    rectangularKey(4.75, 2, 1, Scancode(0x21, false));
+    rectangularKey(5.75, 2, 1, Scancode(0x22, false));
+    rectangularKey(6.75, 2, 1, Scancode(0x23, false));
+    rectangularKey(7.75, 2, 1, Scancode(0x24, false));
+    rectangularKey(8.75, 2, 1, Scancode(0x25, false));
+    rectangularKey(9.75, 2, 1, Scancode(0x26, false));
+    rectangularKey(10.75, 2, 1, Scancode(0x27, false));
+    rectangularKey(11.75, 2, 1, Scancode(0x28, false));
+    // Fourth row
+    if (configOskLayout == OSKLayout.ISO) {
+        rectangularKey(0, 3, 1.25, Scancode(0x2A, false)); // Shift
+        rectangularKey(1.25, 3, 1, Scancode(0x56, false)); // OEM key
+    } else if (configOskLayout == OSKLayout.ANSI) {
+        rectangularKey(0, 3, 2.25, Scancode(0x2A, false)); // Shift
+    }
+    rectangularKey(2.25, 3, 1, Scancode(0x2C, false));
+    rectangularKey(3.25, 3, 1, Scancode(0x2D, false));
+    rectangularKey(4.25, 3, 1, Scancode(0x2E, false));
+    rectangularKey(5.25, 3, 1, Scancode(0x2F, false));
+    rectangularKey(6.25, 3, 1, Scancode(0x30, false));
+    rectangularKey(7.25, 3, 1, Scancode(0x31, false));
+    rectangularKey(8.25, 3, 1, Scancode(0x32, false));
+    rectangularKey(9.25, 3, 1, Scancode(0x33, false));
+    rectangularKey(10.25, 3, 1, Scancode(0x34, false));
+    rectangularKey(11.25, 3, 1, Scancode(0x35, false));
+    rectangularKey(12.25, 3, 2.75, Scancode(0x36, true)); // Shift
+    // Fifth row
+    rectangularKey(3.75, 4, 6.25, Scancode(0x39, false)); // Space
+    rectangularKey(10, 4, 1.25, Scancode(0x38, true)); // AltGr
+    
     if (configOskNumpad) {
+        // First row
+        rectangularKey(16, 0, 1, Scancode(0x45, true));
+        rectangularKey(17, 0, 1, Scancode(0x35, true));
+        rectangularKey(18, 0, 1, Scancode(0x37, false));
+        rectangularKey(19, 0, 1, Scancode(0x4A, false));
+        // Second row
+        rectangularKey(16, 1, 1, Scancode(0x47, false));
+        rectangularKey(17, 1, 1, Scancode(0x48, false));
+        rectangularKey(18, 1, 1, Scancode(0x49, false));
+        // Third row
+        rectangularKey(16, 2, 1, Scancode(0x4B, false));
+        rectangularKey(17, 2, 1, Scancode(0x4C, false));
+        rectangularKey(18, 2, 1, Scancode(0x4D, false));
+        // Fourth row
+        rectangularKey(16, 3, 1, Scancode(0x4F, false));
+        rectangularKey(17, 3, 1, Scancode(0x50, false));
+        rectangularKey(18, 3, 1, Scancode(0x51, false));
+        // Fifth row
+        rectangularKey(16, 4, 2, Scancode(0x52, false));
+        rectangularKey(18, 4, 1, Scancode(0x53, false));
+
         // Numpad Add
         roundRectangle(cr, 19 + PADDING, 1 + PADDING, 1 - 2*PADDING, 2 - 2*PADDING, CORNER_RADIUS);
         cairo_set_source(cr, KEY_COLOR);
@@ -307,11 +320,6 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
         cairo_fill(cr);
         showKeyLabelCentered(Scancode(0x1C, true), 19, 1, 3.5 + BASE_LINE);
     }
-    // Return
-    returnKey(cr, 13.5 + PADDING, 1 + PADDING, 1.5 - 2*PADDING, 1.25 - 2*PADDING, 1 - 2*PADDING, 1, CORNER_RADIUS);
-    cairo_set_source(cr, KEY_COLOR);
-    cairo_fill(cr);
-    showKeyLabelCentered(Scancode(0x1C, false), 13.75, 1.25, 1.5 + BASE_LINE);
 
     // Cairo cleanup    
     cairo_destroy(cr);
