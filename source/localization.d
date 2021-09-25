@@ -102,11 +102,7 @@ string hotkeyString(HotkeyConfig hotkey) {
         hotkeyString ~= "Win+";
     }
     if (hotkey.modFlags & MOD_CONTROL) {
-        if (selectedLanguage == Language.GERMAN) {
-            hotkeyString ~= "Strg+";
-        } else {
-            hotkeyString ~= "Ctrl+";
-        }
+        hotkeyString ~= controlKeyName() ~ "+";
     }
     if (hotkey.modFlags & MOD_ALT) {
         hotkeyString ~= "Alt+";
@@ -118,4 +114,12 @@ string hotkeyString(HotkeyConfig hotkey) {
     hotkeyString ~= hotkey.key.to!VKEY.to!string[3..$].capitalize;
 
     return hotkeyString;
+}
+
+string controlKeyName() {
+    if (selectedLanguage == Language.GERMAN) {
+        return "Strg";
+    } else {
+        return "Ctrl";
+    }
 }
