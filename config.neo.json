@@ -8,7 +8,8 @@
         "numpad": true,
         "theme": "Grey",
         "layout": "iso",
-        "numberRow": true
+        "numberRow": true,
+        "modifierNames": "standard"
     },
     "hotkeys": {
         "toggleActivation": "Shift+Pause",

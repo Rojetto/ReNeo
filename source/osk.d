@@ -31,6 +31,7 @@ bool configOskNumpad;
 OSKTheme configOskTheme;
 OSKLayout configOskLayout;
 bool configOskNumberRow;
+OSKModifierNames configOskModifierNames;
 
 
 enum OSKTheme {
@@ -41,6 +42,11 @@ enum OSKTheme {
 enum OSKLayout {
     ISO,
     ANSI
+}
+
+enum OSKModifierNames {
+    STANDARD,  // M3, M4, ...
+    THREE      // Sym, Cur
 }
 
 const float KEYBOARD_WIDTH_WITH_NUMPAD = 20;
@@ -59,6 +65,7 @@ void initOsk(JSONValue oskJson) {
     configOskTheme = oskJson["theme"].str.to!OSKTheme;
     configOskLayout = oskJson["layout"].str.toUpper.to!OSKLayout;
     configOskNumberRow = oskJson["numberRow"].boolean;
+    configOskModifierNames = oskJson["modifierNames"].str.toUpper.to!OSKModifierNames;
 
     // Load fonts
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -177,8 +184,18 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
                     case Modifier.LSHIFT: return "\u21e7";
                     case Modifier.LCTRL: return controlKeyName();
                     case Modifier.LALT: return "Alt";
-                    case Modifier.MOD3: return "M3";
-                    case Modifier.MOD4: return "M4";
+                    case Modifier.MOD3:
+                        if (configOskModifierNames == OSKModifierNames.STANDARD)
+                            return "M3";
+                        else if (configOskModifierNames == OSKModifierNames.THREE)
+                            return "Sym";
+                    break;
+                    case Modifier.MOD4:
+                    if (configOskModifierNames == OSKModifierNames.STANDARD)
+                            return "M4";
+                        else if (configOskModifierNames == OSKModifierNames.THREE)
+                            return "Cur";
+                    break;
                     case Modifier.MOD5: return "M5";
                     case Modifier.MOD6: return "M6";
                     case Modifier.MOD7: return "M7";
