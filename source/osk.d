@@ -30,6 +30,7 @@ uint dpi = 96;
 bool configOskNumpad;
 OSKTheme configOskTheme;
 OSKLayout configOskLayout;
+bool configOskNumberRow;
 
 
 enum OSKTheme {
@@ -57,6 +58,7 @@ void initOsk(JSONValue oskJson) {
     configOskNumpad = oskJson["numpad"].boolean;
     configOskTheme = oskJson["theme"].str.to!OSKTheme;
     configOskLayout = oskJson["layout"].str.toUpper.to!OSKLayout;
+    configOskNumberRow = oskJson["numberRow"].boolean;
 
     // Load fonts
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -219,20 +221,22 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
 
     // Draw “regular” keys, i.e. keys with height 1
     // First row
-    drawKey(0, 0, 1, 1, Scancode(0x29, false));
-    drawKey(1, 0, 1, 1, Scancode(0x02, false));
-    drawKey(2, 0, 1, 1, Scancode(0x03, false));
-    drawKey(3, 0, 1, 1, Scancode(0x04, false));
-    drawKey(4, 0, 1, 1, Scancode(0x05, false));
-    drawKey(5, 0, 1, 1, Scancode(0x06, false));
-    drawKey(6, 0, 1, 1, Scancode(0x07, false));
-    drawKey(7, 0, 1, 1, Scancode(0x08, false));
-    drawKey(8, 0, 1, 1, Scancode(0x09, false));
-    drawKey(9, 0, 1, 1, Scancode(0x0A, false));
-    drawKey(10, 0, 1, 1, Scancode(0x0B, false));
-    drawKey(11, 0, 1, 1, Scancode(0x0C, false));
-    drawKey(12, 0, 1, 1, Scancode(0x0D, false));
-    drawKey(13, 0, 2, 1, Scancode(0x0E, false)); // Backspace
+    if (configOskNumberRow) {
+        drawKey(0, 0, 1, 1, Scancode(0x29, false));
+        drawKey(1, 0, 1, 1, Scancode(0x02, false));
+        drawKey(2, 0, 1, 1, Scancode(0x03, false));
+        drawKey(3, 0, 1, 1, Scancode(0x04, false));
+        drawKey(4, 0, 1, 1, Scancode(0x05, false));
+        drawKey(5, 0, 1, 1, Scancode(0x06, false));
+        drawKey(6, 0, 1, 1, Scancode(0x07, false));
+        drawKey(7, 0, 1, 1, Scancode(0x08, false));
+        drawKey(8, 0, 1, 1, Scancode(0x09, false));
+        drawKey(9, 0, 1, 1, Scancode(0x0A, false));
+        drawKey(10, 0, 1, 1, Scancode(0x0B, false));
+        drawKey(11, 0, 1, 1, Scancode(0x0C, false));
+        drawKey(12, 0, 1, 1, Scancode(0x0D, false));
+        drawKey(13, 0, 2, 1, Scancode(0x0E, false)); // Backspace
+    }
     // Second row
     drawKey(0, 1, 1.5, 1, Scancode(0x0F, false)); // Tab
     drawKey(1.5, 1, 1, 1, Scancode(0x10, false));
