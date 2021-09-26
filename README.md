@@ -111,26 +111,6 @@ Zum Erstellen neuer Layouts hat sich folgender Arbeitsablauf bewährt:
 
 So bleiben Ebenen 3 und 4 an der richtigen Stelle, und die anderen Ebenen werden nach der neuen Buchstabenanordnung permutiert.
 
-
-## Vergleich vorhandener Windows-Treiber
-| Feature                               | ReNeo (Standalone) | ReNeo+kbdneo | AHK+kbdneo | NeoVars |
-| ------------------------------------- | ------------------ | ------------ | ---------- | ------- |
-| Unterstützte Layouts                  | 🟢                  | 🟡            | 🟡          | 🟡 1     |
-| Compose                               | 🟢                  | 🟢            | 🟠          | 🟡       |
-| Admin-Rechte                          | 🟢                  | 🟡            | 🟡          | 🟢       |
-| Zusammenspiel mit nativem Layout      | 🟢 2                | 🟢            | 🟠          | 🟠 3     |
-| Anmeldebildschirm & Admin-Anwendungen | 🟡                  | 🟢            | 🟢          | 🟡       |
-| Kompatibilität                        | 🟢                  | 🟢            | 🟡 4        | 🟡 5     |
-| Bildschirmtastatur                    | 🟢                  | 🟢            | 🟡          | 🟡       |
-| Extra-Features                        | 🟡                  | 🟡            | 🟠          | 🟢 6     |
-
-1. Buchstabenanordnung kann zwar vertauscht werden, sonst ist Anpassung aber schwer
-2. Verträgt sich mit den meisten Layouts (QWERTZ, QWERTY, QWERTZ-CH), inklusive IMEs wie Chinesisch/Japanisch (eingeschränkt). Umschalten ist in Windows ganz normal möglich.
-3. QWERTZ muss aktiv sein und in der Liste an erster Stelle stehen
-4. siehe o.g. Bugs
-5. Key-Events „klappern“ bei Sonderzeichen, Steuertasten gehen nicht überall
-6. ſ-Modus, Taschenrechner, ...
-
 # Virtuelle Maschinen und Remote Desktop
 Sobald mehrere „ineinander“ laufende Betriebssysteme ins Spiel kommen, wird es mit alternativen Tastaturlayouts fast immer haarig.
 Da sich die verschiedenen VM-Programme und Remote Desktop Clients unterschiedlich verhalten, gibt es leider keine universelle Lösung, sondern nur eine grundsätzliche Empfehlung und ein paar erprobte Konfigurationen.
