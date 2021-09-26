@@ -43,6 +43,10 @@ jobs:
         run: mv -Force config.bone.json ReNeo\config.default.json
       - name: Create Bone ZIP file
         run: 7z a -tzip ReNeo_Bone.zip ReNeo\
+      - name: Replace config.default.json with 3l config
+        run: mv -Force config.3l.json ReNeo\config.default.json
+      - name: Create 3l ZIP file
+        run: 7z a -tzip ReNeo_3l.zip ReNeo\
       - name: Create Release
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
@@ -53,4 +57,5 @@ jobs:
             ReNeo_Neo.zip
             ReNeo_NeoQwertz.zip
             ReNeo_Bone.zip
+            ReNeo_3l.zip
       
