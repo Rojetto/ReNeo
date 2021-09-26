@@ -326,6 +326,7 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
             case ID_TRAY_RELOAD_CONTEXTMENU:
             debugWriteln("Re-initialize...");
             initialize();
+            updateOSK();
             break;
 
             case ID_TRAY_QUIT_CONTEXTMENU:
