@@ -1,5 +1,7 @@
 # ReNeo – Die Neo-Tastaturlayouts für Windows
 
+[**Click here for English**](README_EN.md)
+
 ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine Verwandten für Windows. Dabei kann man sich für eine von zwei Varianten entscheiden:
 1. Im *Standalone-Modus* ersetzt ReNeo alle Tastendrücke des nativen Layouts (meistens QWERTZ) durch das gewünschte Neo-Layout. Dafür muss zum Systemstart nur die ReNeo-EXE ausgeführt werden.
 2. Im *Erweiterungsmodus* installiert man einen nativen Neo-Treiber wie [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/). ReNeo ergänzt dann alle Funktionen, die nativ nicht umsetzbar sind (Capslock, Steuertasten auf Ebene 4, Compose, ...).
@@ -26,7 +28,7 @@ Neuen Release herunterladen und vorhandene Dateien mit den neuen überschreiben.
 
 Allgemein:
 
-- Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*
+- Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*3l*](https://github.com/jackrosenthal/threelayout)
 - Im Traymenü kann zwischen Layouts gewechselt werden
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
 - **Bildschirmtastatur**: Wird über Tray-Menü ein- und ausgeschaltet oder per Shortcut `M3+F1`. Wechselt zwischen Ebenen, wenn Modifier gedrückt werden.
@@ -60,8 +62,10 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 - `"language"`: Programmsprache, `"german"` oder `"english"`.
 - `"osk"`:
     - `"numpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
+    - `"numberRow"`: Soll die Zahlenreihe angezeigt werden?
     - `"theme"`: Farbschema für Bildschirmtastatur. Mögliche Werte: `"Grey"`, `"NeoBlue"`
     - `"layout"`: `"iso"` oder `"ansi"`
+    - `"modifierNames"`: `"standard"` (M3, M4, ...) oder `"three"` (Sym, Cur)
 - `"hotkeys"`: Hotkeys für verschiedene Funktionen. Beispiel: `"Ctrl+Alt+F5"` oder `"Shift+Alt+Key_A"`. Erlaubte Modifier sind `Shift`, `Ctrl`, `Alt`, `Win`. Die Haupttaste ist ein beliebiger VK aus [dieser Enum](https://github.com/Rojetto/ReNeo/blob/5bd304a7c42c768ed45813095ab5fbc69103773c/source/mapping.d#L17), die auf der [Win32-Doku](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) basiert. Ist ein Wert `null`, wird kein globaler Hotkey angelegt.
     - `"toggleActivation"`: ReNeo aktivieren/deaktivieren
     - `"toggleOSK"`: Bildschirmtastatur öffnen/schließen. Zusätzlich zu dem hier konfigurierten Hotkey funktioniert immer `M3+F1`.
