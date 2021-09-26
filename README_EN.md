@@ -40,10 +40,10 @@ General:
 
 As an extension to the native driver:
 
-- Steuertasten auf Ebene 4
-- Wird das native Layout als Neo-verwandt erkannt (`kbdneo.dll`, `kbdbone.dll`, `kbdgr2.dll`), schaltet ReNeo automatisch in den Erweiterungs-Modus. Umschalten zwischen Layouts ist ganz normal möglich.
-- Verbesserte Kompatibilität mit Qt- und GTK-Anwendungen. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
-- Compose-Taste `M3+Tab` sendet keinen Tab mehr an Anwendung. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/397).
+- Navigation keys on layer 4
+- If the native layout is recognized as Neo-related (`kbdneo.dll`, `kbdbone.dll`, `kbdgr2.dll`), ReNeo automatically switches to extension mode. Switching between layouts is possible as normal.
+- Improved compatibility with Qt and GTK applications. Workaround for [this bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
+- Compose key `M3+Tab` does not send tab character to applications. Workaround for [this bug](https://git.neo-layout.org/neo/neo-layout/issues/397).
 
 ## Configuration
 
