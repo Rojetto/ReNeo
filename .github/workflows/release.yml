@@ -30,7 +30,7 @@ jobs:
       - name: Create directory for ZIP file
         run: mkdir ReNeo
       - name: Move release files into directory (except default config)
-        run: Move-Item -Path compose,cairo.dll,COPYING,keysymdef.h,layouts.json,README.md,README.html,docs,reneo.exe,reneo_debug.exe -Destination ReNeo
+        run: Move-Item -Path compose,cairo.dll,COPYING,keysymdef.h,layouts.json,README.md,README.html,README_EN.md,README_EN.html,docs,reneo.exe,reneo_debug.exe -Destination ReNeo
       - name: Replace config.default.json with Neo config
         run: mv -Force config.neo.json ReNeo\config.default.json
       - name: Create Neo ZIP file
