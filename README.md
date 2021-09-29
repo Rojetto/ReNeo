@@ -12,7 +12,7 @@ ReNeo implementiert das [Neo-Tastaturlayout](http://neo-layout.org/) und seine V
 
 1. *Optional*: [kbdneo](https://neo-layout.org/Einrichtung/kbdneo/) normal installieren
 2. [Neuesten ReNeo-Release](https://github.com/Rojetto/ReNeo/releases/latest) herunterladen und in ein Verzeichnis mit Schreibrechten entpacken (z. B. `C:\Users\[USER]\ReNeo`)
-3. `reneo.exe` starten oder zu Autostart hinzufügen. Über das Trayicon kann das Programm deaktiviert und beendet werden.
+3. `reneo.exe` starten oder [zu Autostart hinzufügen](docs/autostart.md). Über das Trayicon kann das Programm deaktiviert und beendet werden.
 4. *Optional*: [`config.json` anpassen](#Allgemeine-Konfiguration) (wird beim ersten Start generiert)
 
 *Update*
