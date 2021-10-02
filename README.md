@@ -115,6 +115,8 @@ Zum Erstellen neuer Layouts hat sich folgender Arbeitsablauf bewährt:
 
 So bleiben Ebenen 3 und 4 an der richtigen Stelle, und die anderen Ebenen werden nach der neuen Buchstabenanordnung permutiert.
 
+Folgende Regex kann beim Ausrichten der Spalten helfen: `"[\dA-Fa-f]+\+?": *\[(\{.*?\}, *){5}\{`
+
 # Virtuelle Maschinen und Remote Desktop
 Sobald mehrere „ineinander“ laufende Betriebssysteme ins Spiel kommen, wird es mit alternativen Tastaturlayouts fast immer haarig.
 Da sich die verschiedenen VM-Programme und Remote Desktop Clients unterschiedlich verhalten, gibt es leider keine universelle Lösung, sondern nur eine grundsätzliche Empfehlung und ein paar erprobte Konfigurationen.

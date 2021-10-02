@@ -113,6 +113,8 @@ The following procedure is recommended to create a new layout:
 
 This results in layers 3 and 4 remaining as they were while the other layers permute according to the new letter layout.
 
+The following regex can help with aligning the columns: `"[\dA-Fa-f]+\+?": *\[(\{.*?\}, *){5}\{`
+
 # Virtual machines and remote desktop
 As soon as several nested operatings systems interoperate things get difficult. Because different VM software and remote desktop clients behave differently there is no universal solution. What follows is some general advice and a few tested configurations.
 
