@@ -567,8 +567,8 @@ bool handleKeyEvent(Scancode scan, bool down) nothrow {
     // Called from the main keyboard hook. Sends key events depending on the current mode, layer and compose state,
     // updates modifier and layer states, and returns whether the original event should be eaten.
 
-    // All Numpad keys including KP_Enter
-    bool isNumpadKey = (!scan.extended && scan.scan >= 0x47 && scan.scan <= 0x53) || scan == Scancode(0x35, true) || scan == Scancode(0x37, false) || scan == Scancode(0x1C, true);
+    // All Numpad keys including KP_Enter and Numlock
+    bool isNumpadKey = (!scan.extended && scan.scan >= 0x47 && scan.scan <= 0x53) || scan == Scancode(0x35, true) || scan == Scancode(0x37, false) || scan == Scancode(0x1C, true) || scan == Scancode(0x45, true);
 
     // is this key mapped to a modifier?
     bool isModifier;
@@ -859,7 +859,8 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
 
     // Handle Numlock key, which would otherwise toggle Numlock state without changing the LED.
     // For more information see AutoHotkey: https://github.com/Lexikos/AutoHotkey_L/blob/master/source/hook.cpp#L2027
-    if (vk == VKEY.VK_NUMLOCK && down) {
+    // If key is not mapped in layout, let it pass unaffected
+    if (vk == VKEY.VK_NUMLOCK && down && scan in activeLayout.map) {
         sendVK(VK_NUMLOCK, scanNumlock, false);
         sendVK(VK_NUMLOCK, scanNumlock, true);
         sendVK(VK_NUMLOCK, scanNumlock, false);
