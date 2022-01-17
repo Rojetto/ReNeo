@@ -28,7 +28,7 @@ Neuen Release herunterladen und vorhandene Dateien mit den neuen überschreiben.
 
 Allgemein:
 
-- Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*3l*](https://github.com/jackrosenthal/threelayout)
+- Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*VOU*](https://www.maximilian-schillinger.de/vou-layout.html), [*3l*](https://github.com/jackrosenthal/threelayout)
 - Im Traymenü kann zwischen Layouts gewechselt werden
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
 - **Bildschirmtastatur**: Wird über Tray-Menü ein- und ausgeschaltet oder per Shortcut `M3+F1`. Wechselt zwischen Ebenen, wenn Modifier gedrückt werden.

@@ -26,7 +26,7 @@ Download new release and overwrite existing files with package contents. Because
 
 General:
 
-- Supports the layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*3l*](https://github.com/jackrosenthal/threelayout)
+- Supports the layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*VOU*](https://www.maximilian-schillinger.de/vou-layout.html), [*3l*](https://github.com/jackrosenthal/threelayout)
 - Use tray menu to switch between layouts
 - Capslock (both shift keys) and mod 4 lock (both mod 4 keys)
 - **On-screen keyboard**: Toggle using tray menu or with shortcut `M3+F1`. Switches between layers as modifiers are pressed.
