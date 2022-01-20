@@ -810,7 +810,7 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
     }
 
     // ignore all simulated keypresses
-    if (vk == VKEY.VK_PACKET || injected) {
+    if (vk == VKEY.VK_PACKET) {
         return false;
     }
 
