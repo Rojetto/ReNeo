@@ -229,8 +229,9 @@ void checkKeyboardLayout() nothrow {
         if (layout == null) {
             if (configStandaloneMode) {
                 // user enabled standalone mode in config, so we want to overtake and replace it with the selected Neo related layout
-                standaloneModeActive = true;
-                layout = configStandaloneLayout;
+                //standaloneModeActive = true;
+                //layout = configStandaloneLayout;
+                standaloneModeActive = false;  // disable standalone mode in this modified version
             } else {
                 // user just wants to use whatever native layout they selected
                 standaloneModeActive = false;
