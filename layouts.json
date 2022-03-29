@@ -393,6 +393,7 @@
         },
         {
             "name": "Mine",
+            "dllName": "kbdmine.dll",
             "modifiers": {
                 "2A":  "LShift",
                 "36+": "RShift",
