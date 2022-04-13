@@ -273,6 +273,7 @@ void checkKeyboardLayout() nothrow {
     }
 }
 
+uint taskBarCreatedMsg = 0;
 
 extern(Windows)
 LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
@@ -280,6 +281,9 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
     try {
 
     switch (msg) {
+        case WM_CREATE:
+            taskBarCreatedMsg = RegisterWindowMessage("TaskbarCreated");
+            break;
         case WM_DESTROY:
         // Hide the tray icon and cleanup before closing the application
         trayIcon.hide();
@@ -367,6 +371,10 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         break;
 
         default:  // Pass everything else to OSK
+            if (msg == taskBarCreatedMsg) {
+                debugWriteln("Show tray icon");
+                trayIcon.show();
+            }
         return oskWndProc(hwnd, msg, wParam, lParam);
     }
 
