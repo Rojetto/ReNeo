@@ -282,8 +282,8 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
 
     switch (msg) {
         case WM_CREATE:
-            taskBarCreatedMsg = RegisterWindowMessage("TaskbarCreated");
-            break;
+        taskBarCreatedMsg = RegisterWindowMessage("TaskbarCreated");
+        break;
         case WM_DESTROY:
         // Hide the tray icon and cleanup before closing the application
         trayIcon.hide();
@@ -371,10 +371,15 @@ LRESULT WndProc(HWND hwnd, uint msg, WPARAM wParam, LPARAM lParam) nothrow {
         break;
 
         default:  // Pass everything else to OSK
-            if (msg == taskBarCreatedMsg) {
-                debugWriteln("Show tray icon");
-                trayIcon.show();
-            }
+        if (msg == taskBarCreatedMsg) {
+            /** If the explorer process is restarted, tray icons need to be readded,
+            otherwise they wont show up. The shell registers TaskbarCreated as a
+            message and then broadcasts it to all top-level windows when the taskbar has
+            been created. When this message is received, the tray icon needs to be
+            readded. **/
+            debugWriteln("Show tray icon");
+            trayIcon.show();
+        }
         return oskWndProc(hwnd, msg, wParam, lParam);
     }
 
