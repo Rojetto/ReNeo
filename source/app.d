@@ -664,6 +664,14 @@ JSONValue parseJSONFile(string jsonFilename) {
 }
 
 void main(string[] args) {
+    debug {
+        const auto codePage = CP_UTF8;
+        if (!SetConsoleCP(codePage))
+            debugWriteln("WARNING: Could not set input CP to UTF-8. This probably doesn’t matter.");
+        if (!SetConsoleOutputCP(codePage))
+            debugWriteln("WARNING: Could not set output CP to UTF-8. Some characters may be displayed wrongly.");
+    }
+
     debugWriteln("Starting ReNeo...");
     version(FileLogging) {
         debugWriteln("WARNING: File logging enabled, make sure you know what you're doing!");
