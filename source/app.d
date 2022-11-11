@@ -502,9 +502,9 @@ void toggleKeyboardHook() {
 extern (Windows)
 void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow {
     foregroundWindowChanged = true;
-    char[256] titleBuffer;
-    uint titleLen = GetWindowTextA(hwnd, titleBuffer.ptr, 256);
-    char[] windowTitle = titleBuffer[0..titleLen];
+    wchar[256] titleBuffer;
+    uint titleLen = GetWindowTextW(hwnd, titleBuffer.ptr, 256);
+    const auto windowTitle = titleBuffer[0..titleLen].toUTF8;
     debugWriteln("Changed to window with title '", windowTitle, "'");
     try {
         bool windowInBlacklist;
