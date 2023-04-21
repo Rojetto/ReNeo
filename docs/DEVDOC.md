@@ -20,7 +20,7 @@ Welche **Modifier** es gibt und wo diese auf der Tastatur verortet sind ist in `
 
 Der **natürliche Modifier-Zustand** beschreibt, welche dieser Modifier gerade durch physische Tasten gedrückt sind. Das wird ein wenig dadurch verkompliziert, dass prinzipiell mehrere physische Tasten den gleichen Modifier drücken können. Wenn mehrere Tasten den gleichen Modifier halten, wollen wir den Modifier erst "loslassen", wenn die letzte physische Taste losgelassen wird.
 
-Dazu wird für jeden Modifier-Typ gespeichert, welche Scancodes gerade diesen Modifier drücken. Bei einem *Modifier-Down-Event*, wird der entsprechende Scancodes in dieser Datenstruktur ergänzt und das korrekte Modifier-Event durchgelassen oder gesendet. Grundsätzlich sollen Programme nur *native Modifier* sehen, *Neo-Modifier* werden gefiltert und deren Zustand nur intern behandelt. Beim *Modifier-Up-Event* wird der Scancode wieder aus der Datenstruktur entfernt. Nur wenn diese Taste die letzte war, die diesen Modifier gehalten hat, wird auch ein Up-Event für Programm̀e erzeugt (inklusive forcierter Modifier, siehe unten).
+Dazu wird für jeden Modifier-Typ gespeichert, welche Scancodes gerade diesen Modifier drücken. Bei einem *Modifier-Down-Event*, wird der entsprechende Scancodes in dieser Datenstruktur ergänzt und das korrekte Modifier-Event durchgelassen oder gesendet. Grundsätzlich sollen Programme nur *native Modifier* sehen, *Neo-Modifier* werden gefiltert und deren Zustand nur intern behandelt. Beim *Modifier-Up-Event* wird der Scancode wieder aus der Datenstruktur entfernt. Nur wenn diese Taste die letzte war, die diesen Modifier gehalten hat, wird auch ein Up-Event für Programme erzeugt (inklusive forcierter Modifier, siehe unten).
 
 ## Aktuelle Ebene ermitteln
 
