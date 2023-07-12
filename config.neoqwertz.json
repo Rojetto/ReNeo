@@ -4,6 +4,7 @@
     "language": "german",
     "filterNeoModifiers": true,
     "autoNumlock": true,
+    "enableMod4Lock": true,
     "osk": {
         "numpad": true,
         "theme": "Grey",

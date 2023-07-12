@@ -404,7 +404,7 @@ ComposeResult compose(NeoKey nk) nothrow {
                 sequenceChar = nk.charCode;
             }
             if (sequenceChar) {
-                debugWriteln("Added char to compose abort sequence: ", sequenceChar);
+                debugWriteln("Added char to compose abort sequence: ", [sequenceChar].toUTF8);
                 currentSequence ~= sequenceChar;
             }
 

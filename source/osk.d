@@ -36,7 +36,9 @@ OSKModifierNames configOskModifierNames;
 
 enum OSKTheme {
     Grey,
-    NeoBlue
+    NeoBlue,
+    ColorClassic,
+    ColorGreen
 }
 
 enum OSKLayout {
@@ -49,11 +51,22 @@ enum OSKModifierNames {
     THREE      // Sym, Cur
 }
 
+enum OSKKeyType {
+    OTHER,
+    POINTER,
+    MIDDLE,
+    RING,
+    PINKY,
+    HOME
+}
+
 const float KEYBOARD_WIDTH_WITH_NUMPAD = 20;
 const float KEYBOARD_WIDTH_NO_NUMPAD = 15;
 const float KEYBOARD_HEIGHT = 5;
 
 const float M_PI = 3.14159265358979323846;
+
+OSKKeyType[Scancode] KEY_TYPES;
 
 HFONT[] WIN_FONTS;
 cairo_font_face_t*[] CAIRO_FONTS;
@@ -76,6 +89,57 @@ void initOsk(JSONValue oskJson) {
     foreach (HFONT winFont; WIN_FONTS) {
         CAIRO_FONTS ~= cairo_win32_font_face_create_for_hfont(winFont);
     }
+
+    // Define key types
+    KEY_TYPES[Scancode(0x29, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x02, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x03, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x04, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x05, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x06, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x07, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x08, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x09, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x0A, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x0B, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x0C, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x0D, false)] = OSKKeyType.PINKY;
+
+    KEY_TYPES[Scancode(0x10, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x11, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x12, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x13, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x14, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x15, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x16, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x17, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x18, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x19, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x1A, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x1B, false)] = OSKKeyType.PINKY;
+
+    KEY_TYPES[Scancode(0x1E, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x1F, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x20, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x21, false)] = OSKKeyType.HOME;
+    KEY_TYPES[Scancode(0x22, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x23, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x24, false)] = OSKKeyType.HOME;
+    KEY_TYPES[Scancode(0x25, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x26, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x27, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x28, false)] = OSKKeyType.PINKY;
+
+    KEY_TYPES[Scancode(0x2C, false)] = OSKKeyType.PINKY;
+    KEY_TYPES[Scancode(0x2D, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x2E, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x2F, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x30, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x31, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x32, false)] = OSKKeyType.POINTER;
+    KEY_TYPES[Scancode(0x33, false)] = OSKKeyType.MIDDLE;
+    KEY_TYPES[Scancode(0x34, false)] = OSKKeyType.RING;
+    KEY_TYPES[Scancode(0x35, false)] = OSKKeyType.PINKY;
 }
 
 cairo_font_face_t* getFontFaceForChar(HDC hdc, string c) {
@@ -148,15 +212,29 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     const float FONT_SIZE = 0.45;
     const float BASE_LINE = 0.7;
 
-    cairo_pattern_t *KEY_COLOR;
+    cairo_pattern_t *COLOR_GREY = cairo_pattern_create_rgba(0.4, 0.4, 0.4, 0.9);
+
+    cairo_pattern_t *COLOR_NEO_BLUE = cairo_pattern_create_rgba(0.024, 0.533, 0.612, 0.95);
+
+    cairo_pattern_t *COLOR_NEOVARS_GREY = cairo_pattern_create_rgba(200.0/255.0, 200.0/255.0, 200.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_NEOVARS_YELLOW = cairo_pattern_create_rgba(235.0/255.0, 230.0/255.0, 150.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_NEOVARS_RED = cairo_pattern_create_rgba(231.0/255.0, 150.0/255.0, 153.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_NEOVARS_GREEN = cairo_pattern_create_rgba(117.0/255.0, 216.0/255.0, 157.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_NEOVARS_BLUE = cairo_pattern_create_rgba(134.0/255.0, 138.0/255.0, 223.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_NEOVARS_LIGHT_BLUE = cairo_pattern_create_rgba(197.0/255.0, 203.0/255.0, 255.0/255.0, 0.95);
+
+    cairo_pattern_t *COLOR_GREEN_LIGHT_BLUE = cairo_pattern_create_rgba(147.0/255.0, 204.0/255.0, 234.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_GREEN_GREENISH_BLUE = cairo_pattern_create_rgba(122.0/255.0, 190.0/255.0, 179.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_GREEN_BLUEISH_GREEN = cairo_pattern_create_rgba(99.0/255.0, 178.0/255.0, 128.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_GREEN_GREEN = cairo_pattern_create_rgba(74.0/255.0, 164.0/255.0, 74.0/255.0, 0.95);
+    cairo_pattern_t *COLOR_GREEN_LIGHT_GREEN = cairo_pattern_create_rgba(139.0/255.0, 189.0/255.0, 139.0/255.0, 0.95);
+
+    cairo_pattern_t *TEXT_COLOR;
+
     switch (configOskTheme) {
-        case OSKTheme.Grey:
-        KEY_COLOR = cairo_pattern_create_rgba(0.4, 0.4, 0.4, 0.9);
-        break;
-        case OSKTheme.NeoBlue:
-        KEY_COLOR = cairo_pattern_create_rgba(0.024, 0.533, 0.612, 0.95);
-        break;
-        default: break;
+        case OSKTheme.ColorClassic: TEXT_COLOR = cairo_pattern_create_rgba(0.05, 0.05, 0.05, 1.0); break;
+        case OSKTheme.ColorGreen: TEXT_COLOR = cairo_pattern_create_rgba(0.05, 0.05, 0.05, 1.0); break;
+        default: TEXT_COLOR = cairo_pattern_create_rgba(0.95, 0.95, 0.95, 1.0);
     }
 
     cairo_set_font_size(cr, FONT_SIZE);
@@ -213,8 +291,44 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
         return "UNMAPPED";
     }
 
+    cairo_pattern_t *getKeyColor(Scancode scan) {
+        switch (configOskTheme) {
+            case OSKTheme.Grey: return COLOR_GREY;
+            case OSKTheme.NeoBlue: return COLOR_NEO_BLUE;
+            case OSKTheme.ColorClassic:
+            {
+                auto keyType = KEY_TYPES.get(scan, OSKKeyType.OTHER);
+            
+                switch (keyType) {
+                    case OSKKeyType.OTHER: return COLOR_NEOVARS_GREY;
+                    case OSKKeyType.HOME: return COLOR_NEOVARS_LIGHT_BLUE;
+                    case OSKKeyType.POINTER: return COLOR_NEOVARS_BLUE;
+                    case OSKKeyType.MIDDLE: return COLOR_NEOVARS_GREEN;
+                    case OSKKeyType.RING: return COLOR_NEOVARS_RED;
+                    case OSKKeyType.PINKY: return COLOR_NEOVARS_YELLOW;
+                    default: return COLOR_NEOVARS_GREY;
+                }
+            }
+            case OSKTheme.ColorGreen:
+            {
+                auto keyType = KEY_TYPES.get(scan, OSKKeyType.OTHER);
+            
+                switch (keyType) {
+                    case OSKKeyType.OTHER: return COLOR_NEOVARS_GREY;
+                    case OSKKeyType.HOME: return COLOR_GREEN_LIGHT_GREEN;
+                    case OSKKeyType.POINTER: return COLOR_GREEN_GREEN;
+                    case OSKKeyType.MIDDLE: return COLOR_GREEN_BLUEISH_GREEN;
+                    case OSKKeyType.RING: return COLOR_GREEN_GREENISH_BLUE;
+                    case OSKKeyType.PINKY: return COLOR_GREEN_LIGHT_BLUE;
+                    default: return COLOR_NEOVARS_GREY;
+                }
+            }
+            default: return COLOR_GREY;
+        }
+    }
+    
     void showKeyLabelCentered(string label, float keyX, float keyWidth, float baseline) {
-        cairo_set_source_rgba(cr, 0.95, 0.95, 0.95, 1.0);
+        cairo_set_source(cr, TEXT_COLOR);
         cairo_set_font_face(cr, getFontFaceForChar(hdcMem, label));
         auto labelz = label.toStringz;
         cairo_text_extents_t extents;
@@ -229,8 +343,10 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
         if (label == "UNMAPPED")
             return;
 
+        auto keyColor = getKeyColor(scan);
+
         roundRectangle(cr, x + PADDING, y + PADDING, width - 2*PADDING, height - 2*PADDING, CORNER_RADIUS);
-        cairo_set_source(cr, KEY_COLOR);
+        cairo_set_source(cr, keyColor);
         cairo_fill(cr);
 
         showKeyLabelCentered(label, x, width, y + (height - 1) / 2 + BASE_LINE);
@@ -276,7 +392,7 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
         string label = getKeyLabel(Scancode(0x1C, false));
         if (label != "UNMAPPED") {
             returnKey(cr, 13.5 + PADDING, 1 + PADDING, 1.5 - 2*PADDING, 1.25 - 2*PADDING, 1 - 2*PADDING, 1, CORNER_RADIUS);
-            cairo_set_source(cr, KEY_COLOR);
+            cairo_set_source(cr, getKeyColor(Scancode(0x1C, false)));
             cairo_fill(cr);
             showKeyLabelCentered(label, 13.75, 1.25, 1.5 + BASE_LINE);
         }

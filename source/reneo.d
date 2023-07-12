@@ -14,7 +14,7 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
-import app : configAutoNumlock, configFilterNeoModifiers, configOneHandedModeMirrorKey, configOneHandedModeMirrorMap, updateOSKAsync, toggleOSK, toggleOneHandedMode, lastInputLocale;
+import app : configAutoNumlock, configEnableMod4Lock, configFilterNeoModifiers, configOneHandedModeMirrorKey, configOneHandedModeMirrorMap, updateOSKAsync, toggleOSK, toggleOneHandedMode, lastInputLocale;
 
 const SC_FAKE_LSHIFT = 0x22A;
 const SC_FAKE_RSHIFT = 0x236;
@@ -593,7 +593,8 @@ bool handleKeyEvent(Scancode scan, bool down) nothrow {
 
             if (mod == Modifier.LMOD4 && !isModifierHeld(Modifier.LMOD4) && isModifierHeld(Modifier.RMOD4) ||
                 mod == Modifier.RMOD4 && !isModifierHeld(Modifier.RMOD4) && isModifierHeld(Modifier.LMOD4)) {
-                mod4Lock = !mod4Lock;
+                if (configEnableMod4Lock || mod4Lock)  // always allow lock to be disabled
+                    mod4Lock = !mod4Lock;
             }
         }
 

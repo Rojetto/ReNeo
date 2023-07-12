@@ -28,7 +28,7 @@ Neuen Release herunterladen und vorhandene Dateien mit den neuen überschreiben.
 
 Allgemein:
 
-- Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*3l*](https://github.com/jackrosenthal/threelayout)
+- Unterstützt die Layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*VOU*](https://www.maximilian-schillinger.de/vou-layout.html), [*3l*](https://github.com/jackrosenthal/threelayout)
 - Im Traymenü kann zwischen Layouts gewechselt werden
 - Capslock (beide Shift-Tasten) und Mod4-Lock (beide Mod4-Tasten)
 - **Bildschirmtastatur**: Wird über Tray-Menü ein- und ausgeschaltet oder per Shortcut `M3+F1`. Wechselt zwischen Ebenen, wenn Modifier gedrückt werden.
@@ -63,7 +63,7 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 - `"osk"`:
     - `"numpad"`: Soll Numpad in Bildschirmtastatur angezeigt werden?
     - `"numberRow"`: Soll die Zahlenreihe angezeigt werden?
-    - `"theme"`: Farbschema für Bildschirmtastatur. Mögliche Werte: `"Grey"`, `"NeoBlue"`
+    - `"theme"`: Farbschema für Bildschirmtastatur. Mögliche Werte: `"Grey"`, `"NeoBlue"`, `"ColorClassic"`, `"ColorGreen"`
     - `"layout"`: `"iso"` oder `"ansi"`
     - `"modifierNames"`: `"standard"` (M3, M4, ...) oder `"three"` (Sym, Cur)
 - `"hotkeys"`: Hotkeys für verschiedene Funktionen. Beispiel: `"Ctrl+Alt+F5"` oder `"Shift+Alt+Key_A"`. Erlaubte Modifier sind `Shift`, `Ctrl`, `Alt`, `Win`. Die Haupttaste ist ein beliebiger VK aus [dieser Enum](https://github.com/Rojetto/ReNeo/blob/5bd304a7c42c768ed45813095ab5fbc69103773c/source/mapping.d#L17), die auf der [Win32-Doku](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes) basiert. Ist ein Wert `null`, wird kein globaler Hotkey angelegt.
@@ -82,6 +82,7 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 ]
 ```
 - `"autoNumlock"`: Soll Numlock automatisch angeschaltet werden? Wenn die Tastatur einen echten Nummernblock besitzt, sollte diese Option für beste Kompatibilität immer auf `true` gesetzt sein. Bei Laptops mit nativer Numpad-Ebene auf dem Hauptfeld kann dieses Verhalten aber mit `false` deaktiviert werden.
+- `"enableMod4Lock"`: Soll Mod4-Lock mit `LM4+RM4` aktiviert werden können? Kann abgestellt werden um unabsichtliches Aktivieren zu vermeiden.
 - `"filterNeoModifiers"`:
     - `true` (Standard): Die Tastenevents für M3 und M4 werden im Erweiterungsmodus von ReNeo weggefiltert, Anwendungen bekommen von diesen Tasten also nichts mit. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
     - `false`: Anwendungen sehen M3/M4. Notwendig, wenn man in den Anwendungen mit diesen Tasten Optionen verknüpfen will.

@@ -26,7 +26,7 @@ Download new release and overwrite existing files with package contents. Because
 
 General:
 
-- Supports the layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*3l*](https://github.com/jackrosenthal/threelayout)
+- Supports the layouts *Neo*, *Bone*, *NeoQwertz*, *Mine*, *AdNW*, *KOY*, [*VOU*](https://www.maximilian-schillinger.de/vou-layout.html), [*3l*](https://github.com/jackrosenthal/threelayout)
 - Use tray menu to switch between layouts
 - Capslock (both shift keys) and mod 4 lock (both mod 4 keys)
 - **On-screen keyboard**: Toggle using tray menu or with shortcut `M3+F1`. Switches between layers as modifiers are pressed.
@@ -61,7 +61,7 @@ ReNeo can be configured with two files.
 - `"osk"`:
     - `"numpad"`: Should on-screen keyboard show the numpad?
     - `"numberRow"`: Should on-screen keyboard show the number row?
-    - `"theme"`: Color scheme for on-screen keyboard. `"Grey"` or `"NeoBlue"`
+    - `"theme"`: Color scheme for on-screen keyboard. `"Grey"`, `"NeoBlue"`, `"ColorClassic"`, `"ColorGreen"`
     - `"layout"`: `"iso"` or `"ansi"`
     - `"modifierNames"`: `"standard"` (M3, M4, ...) or `"three"` (Sym, Cur)
 - `"hotkeys"`: Hotkeys various program functions. Examples: `"Ctrl+Alt+F5"`, `"Shift+Alt+Key_A"`. Allowed modifiers are `Shift`, `Ctrl`, `Alt`, `Win`. The main key must be a VK from [this enumeration](https://github.com/Rojetto/ReNeo/blob/5bd304a7c42c768ed45813095ab5fbc69103773c/source/mapping.d#L17) based on [this Win32 documentation](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes). If a value is `null`, no global hotkey will be registered.
@@ -80,6 +80,7 @@ ReNeo can be configured with two files.
 ]
 ```
 - `"autoNumlock"`: Activate Numlock automatically? For optimal compatibility this should always be set to `true` if the keyboard has a real number pad. However, this may cause problems for laptops with a native number block located on the letter keys. In that case, disable this feature with `false`.
+- `"enableMod4Lock"`: Should Mod4-lock be enabled with `LM4+RM4`? Can be disabled to prevent activating the lock on accident.
 - `"filterNeoModifiers"`:
     - `true` (false): Key events for M3 and M4 are filtered in extension mode so that other programs won't see these events. Workaround for [this Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
     - `false`: Programs see M3/M4 events. Necessary if functions need to be bound in these applications.
