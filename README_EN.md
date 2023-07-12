@@ -61,7 +61,7 @@ ReNeo can be configured with two files.
 - `"osk"`:
     - `"numpad"`: Should on-screen keyboard show the numpad?
     - `"numberRow"`: Should on-screen keyboard show the number row?
-    - `"theme"`: Color scheme for on-screen keyboard. `"Grey"` or `"NeoBlue"`
+    - `"theme"`: Color scheme for on-screen keyboard. `"Grey"`, `"NeoBlue"`, `"ColorClassic"`, `"ColorGreen"`
     - `"layout"`: `"iso"` or `"ansi"`
     - `"modifierNames"`: `"standard"` (M3, M4, ...) or `"three"` (Sym, Cur)
 - `"hotkeys"`: Hotkeys various program functions. Examples: `"Ctrl+Alt+F5"`, `"Shift+Alt+Key_A"`. Allowed modifiers are `Shift`, `Ctrl`, `Alt`, `Win`. The main key must be a VK from [this enumeration](https://github.com/Rojetto/ReNeo/blob/5bd304a7c42c768ed45813095ab5fbc69103773c/source/mapping.d#L17) based on [this Win32 documentation](https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes). If a value is `null`, no global hotkey will be registered.

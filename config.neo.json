@@ -6,7 +6,7 @@
     "autoNumlock": true,
     "osk": {
         "numpad": true,
-        "theme": "Grey",
+        "theme": "ColorClassic",
         "layout": "iso",
         "numberRow": true,
         "modifierNames": "standard"
