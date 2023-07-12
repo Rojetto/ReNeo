@@ -515,9 +515,9 @@ void toggleKeyboardHook() {
 extern (Windows)
 void WinEventProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD idEventThread, DWORD dwmsEventTime) nothrow {
     foregroundWindowChanged = true;
-    char[256] titleBuffer;
-    uint titleLen = GetWindowTextA(hwnd, titleBuffer.ptr, 256);
-    char[] windowTitle = titleBuffer[0..titleLen];
+    wchar[256] titleBuffer;
+    uint titleLen = GetWindowTextW(hwnd, titleBuffer.ptr, 256);
+    const auto windowTitle = titleBuffer[0..titleLen].toUTF8;
     debugWriteln("Changed to window with title '", windowTitle, "'");
     try {
         bool windowInBlacklist;
@@ -677,6 +677,14 @@ JSONValue parseJSONFile(string jsonFilename) {
 }
 
 void main(string[] args) {
+    debug {
+        const auto codePage = CP_UTF8;
+        if (!SetConsoleCP(codePage))
+            debugWriteln("WARNING: Could not set input CP to UTF-8. This probably doesn’t matter.");
+        if (!SetConsoleOutputCP(codePage))
+            debugWriteln("WARNING: Could not set output CP to UTF-8. Some characters may be displayed wrongly.");
+    }
+
     debugWriteln("Starting ReNeo...");
     version(FileLogging) {
         debugWriteln("WARNING: File logging enabled, make sure you know what you're doing!");
