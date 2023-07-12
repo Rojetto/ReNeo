@@ -75,6 +75,7 @@ bool oskOpen;
 bool configStandaloneMode;
 NeoLayout *configStandaloneLayout;
 bool configAutoNumlock;
+bool configEnableMod4Lock;
 bool configFilterNeoModifiers;
 HotkeyConfig configHotkeyToggleActivation;
 HotkeyConfig configHotkeyToggleOSK;
@@ -626,6 +627,7 @@ void initialize() {
         }
 
         configAutoNumlock = configJson["autoNumlock"].boolean;
+        configEnableMod4Lock = configJson["enableMod4Lock"].boolean;
         configFilterNeoModifiers = configJson["filterNeoModifiers"].boolean;
 
         // Parse hotkeys (might be null -> user doesn't want to use hotkey)

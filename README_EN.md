@@ -80,6 +80,7 @@ ReNeo can be configured with two files.
 ]
 ```
 - `"autoNumlock"`: Activate Numlock automatically? For optimal compatibility this should always be set to `true` if the keyboard has a real number pad. However, this may cause problems for laptops with a native number block located on the letter keys. In that case, disable this feature with `false`.
+- `"enableMod4Lock"`: Should Mod4-lock be enabled with `LM4+RM4`? Can be disabled to prevent activating the lock on accident.
 - `"filterNeoModifiers"`:
     - `true` (false): Key events for M3 and M4 are filtered in extension mode so that other programs won't see these events. Workaround for [this Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
     - `false`: Programs see M3/M4 events. Necessary if functions need to be bound in these applications.

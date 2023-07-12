@@ -82,6 +82,7 @@ ReNeo kann mit zwei Konfigurationsdateien angepasst werden.
 ]
 ```
 - `"autoNumlock"`: Soll Numlock automatisch angeschaltet werden? Wenn die Tastatur einen echten Nummernblock besitzt, sollte diese Option für beste Kompatibilität immer auf `true` gesetzt sein. Bei Laptops mit nativer Numpad-Ebene auf dem Hauptfeld kann dieses Verhalten aber mit `false` deaktiviert werden.
+- `"enableMod4Lock"`: Soll Mod4-Lock mit `LM4+RM4` aktiviert werden können? Kann abgestellt werden um unabsichtliches Aktivieren zu vermeiden.
 - `"filterNeoModifiers"`:
     - `true` (Standard): Die Tastenevents für M3 und M4 werden im Erweiterungsmodus von ReNeo weggefiltert, Anwendungen bekommen von diesen Tasten also nichts mit. Workaround für [diesen Bug](https://git.neo-layout.org/neo/neo-layout/issues/510).
     - `false`: Anwendungen sehen M3/M4. Notwendig, wenn man in den Anwendungen mit diesen Tasten Optionen verknüpfen will.
