@@ -79,6 +79,12 @@ void initOsk(JSONValue oskJson) {
     configOskLayout = oskJson["layout"].str.toUpper.to!OSKLayout;
     configOskNumberRow = oskJson["numberRow"].boolean;
     configOskModifierNames = oskJson["modifierNames"].str.toUpper.to!OSKModifierNames;
+    configOskTransparancy = (configOskTheme == OSKTheme.Grey) ? 0.9 : 0.95;
+    if (oskJson["transparency"].type == JSONType.float_) {
+        configOskTransparancy = oskJson["transparency"].floating;
+    } else if (oskJson["transparency"].type == JSONType.integer) {
+        configOskTransparancy = cast(float)oskJson["transparency"].integer;
+    }
 
     // Load fonts
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
