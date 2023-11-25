@@ -32,6 +32,7 @@ OSKTheme configOskTheme;
 OSKLayout configOskLayout;
 bool configOskNumberRow;
 OSKModifierNames configOskModifierNames;
+float configOskTransparancy;
 
 
 enum OSKTheme {
