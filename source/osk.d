@@ -80,6 +80,7 @@ void initOsk(JSONValue oskJson) {
     configOskLayout = oskJson["layout"].str.toUpper.to!OSKLayout;
     configOskNumberRow = oskJson["numberRow"].boolean;
     configOskModifierNames = oskJson["modifierNames"].str.toUpper.to!OSKModifierNames;
+    configOskTransparency = 0;
     updateOSKTransparency(oskJson["transparencyPercent"].str.to!int);
 
     // Load fonts
