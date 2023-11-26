@@ -32,7 +32,7 @@ OSKTheme configOskTheme;
 OSKLayout configOskLayout;
 bool configOskNumberRow;
 OSKModifierNames configOskModifierNames;
-float configOskTransparency;
+int configOskTransparency;
 
 
 enum OSKTheme {
@@ -80,7 +80,7 @@ void initOsk(JSONValue oskJson) {
     configOskLayout = oskJson["layout"].str.toUpper.to!OSKLayout;
     configOskNumberRow = oskJson["numberRow"].boolean;
     configOskModifierNames = oskJson["modifierNames"].str.toUpper.to!OSKModifierNames;
-    updateOSKTransparency(oskJson["transparencyPercent"].str.to!int)
+    updateOSKTransparency(oskJson["transparencyPercent"].str.to!int);
 
     // Load fonts
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -214,9 +214,9 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     const float FONT_SIZE = 0.45;
     const float BASE_LINE = 0.7;
 
-    float transparency = configOskTransparency / 100.0
+    float transparency = configOskTransparency.to!float / 100.0;
     cairo_pattern_t *COLOR_GREY = cairo_pattern_create_rgba(0.4, 0.4, 0.4, transparency);
-    cairo_pattern_t *COLOR_GREY_2 = cairo_pattern_create_rgba(0.5, 0.5, 0.5, transparency);
+    cairo_pattern_t *COLOR_GREY_2 = cairo_pattern_create_rgba(0.6, 0.6, 0.6, transparency);
 
     cairo_pattern_t *COLOR_NEO_BLUE = cairo_pattern_create_rgba(0.024, 0.533, 0.612, transparency);
 
@@ -631,7 +631,7 @@ void centerOskOnScreen(HWND hwnd) {
 }
 
 void updateOSKTransparency(int diff) nothrow {
-    float newValue = configOskTransparency + diff;
+    int newValue = configOskTransparency + diff;
     if (newValue < 0) {
         newValue = 0;
     } else if (newValue > 100) {

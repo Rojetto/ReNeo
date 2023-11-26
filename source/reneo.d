@@ -855,11 +855,13 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
     // Increase transparency of OSK on M3+F2
     if (vk == VK_F2 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
         updateOSKTransparency(-10);
+        updateOSKAsync();
         return true;  // Eat F2
     }
     // Decrease transparency of OSK on M3+F2
     if (vk == VK_F3 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
         updateOSKTransparency(10);
+        updateOSKAsync();
         return true;  // Eat F3
     }
 
