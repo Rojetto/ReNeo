@@ -10,7 +10,8 @@
         "theme": "Grey",
         "layout": "ansi",
         "numberRow": false,
-        "modifierNames": "three"
+        "modifierNames": "three",
+        "transparencyPercent": "90"
     },
     "hotkeys": {
         "toggleActivation": "Shift+Pause",

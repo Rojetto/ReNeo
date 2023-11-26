@@ -32,7 +32,7 @@ OSKTheme configOskTheme;
 OSKLayout configOskLayout;
 bool configOskNumberRow;
 OSKModifierNames configOskModifierNames;
-float configOskTransparancy;
+float configOskTransparency;
 
 
 enum OSKTheme {
@@ -80,12 +80,7 @@ void initOsk(JSONValue oskJson) {
     configOskLayout = oskJson["layout"].str.toUpper.to!OSKLayout;
     configOskNumberRow = oskJson["numberRow"].boolean;
     configOskModifierNames = oskJson["modifierNames"].str.toUpper.to!OSKModifierNames;
-    configOskTransparancy = (configOskTheme == OSKTheme.Grey) ? 0.9 : 0.95;
-    if (oskJson["transparency"].type == JSONType.float_) {
-        configOskTransparancy = oskJson["transparency"].floating;
-    } else if (oskJson["transparency"].type == JSONType.integer) {
-        configOskTransparancy = cast(float)oskJson["transparency"].integer;
-    }
+    updateOSKTransparency(oskJson["transparencyPercent"].str.to!int)
 
     // Load fonts
     WIN_FONTS ~= CreateFont(0, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -219,29 +214,31 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
     const float FONT_SIZE = 0.45;
     const float BASE_LINE = 0.7;
 
-    cairo_pattern_t *COLOR_GREY = cairo_pattern_create_rgba(0.4, 0.4, 0.4, configOskTransparancy);
+    float transparency = configOskTransparency / 100.0
+    cairo_pattern_t *COLOR_GREY = cairo_pattern_create_rgba(0.4, 0.4, 0.4, transparency);
+    cairo_pattern_t *COLOR_GREY_2 = cairo_pattern_create_rgba(0.5, 0.5, 0.5, transparency);
 
-    cairo_pattern_t *COLOR_NEO_BLUE = cairo_pattern_create_rgba(0.024, 0.533, 0.612, configOskTransparancy);
+    cairo_pattern_t *COLOR_NEO_BLUE = cairo_pattern_create_rgba(0.024, 0.533, 0.612, transparency);
 
-    cairo_pattern_t *COLOR_NEOVARS_GREY = cairo_pattern_create_rgba(200.0/255.0, 200.0/255.0, 200.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_NEOVARS_YELLOW = cairo_pattern_create_rgba(235.0/255.0, 230.0/255.0, 150.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_NEOVARS_RED = cairo_pattern_create_rgba(231.0/255.0, 150.0/255.0, 153.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_NEOVARS_GREEN = cairo_pattern_create_rgba(117.0/255.0, 216.0/255.0, 157.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_NEOVARS_BLUE = cairo_pattern_create_rgba(134.0/255.0, 138.0/255.0, 223.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_NEOVARS_LIGHT_BLUE = cairo_pattern_create_rgba(197.0/255.0, 203.0/255.0, 255.0/255.0, configOskTransparancy);
+    cairo_pattern_t *COLOR_NEOVARS_GREY = cairo_pattern_create_rgba(200.0/255.0, 200.0/255.0, 200.0/255.0, transparency);
+    cairo_pattern_t *COLOR_NEOVARS_YELLOW = cairo_pattern_create_rgba(235.0/255.0, 230.0/255.0, 150.0/255.0, transparency);
+    cairo_pattern_t *COLOR_NEOVARS_RED = cairo_pattern_create_rgba(231.0/255.0, 150.0/255.0, 153.0/255.0, transparency);
+    cairo_pattern_t *COLOR_NEOVARS_GREEN = cairo_pattern_create_rgba(117.0/255.0, 216.0/255.0, 157.0/255.0, transparency);
+    cairo_pattern_t *COLOR_NEOVARS_BLUE = cairo_pattern_create_rgba(134.0/255.0, 138.0/255.0, 223.0/255.0, transparency);
+    cairo_pattern_t *COLOR_NEOVARS_LIGHT_BLUE = cairo_pattern_create_rgba(197.0/255.0, 203.0/255.0, 255.0/255.0, transparency);
 
-    cairo_pattern_t *COLOR_GREEN_LIGHT_BLUE = cairo_pattern_create_rgba(147.0/255.0, 204.0/255.0, 234.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_GREEN_GREENISH_BLUE = cairo_pattern_create_rgba(122.0/255.0, 190.0/255.0, 179.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_GREEN_BLUEISH_GREEN = cairo_pattern_create_rgba(99.0/255.0, 178.0/255.0, 128.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_GREEN_GREEN = cairo_pattern_create_rgba(74.0/255.0, 164.0/255.0, 74.0/255.0, configOskTransparancy);
-    cairo_pattern_t *COLOR_GREEN_LIGHT_GREEN = cairo_pattern_create_rgba(139.0/255.0, 189.0/255.0, 139.0/255.0, configOskTransparancy);
+    cairo_pattern_t *COLOR_GREEN_LIGHT_BLUE = cairo_pattern_create_rgba(147.0/255.0, 204.0/255.0, 234.0/255.0, transparency);
+    cairo_pattern_t *COLOR_GREEN_GREENISH_BLUE = cairo_pattern_create_rgba(122.0/255.0, 190.0/255.0, 179.0/255.0, transparency);
+    cairo_pattern_t *COLOR_GREEN_BLUEISH_GREEN = cairo_pattern_create_rgba(99.0/255.0, 178.0/255.0, 128.0/255.0, transparency);
+    cairo_pattern_t *COLOR_GREEN_GREEN = cairo_pattern_create_rgba(74.0/255.0, 164.0/255.0, 74.0/255.0, transparency);
+    cairo_pattern_t *COLOR_GREEN_LIGHT_GREEN = cairo_pattern_create_rgba(139.0/255.0, 189.0/255.0, 139.0/255.0, transparency);
 
     cairo_pattern_t *TEXT_COLOR;
 
     switch (configOskTheme) {
-        case OSKTheme.ColorClassic: TEXT_COLOR = cairo_pattern_create_rgba(0.05, 0.05, 0.05, configOskTransparancy + 0.05); break;
-        case OSKTheme.ColorGreen: TEXT_COLOR = cairo_pattern_create_rgba(0.05, 0.05, 0.05, configOskTransparancy + 0.05); break;
-        default: TEXT_COLOR = cairo_pattern_create_rgba(0.95, 0.95, 0.95, configOskTransparancy + 0.05);
+        case OSKTheme.ColorClassic: TEXT_COLOR = cairo_pattern_create_rgba(0.05, 0.05, 0.05, transparency + 0.05); break;
+        case OSKTheme.ColorGreen: TEXT_COLOR = cairo_pattern_create_rgba(0.05, 0.05, 0.05, transparency + 0.05); break;
+        default: TEXT_COLOR = cairo_pattern_create_rgba(0.95, 0.95, 0.95, transparency + 0.05);
     }
 
     cairo_set_font_size(cr, FONT_SIZE);
@@ -300,7 +297,14 @@ void drawOsk(HWND hwnd, NeoLayout *layout, uint layer, bool capslock) {
 
     cairo_pattern_t *getKeyColor(Scancode scan) {
         switch (configOskTheme) {
-            case OSKTheme.Grey: return COLOR_GREY;
+            case OSKTheme.Grey: 
+            {
+                auto keyType = KEY_TYPES.get(scan, OSKKeyType.OTHER);
+                switch (keyType) {
+                    case OSKKeyType.HOME: return COLOR_GREY_2;
+                    default: return COLOR_GREY;
+                }
+            }
             case OSKTheme.NeoBlue: return COLOR_NEO_BLUE;
             case OSKTheme.ColorClassic:
             {
@@ -624,4 +628,14 @@ void centerOskOnScreen(HWND hwnd) {
         workArea.left + (workArea.right - workArea.left - winWidth) / 2,
         workArea.bottom - winHeight - winBottomOffset,
         winWidth, winHeight, SWP_NOZORDER);
+}
+
+void updateOSKTransparency(int diff) nothrow {
+    float newValue = configOskTransparency + diff;
+    if (newValue < 0) {
+        newValue = 0;
+    } else if (newValue > 100) {
+        newValue = 100;
+    }
+    configOskTransparency = newValue;
 }

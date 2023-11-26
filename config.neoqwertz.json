@@ -10,7 +10,8 @@
         "theme": "Grey",
         "layout": "iso",
         "numberRow": true,
-        "modifierNames": "standard"
+        "modifierNames": "standard",
+        "transparencyPercent": "90"
     },
     "hotkeys": {
         "toggleActivation": "Shift+Pause",
