@@ -14,6 +14,7 @@ import core.sys.windows.windows;
 
 import mapping;
 import composer;
+import osk : updateOSKTransparency;
 import app : configAutoNumlock, configEnableMod4Lock, configFilterNeoModifiers, configOneHandedModeMirrorKey, configOneHandedModeMirrorMap, updateOSKAsync, toggleOSK, toggleOneHandedMode, lastInputLocale;
 
 const SC_FAKE_LSHIFT = 0x22A;
@@ -850,6 +851,18 @@ bool keyboardHook(WPARAM msgType, KBDLLHOOKSTRUCT msgStruct) nothrow {
     if (vk == VK_F1 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
         toggleOSK();
         return true;  // Eat F1
+    }
+    // Increase transparency of OSK on M3+F2
+    if (vk == VK_F2 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
+        updateOSKTransparency(-10);
+        updateOSKAsync();
+        return true;  // Eat F2
+    }
+    // Decrease transparency of OSK on M3+F2
+    if (vk == VK_F3 && down && (isModifierHeld(Modifier.LMOD3) || isModifierHeld(Modifier.RMOD3))) {
+        updateOSKTransparency(10);
+        updateOSKAsync();
+        return true;  // Eat F3
     }
 
     // Toggle one handed mode on M3+F10
