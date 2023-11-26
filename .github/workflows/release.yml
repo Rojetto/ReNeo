@@ -2,8 +2,6 @@ name: Release
 on:
   workflow_dispatch:
   push:
-    tags:
-    - 'v*'
 jobs:
   build-release:
     runs-on: windows-latest
@@ -40,23 +38,8 @@ jobs:
         run: mv -Force config.neoqwertz.json ReNeo\config.default.json
       - name: Create NeoQwertz ZIP file
         run: 7z a -tzip ReNeo_NeoQwertz.zip ReNeo\
-      - name: Replace config.default.json with Bone config
-        run: mv -Force config.bone.json ReNeo\config.default.json
-      - name: Create Bone ZIP file
-        run: 7z a -tzip ReNeo_Bone.zip ReNeo\
-      - name: Replace config.default.json with 3l config
-        run: mv -Force config.3l.json ReNeo\config.default.json
-      - name: Create 3l ZIP file
-        run: 7z a -tzip ReNeo_3l.zip ReNeo\
-      - name: Create Release
-        uses: marvinpinto/action-automatic-releases@v1.2.1
+      - uses: actions/upload-artifact@v3
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          draft: true
-          prerelease: false
-          files: |
-            ReNeo_Neo.zip
-            ReNeo_NeoQwertz.zip
-            ReNeo_Bone.zip
-            ReNeo_3l.zip
-      
+          name: ReNeo_NeoQwertz.zip
+          path: ReNeo_NeoQwertz.zip
+          retention-days: 2
